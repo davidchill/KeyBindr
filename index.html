@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Hotkey Mapper</title>
+  <link rel="stylesheet" href="style.css">
+</head>
+<body>
+  <header class="app-header">
+    <div class="header-brand">
+      <svg class="brand-icon" viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
+        <rect x="2" y="5" width="20" height="14" rx="2" stroke="currentColor" stroke-width="1.5"/>
+        <rect x="5" y="8" width="3" height="3" rx="0.5" fill="currentColor" opacity="0.7"/>
+        <rect x="10" y="8" width="3" height="3" rx="0.5" fill="currentColor" opacity="0.7"/>
+        <rect x="15" y="8" width="3" height="3" rx="0.5" fill="currentColor" opacity="0.7"/>
+        <rect x="5" y="13" width="13" height="3" rx="0.5" fill="currentColor" opacity="0.5"/>
+      </svg>
+      <span class="brand-name">Hotkey Mapper</span>
+    </div>
+
+    <div class="header-map-name">
+      <input type="text" id="map-name" placeholder="Map name…" autocomplete="off" spellcheck="false" value="My Keyboard Map">
+    </div>
+
+    <div class="header-actions">
+      <button id="btn-clear-all" class="btn btn-ghost">Clear All</button>
+      <button id="btn-export" class="btn btn-secondary">Export JSON</button>
+      <button id="btn-import" class="btn btn-secondary">Import JSON</button>
+      <input type="file" id="file-input" accept=".json" style="display:none">
+    </div>
+  </header>
+
+  <main class="app-main">
+    <div class="keyboard-section">
+      <div id="keyboard" class="keyboard"></div>
+    </div>
+
+    <div class="legend-section">
+      <div class="legend">
+        <span class="legend-title">Categories</span>
+        <div id="category-list" class="category-list"></div>
+        <span id="stat-assigned" class="legend-stat">0 keys assigned</span>
+      </div>
+    </div>
+  </main>
+
+  <!-- Popover overlay -->
+  <div id="popover-overlay" class="popover-overlay hidden"></div>
+
+  <!-- Edit popover -->
+  <div id="popover" class="popover hidden" role="dialog" aria-modal="true" aria-labelledby="popover-title">
+    <div class="popover-header">
+      <div class="popover-key-info">
+        <kbd id="popover-key-badge" class="key-badge"></kbd>
+        <span id="popover-title" class="popover-key-name"></span>
+      </div>
+      <button id="popover-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="popover-body">
+      <div class="form-group">
+        <span class="form-label">Modifiers</span>
+        <div class="mod-group" id="mod-group">
+          <label class="mod-chip"><input type="checkbox" value="Ctrl"><span>Ctrl</span></label>
+          <label class="mod-chip"><input type="checkbox" value="Alt"><span>Alt</span></label>
+          <label class="mod-chip"><input type="checkbox" value="Shift"><span>Shift</span></label>
+          <label class="mod-chip"><input type="checkbox" value="Win"><span>⊞ Win</span></label>
+        </div>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="hotkey-label">Action Label</label>
+        <input id="hotkey-label" type="text" class="form-input" placeholder="e.g. Undo, Save, Jump" maxlength="40" autocomplete="off">
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="hotkey-desc">Description <span class="form-optional">(optional)</span></label>
+        <textarea id="hotkey-desc" class="form-input form-textarea" placeholder="What does this do?" rows="2" maxlength="140"></textarea>
+      </div>
+      <div class="form-group">
+        <label class="form-label" for="hotkey-category">Category</label>
+        <select id="hotkey-category" class="form-input form-select"></select>
+      </div>
+      <div class="popover-footer">
+        <button id="btn-save-hotkey" class="btn btn-primary">Save</button>
+        <button id="btn-clear-hotkey" class="btn btn-danger">Clear Key</button>
+      </div>
+    </div>
+  </div>
+
+  <script src="app.js"></script>
+</body>
+</html>
