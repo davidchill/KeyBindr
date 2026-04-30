@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.1.1] – 2026-04-29
+
+### Added
+
+- `README.md` — full project synopsis for the GitHub repo covering features, how it works, local dev setup, project structure, tech stack, and planned work
+
+---
+
 ## [0.1.0] – 2026-04-22
 
 ### Initial Release
