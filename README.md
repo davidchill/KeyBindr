@@ -1,42 +1,61 @@
-# Hotkey Mapper
+# KeyBindr
 
-A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered 104-key US QWERTY keyboard to assign a label, modifiers, description, and color category. Maps can be saved, exported, and reimported as JSON.
+A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.1.1 — work in progress, active development.
+**Version:** 0.2.0 — work in progress, active development.
 
 ---
 
 ## Features
 
-- **Full 104-key keyboard** rendered in the browser — main block, navigation cluster, and numpad, all from structured layout data in JavaScript
+### Keyboard
+
+- **Multiple form factors** — Full (104-key), Tenkeyless (TKL), 60%, and Split layouts rendered on the fly
+- **Key map support** — switch between QWERTY, Dvorak, Colemak, AZERTY, and QWERTZ; key labels update instantly while physical key IDs (and existing assignments) are preserved
+- **Full 104-key layout** includes main block, navigation cluster, and numpad rendered from structured JavaScript data — no images or SVG sprites
+
+### Key assignment
+
 - **Click any key** to open an edit popover and assign:
   - Modifier keys (Ctrl, Alt, Shift, Win)
   - Action label (e.g. "Undo", "Save", "Jump")
   - Optional description
   - Color category
 - **8 built-in categories** with distinct colors: Movement, Edit/Undo, Selection, File/Save, View/Zoom, Tool/Mode, Combat, Custom
-- **Category legend** below the keyboard with per-category key counts
-- **Modifier pills** and action labels displayed directly on assigned key faces
-- **Named maps** — give your map a name in the header
+- **Modifier pills** and action labels displayed directly on assigned key faces, filled with the category color
+
+### UI & theming
+
+- **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
+- **Category legend** above the keyboard with per-category key counts
+- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category, showing modifier + key chips, action label, and description
+- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to the opposite column; arrangement persists
+
+### Data
+
+- **Named maps** — editable map name in the header
 - **Export / Import** — save any map as a `.json` file and reload it later
 - **Clear All** — wipe all assignments with a confirmation prompt
-- **Persistent** — all assignments and the map name are saved to `localStorage`
+- **Persistent** — all assignments, map name, layout, key map, and summary arrangement saved to `localStorage`
 
 ---
 
 ## How It Works
 
-The keyboard is rendered entirely at runtime from three layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`) defined in `app.js`. No images, no SVG sprites — every key is a DOM element styled with CSS.
+The keyboard is rendered entirely at runtime from three layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`) in `app.js`. The active form factor and key map are read from `state` at render time — switching either re-renders the keyboard without touching the stored hotkey data.
 
-The numpad uses CSS Grid with explicit `grid-column` / `grid-row` placement to handle the special-shaped keys (`+` spans 2 rows, `Enter` spans 2 rows, `0` spans 2 columns).
+The numpad uses CSS Grid with explicit `grid-column` / `grid-row` placement to handle special-shaped keys (`+` and `Enter` span 2 rows, `0` spans 2 columns).
 
-App state is a plain object:
+App state:
 
 ```js
-{ mapName: string, hotkeys: { [keyId]: { label, description, category, modifiers[] } } }
+{
+  hotkeys:     { [keyId]: { label, description, category, modifiers[] } },
+  layout:      'full' | 'tkl' | '60' | 'split',
+  keyMap:      'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
+  summaryCols: [ [catId, ...], [catId, ...] ]
+}
 ```
-
-State is read from and written to `localStorage` on every save.
 
 ---
 
@@ -60,9 +79,9 @@ Then open `http://localhost:3000` (or `:8080`).
 
 ```
 site/
-├── index.html      # App shell — header, keyboard mount, legend, edit popover
-├── style.css       # Dark-theme stylesheet using CSS custom properties
-├── app.js          # All layout data and application logic
+├── index.html      # App shell — header, layout bar, keyboard, legend, summary, popover
+├── style.css       # Themed stylesheet using CSS custom properties (light + dark)
+├── app.js          # All layout data, key maps, and application logic
 ├── package.json    # Metadata only — no dependencies, no build tools
 └── CHANGELOG.md    # Version history
 ```
@@ -80,7 +99,7 @@ site/
 
 - Pre-built templates for common apps and games (Photoshop, Premiere, World of Warcraft)
 - Template gallery / import from dropdown
-- Additional keyboard layouts beyond US QWERTY
+- Export to machine or cloud storage (local file picker + cloud-synced folder)
 
 ---
 

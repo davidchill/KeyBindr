@@ -1,6 +1,6 @@
 {
-  "name": "hotkey-mapper",
-  "version": "0.1.1",
+  "name": "keybindr",
+  "version": "0.2.0",
   "description": "Interactive 104-key keyboard mapper for visualizing hotkeys and shortcuts",
-  "homepage": "https://github.com/davidchill/Hotkey-Mapper"
+  "homepage": "https://github.com/davidchill/KeyBindr.app"
 }

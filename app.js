@@ -3,6 +3,45 @@ const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
 
+const LAYOUTS = [
+  { id: 'full',  name: 'Full (104-key)'    },
+  { id: 'tkl',   name: 'Tenkeyless (TKL)'  },
+  { id: '60',    name: '60%'               },
+  { id: 'split', name: 'Split'             },
+];
+
+// Primary label overrides per key map (unrecognised keys fall through to default)
+const KEY_MAPS = {
+  qwerty:  {},
+  dvorak:  {
+    KeyQ:"'", KeyW:',', KeyE:'.', KeyR:'P', KeyT:'Y',
+    KeyY:'F', KeyU:'G', KeyI:'C', KeyO:'R', KeyP:'L',
+    KeyS:'O', KeyD:'E', KeyF:'U', KeyG:'I',
+    KeyH:'D', KeyJ:'H', KeyK:'T', KeyL:'N', Semicolon:'S', Quote:'-',
+    KeyZ:';', KeyX:'Q', KeyC:'J', KeyV:'K', KeyB:'X',
+    KeyN:'B', Comma:'W', Period:'V', Slash:'Z',
+    Minus:'[', Equal:']', BracketLeft:'/', BracketRight:'=',
+  },
+  colemak: {
+    KeyE:'F', KeyR:'P', KeyT:'G', KeyY:'J', KeyU:'L',
+    KeyI:'U', KeyO:'Y', KeyP:';',
+    KeyS:'R', KeyD:'S', KeyF:'T', KeyG:'D',
+    KeyJ:'N', KeyK:'E', KeyL:'I', Semicolon:'O',
+    KeyN:'K',
+  },
+  azerty:  {
+    KeyQ:'A', KeyW:'Z', KeyA:'Q', KeyZ:'W',
+    Semicolon:'M', KeyM:',',
+  },
+  qwertz:  {
+    KeyY:'Z', KeyZ:'Y',
+  },
+};
+
+// Key IDs after which a visual split gap is inserted in split layout
+const SPLIT_AFTER = new Set(['Digit5', 'KeyT', 'KeyG', 'KeyB', 'Space']);
+const SPLIT_GAP   = 28; // px
+
 const CATEGORIES = [
   { id: 'movement',  name: 'Movement',     color: '#3b82f6' },
   { id: 'edit',      name: 'Edit / Undo',  color: '#f97316' },
@@ -144,11 +183,47 @@ const NUMPAD_KEYS = [
 ];
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {} };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty' };
 let activeKeyId = null;
+
+/* ── Theme ───────────────────────────────────────────────────── */
+const THEME_KEY = 'keybindr-theme';
+let _systemQuery = null;
+
+function applyTheme(pref) {
+  const isDark = pref === 'dark' || (pref === 'system' && window.matchMedia('(prefers-color-scheme: dark)').matches);
+  document.documentElement.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.querySelectorAll('.theme-btn').forEach(btn => {
+    btn.classList.toggle('active', btn.dataset.themeVal === pref);
+  });
+}
+
+function initTheme() {
+  const saved = localStorage.getItem(THEME_KEY) || 'dark';
+  applyTheme(saved);
+
+  _systemQuery = window.matchMedia('(prefers-color-scheme: dark)');
+  _systemQuery.addEventListener('change', () => {
+    if ((localStorage.getItem(THEME_KEY) || 'dark') === 'system') applyTheme('system');
+  });
+
+  document.getElementById('theme-picker').addEventListener('click', e => {
+    const btn = e.target.closest('.theme-btn');
+    if (!btn) return;
+    const pref = btn.dataset.themeVal;
+    localStorage.setItem(THEME_KEY, pref);
+    applyTheme(pref);
+  });
+}
 
 /* ── Helpers ──────────────────────────────────────────────────── */
 const u = (n = 1) => UNIT * n + GAP * (n - 1);
+
+function getKeyLabel(key) {
+  const overrides = KEY_MAPS[state.keyMap];
+  if (overrides && key.id in overrides) return overrides[key.id];
+  return key.label || '';
+}
 
 function findKeyDef(id) {
   for (const row of MAIN_ROWS) {
@@ -231,15 +306,17 @@ function refreshKeyEl(el, key) {
 
     const primary = document.createElement('span');
     primary.className = 'key-primary';
-    primary.textContent = key.label || '';
+    primary.textContent = getKeyLabel(key);
     inner.appendChild(primary);
     el.appendChild(inner);
   }
 }
 
 /* ── Rendering ────────────────────────────────────────────────── */
-function renderRows(rows, container) {
+function renderRows(rows, container, hideFn = false) {
   rows.forEach(row => {
+    if (hideFn && row.fn) return;
+
     if (row.spacer) {
       const sp = document.createElement('div');
       sp.style.height = UNIT + 'px';
@@ -261,6 +338,14 @@ function renderRows(rows, container) {
         const el = makeKey(key);
         if (row.fn) el.style.height = FN_H + 'px';
         rowEl.appendChild(el);
+
+        if (state.layout === 'split' && SPLIT_AFTER.has(key.id)) {
+          const sg = document.createElement('div');
+          sg.className = 'key-gap split-gap';
+          sg.style.width  = SPLIT_GAP + 'px';
+          sg.style.height = (row.fn ? FN_H : UNIT) + 'px';
+          rowEl.appendChild(sg);
+        }
       }
     });
 
@@ -286,29 +371,34 @@ function renderKeyboard() {
   const kb = document.getElementById('keyboard');
   kb.innerHTML = '';
 
+  const hideFn    = state.layout === '60' || state.layout === 'split';
+  const showNav   = state.layout === 'full' || state.layout === 'tkl';
+  const showNumpad = state.layout === 'full';
+
   const body = document.createElement('div');
   body.className = 'keyboard-body';
 
-  // Main block
   const mainBlock = document.createElement('div');
   mainBlock.className = 'key-block';
-  renderRows(MAIN_ROWS, mainBlock);
+  renderRows(MAIN_ROWS, mainBlock, hideFn);
   body.appendChild(mainBlock);
 
-  // Nav cluster
-  const navBlock = document.createElement('div');
-  navBlock.className = 'key-block';
-  renderRows(NAV_ROWS, navBlock);
-  body.appendChild(navBlock);
+  if (showNav) {
+    const navBlock = document.createElement('div');
+    navBlock.className = 'key-block';
+    renderRows(NAV_ROWS, navBlock);
+    body.appendChild(navBlock);
+  }
 
-  // Numpad — add a top spacer to align with the fn row + gap
-  const numBlock = document.createElement('div');
-  numBlock.className = 'key-block';
-  const spacer = document.createElement('div');
-  spacer.style.height = FN_H + 'px';
-  numBlock.appendChild(spacer);
-  renderNumpad(numBlock);
-  body.appendChild(numBlock);
+  if (showNumpad) {
+    const numBlock = document.createElement('div');
+    numBlock.className = 'key-block';
+    const spacer = document.createElement('div');
+    spacer.style.height = FN_H + 'px';
+    numBlock.appendChild(spacer);
+    renderNumpad(numBlock);
+    body.appendChild(numBlock);
+  }
 
   kb.appendChild(body);
 }
@@ -318,6 +408,253 @@ function refreshKey(keyId) {
   if (!el) return;
   const def = findKeyDef(keyId);
   if (def) refreshKeyEl(el, def);
+}
+
+/* ── Hotkey summary ───────────────────────────────────────────── */
+let _dragCatId = null;
+
+function initSummaryCols() {
+  if (!state.summaryCols || state.summaryCols.length !== 2) {
+    const half = Math.ceil(CATEGORIES.length / 2);
+    state.summaryCols = [
+      CATEGORIES.slice(0, half).map(c => c.id),
+      CATEGORIES.slice(half).map(c => c.id),
+    ];
+  }
+  // Ensure any category not yet in a column is added to the shorter one
+  const present = new Set(state.summaryCols.flat());
+  CATEGORIES.forEach(cat => {
+    if (!present.has(cat.id)) {
+      const col = state.summaryCols[0].length <= state.summaryCols[1].length ? 0 : 1;
+      state.summaryCols[col].push(cat.id);
+    }
+  });
+}
+
+function clearDragIndicators() {
+  document.querySelectorAll('.drop-before, .drop-after').forEach(el =>
+    el.classList.remove('drop-before', 'drop-after'));
+  document.querySelectorAll('.summary-col.drag-over').forEach(el =>
+    el.classList.remove('drag-over'));
+}
+
+function moveCategoryInLayout(srcId, targetId, before) {
+  state.summaryCols.forEach(col => {
+    const i = col.indexOf(srcId);
+    if (i !== -1) col.splice(i, 1);
+  });
+  let tgtCol = -1, tgtIdx = -1;
+  state.summaryCols.forEach((col, ci) => {
+    const i = col.indexOf(targetId);
+    if (i !== -1) { tgtCol = ci; tgtIdx = i; }
+  });
+  if (tgtCol === -1) return;
+  state.summaryCols[tgtCol].splice(before ? tgtIdx : tgtIdx + 1, 0, srcId);
+  saveToStorage();
+  renderSummary();
+}
+
+function moveCategoryToColumn(srcId, colIdx) {
+  state.summaryCols.forEach(col => {
+    const i = col.indexOf(srcId);
+    if (i !== -1) col.splice(i, 1);
+  });
+  state.summaryCols[colIdx].push(srcId);
+  saveToStorage();
+  renderSummary();
+}
+
+function getOrderedHotkeys() {
+  const result = [];
+  const seen = new Set();
+  const add = key => {
+    if (!key || key.type === 'gap' || !key.id || seen.has(key.id) || !state.hotkeys[key.id]) return;
+    seen.add(key.id);
+    result.push({ keyId: key.id, hk: state.hotkeys[key.id], def: findKeyDef(key.id) });
+  };
+  MAIN_ROWS.forEach(row => row.keys && row.keys.forEach(add));
+  NAV_ROWS.forEach(row => row.keys && row.keys.forEach(add));
+  NUMPAD_KEYS.forEach(add);
+  return result;
+}
+
+function makeSummaryItem({ hk, def, keyId }) {
+  const mods = hk.modifiers || [];
+  const keyLabel = def ? getKeyLabel(def) : keyId;
+
+  const item = document.createElement('div');
+  item.className = 'summary-item';
+
+  const keyCell = document.createElement('div');
+  keyCell.className = 'summary-key-cell';
+
+  [...mods, keyLabel].forEach(part => {
+    const chip = document.createElement('kbd');
+    chip.className = 'summary-chip';
+    chip.textContent = part;
+    keyCell.appendChild(chip);
+  });
+
+  const info = document.createElement('div');
+  info.className = 'summary-info';
+
+  const lbl = document.createElement('span');
+  lbl.className = 'summary-action';
+  lbl.textContent = hk.label;
+  info.appendChild(lbl);
+
+  if (hk.description) {
+    const desc = document.createElement('span');
+    desc.className = 'summary-desc';
+    desc.textContent = hk.description;
+    info.appendChild(desc);
+  }
+
+  item.appendChild(keyCell);
+  item.appendChild(info);
+  return item;
+}
+
+function makeSummaryGroup(cat, items) {
+  const group = document.createElement('div');
+  group.className = 'summary-group';
+  group.dataset.catId = cat.id;
+  group.draggable = true;
+
+  group.addEventListener('dragstart', e => {
+    _dragCatId = cat.id;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', cat.id);
+    setTimeout(() => group.classList.add('dragging'), 0);
+  });
+
+  group.addEventListener('dragend', () => {
+    _dragCatId = null;
+    group.classList.remove('dragging');
+    clearDragIndicators();
+  });
+
+  group.addEventListener('dragover', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!_dragCatId || _dragCatId === cat.id) return;
+    clearDragIndicators();
+    const before = e.clientY < group.getBoundingClientRect().top + group.getBoundingClientRect().height / 2;
+    group.classList.add(before ? 'drop-before' : 'drop-after');
+  });
+
+  group.addEventListener('drop', e => {
+    e.preventDefault();
+    e.stopPropagation();
+    if (!_dragCatId || _dragCatId === cat.id) return;
+    const before = e.clientY < group.getBoundingClientRect().top + group.getBoundingClientRect().height / 2;
+    moveCategoryInLayout(_dragCatId, cat.id, before);
+  });
+
+  // Header
+  const hdr = document.createElement('div');
+  hdr.className = 'summary-group-header';
+
+  const grip = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  grip.setAttribute('class', 'summary-grip');
+  grip.setAttribute('viewBox', '0 0 8 14');
+  grip.setAttribute('width', '8');
+  grip.setAttribute('height', '14');
+  grip.innerHTML = '<circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="6" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="7" r="1.2" fill="currentColor"/><circle cx="6" cy="7" r="1.2" fill="currentColor"/><circle cx="2" cy="12" r="1.2" fill="currentColor"/><circle cx="6" cy="12" r="1.2" fill="currentColor"/>';
+  hdr.appendChild(grip);
+
+  const swatch = document.createElement('span');
+  swatch.className = 'summary-group-swatch';
+  swatch.style.background = cat.color;
+  hdr.appendChild(swatch);
+
+  const name = document.createElement('span');
+  name.className = 'summary-group-name';
+  name.textContent = cat.name;
+  hdr.appendChild(name);
+
+  group.appendChild(hdr);
+
+  const itemsEl = document.createElement('div');
+  itemsEl.className = 'summary-items';
+  items.forEach(entry => itemsEl.appendChild(makeSummaryItem(entry)));
+  group.appendChild(itemsEl);
+
+  return group;
+}
+
+function renderSummary() {
+  const container = document.getElementById('summary-grid');
+  const empty     = document.getElementById('summary-empty');
+  const entries   = getOrderedHotkeys();
+
+  container.innerHTML = '';
+
+  if (!entries.length) {
+    empty.classList.remove('hidden');
+    return;
+  }
+  empty.classList.add('hidden');
+
+  initSummaryCols();
+
+  const buckets = {};
+  const uncategorized = [];
+  entries.forEach(entry => {
+    const id = entry.hk.category;
+    if (id) { (buckets[id] = buckets[id] || []).push(entry); }
+    else     { uncategorized.push(entry); }
+  });
+
+  const colsEl = document.createElement('div');
+  colsEl.className = 'summary-columns';
+
+  [0, 1].forEach(colIdx => {
+    const colEl = document.createElement('div');
+    colEl.className = 'summary-col';
+    colEl.dataset.col = colIdx;
+
+    state.summaryCols[colIdx].forEach(catId => {
+      const items = buckets[catId];
+      if (!items?.length) return;
+      const cat = CATEGORIES.find(c => c.id === catId);
+      if (cat) colEl.appendChild(makeSummaryGroup(cat, items));
+    });
+
+    colEl.addEventListener('dragover', e => {
+      e.preventDefault();
+      colEl.classList.add('drag-over');
+    });
+    colEl.addEventListener('dragleave', e => {
+      if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over');
+    });
+    colEl.addEventListener('drop', e => {
+      e.preventDefault();
+      colEl.classList.remove('drag-over');
+      if (_dragCatId) moveCategoryToColumn(_dragCatId, colIdx);
+    });
+
+    colsEl.appendChild(colEl);
+  });
+
+  container.appendChild(colsEl);
+
+  if (uncategorized.length) {
+    const uGroup = document.createElement('div');
+    uGroup.className = 'summary-group';
+    const uHdr = document.createElement('div');
+    uHdr.className = 'summary-group-header';
+    const uName = document.createElement('span');
+    uName.className = 'summary-group-name';
+    uName.textContent = 'Uncategorized';
+    uHdr.appendChild(uName);
+    uGroup.appendChild(uHdr);
+    const uItems = document.createElement('div');
+    uItems.className = 'summary-items';
+    uncategorized.forEach(entry => uItems.appendChild(makeSummaryItem(entry)));
+    uGroup.appendChild(uItems);
+    container.appendChild(uGroup);
+  }
 }
 
 /* ── Legend ───────────────────────────────────────────────────── */
@@ -362,7 +699,7 @@ function populateCategorySelect() {
 function openPopover(keyId) {
   activeKeyId = keyId;
   const def = findKeyDef(keyId);
-  const label = def?.label || keyId;
+  const label = def ? getKeyLabel(def) : keyId;
 
   document.getElementById('popover-key-badge').textContent = label;
   document.getElementById('popover-title').textContent = label;
@@ -418,6 +755,7 @@ function saveHotkey() {
 
   refreshKey(activeKeyId);
   renderLegend();
+  renderSummary();
   saveToStorage();
   closePopover();
 }
@@ -427,6 +765,7 @@ function clearHotkey() {
   delete state.hotkeys[activeKeyId];
   refreshKey(activeKeyId);
   renderLegend();
+  renderSummary();
   saveToStorage();
   closePopover();
 }
@@ -434,20 +773,26 @@ function clearHotkey() {
 /* ── Storage ──────────────────────────────────────────────────── */
 function saveToStorage() {
   try {
-    localStorage.setItem('hotkeyMapper', JSON.stringify({
-      hotkeys: state.hotkeys,
-      mapName: document.getElementById('map-name').value,
+    localStorage.setItem('keybindr', JSON.stringify({
+      hotkeys:     state.hotkeys,
+      mapName:     document.getElementById('map-name').value,
+      layout:      state.layout,
+      keyMap:      state.keyMap,
+      summaryCols: state.summaryCols,
     }));
   } catch (_) {}
 }
 
 function loadFromStorage() {
   try {
-    const raw = localStorage.getItem('hotkeyMapper');
+    const raw = localStorage.getItem('keybindr');
     if (!raw) return;
     const data = JSON.parse(raw);
     if (data.hotkeys) state.hotkeys = data.hotkeys;
     if (data.mapName) document.getElementById('map-name').value = data.mapName;
+    if (data.layout)      state.layout      = data.layout;
+    if (data.keyMap)      state.keyMap      = data.keyMap;
+    if (data.summaryCols) state.summaryCols = data.summaryCols;
   } catch (_) {}
 }
 
@@ -474,12 +819,34 @@ function importMap(file) {
       if (data.name) document.getElementById('map-name').value = data.name;
       renderKeyboard();
       renderLegend();
+      renderSummary();
       saveToStorage();
     } catch (_) {
-      alert('Invalid file. Please import a Hotkey Mapper JSON file.');
+      alert('Invalid file. Please import a KeyBindr JSON file.');
     }
   };
   reader.readAsText(file);
+}
+
+/* ── Layout controls ──────────────────────────────────────────── */
+function initLayoutControls() {
+  const layoutSel  = document.getElementById('select-layout');
+  const keymapSel  = document.getElementById('select-keymap');
+
+  layoutSel.value  = state.layout;
+  keymapSel.value  = state.keyMap;
+
+  layoutSel.addEventListener('change', () => {
+    state.layout = layoutSel.value;
+    renderKeyboard();
+    saveToStorage();
+  });
+
+  keymapSel.addEventListener('change', () => {
+    state.keyMap = keymapSel.value;
+    renderKeyboard();
+    saveToStorage();
+  });
 }
 
 /* ── Events ───────────────────────────────────────────────────── */
@@ -510,6 +877,7 @@ function initEvents() {
       state.hotkeys = {};
       renderKeyboard();
       renderLegend();
+      renderSummary();
       saveToStorage();
     }
   });
@@ -528,11 +896,14 @@ function initEvents() {
 
 /* ── Init ─────────────────────────────────────────────────────── */
 function init() {
+  initTheme();
   loadFromStorage();
   renderKeyboard();
   populateCategorySelect();
   renderLegend();
+  renderSummary();
   initEvents();
+  initLayoutControls();
 }
 
 document.addEventListener('DOMContentLoaded', init);
