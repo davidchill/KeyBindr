@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.2.0 — work in progress, active development.
+**Version:** 0.2.1 — work in progress, active development.
 
 ---
 
@@ -24,12 +24,19 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 - **8 built-in categories** with distinct colors: Movement, Edit/Undo, Selection, File/Save, View/Zoom, Tool/Mode, Combat, Custom
 - **Modifier pills** and action labels displayed directly on assigned key faces, filled with the category color
 
+### Presets
+
+- **Built-in presets** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Presets button in the header
+- **Category filter tabs** — filter the preset grid by Design, Video, Gaming, or Development
+- Same JSON shape as Export/Import — any exported map can become a preset
+
 ### UI & theming
 
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
 - **Category legend** above the keyboard with per-category key counts
-- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category, showing modifier + key chips, action label, and description
-- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to the opposite column; arrangement persists
+- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 3 columns, showing modifier + key chips, action label, and description
+- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another column; arrangement persists
+- **Hover cross-highlight** — hovering an assigned key highlights its summary row, and hovering a summary row highlights the key on the keyboard
 
 ### Data
 
@@ -53,7 +60,7 @@ App state:
   hotkeys:     { [keyId]: { label, description, category, modifiers[] } },
   layout:      'full' | 'tkl' | '60' | 'split',
   keyMap:      'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
-  summaryCols: [ [catId, ...], [catId, ...] ]
+  summaryCols: [ [catId, ...], [catId, ...], [catId, ...] ]
 }
 ```
 
@@ -79,9 +86,10 @@ Then open `http://localhost:3000` (or `:8080`).
 
 ```
 site/
-├── index.html      # App shell — header, layout bar, keyboard, legend, summary, popover
+├── index.html      # App shell — header, layout bar, keyboard, legend, summary, popovers
 ├── style.css       # Themed stylesheet using CSS custom properties (light + dark)
 ├── app.js          # All layout data, key maps, and application logic
+├── presets.js      # Built-in preset maps (loaded before app.js, exposes PRESETS array)
 ├── package.json    # Metadata only — no dependencies, no build tools
 └── CHANGELOG.md    # Version history
 ```
@@ -97,8 +105,7 @@ site/
 
 ## Planned
 
-- Pre-built templates for common apps and games (Photoshop, Premiere, World of Warcraft)
-- Template gallery / import from dropdown
+- More built-in presets (community apps, additional games)
 - Export to machine or cloud storage (local file picker + cloud-synced folder)
 
 ---

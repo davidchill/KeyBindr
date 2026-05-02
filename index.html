@@ -44,6 +44,7 @@
           </svg>
         </button>
       </div>
+      <button id="btn-presets" class="btn btn-secondary">Presets</button>
       <button id="btn-clear-all" class="btn btn-ghost">Clear All</button>
       <button id="btn-export" class="btn btn-secondary">Export JSON</button>
       <button id="btn-import" class="btn btn-secondary">Import JSON</button>
@@ -97,6 +98,23 @@
     </div>
   </main>
 
+  <!-- Preset overlay + modal -->
+  <div id="preset-overlay" class="popover-overlay hidden"></div>
+  <div id="preset-modal" class="preset-modal hidden" role="dialog" aria-modal="true" aria-label="Load a Preset">
+    <div class="preset-modal-header">
+      <span class="preset-modal-title">Load a Preset</span>
+      <button id="preset-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="preset-tabs">
+      <button class="preset-tab active" data-cat="all">All</button>
+      <button class="preset-tab" data-cat="Design">Design</button>
+      <button class="preset-tab" data-cat="Video">Video</button>
+      <button class="preset-tab" data-cat="Gaming">Gaming</button>
+      <button class="preset-tab" data-cat="Development">Development</button>
+    </div>
+    <div id="preset-grid" class="preset-grid"></div>
+  </div>
+
   <!-- Popover overlay -->
   <div id="popover-overlay" class="popover-overlay hidden"></div>
 
@@ -138,6 +156,7 @@
     </div>
   </div>
 
+  <script src="presets.js"></script>
   <script src="app.js"></script>
 </body>
 </html>

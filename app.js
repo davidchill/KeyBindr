@@ -252,6 +252,8 @@ function makeKey(key, gridManaged = false) {
 
   el.addEventListener('click', () => openPopover(key.id));
   el.addEventListener('keydown', e => { if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); openPopover(key.id); }});
+  el.addEventListener('mouseenter', () => { if (state.hotkeys[key.id]) setHoverHighlight(key.id); });
+  el.addEventListener('mouseleave', clearHoverHighlight);
 
   refreshKeyEl(el, key);
   return el;
@@ -410,22 +412,34 @@ function refreshKey(keyId) {
   if (def) refreshKeyEl(el, def);
 }
 
+/* ── Hover cross-highlight ────────────────────────────────────── */
+function setHoverHighlight(keyId) {
+  clearHoverHighlight();
+  document.querySelector(`.key[data-id="${keyId}"]`)?.classList.add('pair-highlight');
+  document.querySelector(`.summary-item[data-key-id="${keyId}"]`)?.classList.add('pair-highlight');
+}
+
+function clearHoverHighlight() {
+  document.querySelectorAll('.pair-highlight').forEach(el => el.classList.remove('pair-highlight'));
+}
+
 /* ── Hotkey summary ───────────────────────────────────────────── */
 let _dragCatId = null;
 
 function initSummaryCols() {
-  if (!state.summaryCols || state.summaryCols.length !== 2) {
-    const half = Math.ceil(CATEGORIES.length / 2);
+  if (!state.summaryCols || state.summaryCols.length !== 3) {
+    const third = Math.ceil(CATEGORIES.length / 3);
     state.summaryCols = [
-      CATEGORIES.slice(0, half).map(c => c.id),
-      CATEGORIES.slice(half).map(c => c.id),
+      CATEGORIES.slice(0, third).map(c => c.id),
+      CATEGORIES.slice(third, third * 2).map(c => c.id),
+      CATEGORIES.slice(third * 2).map(c => c.id),
     ];
   }
-  // Ensure any category not yet in a column is added to the shorter one
+  // Ensure any category not yet in a column is added to the shortest one
   const present = new Set(state.summaryCols.flat());
   CATEGORIES.forEach(cat => {
     if (!present.has(cat.id)) {
-      const col = state.summaryCols[0].length <= state.summaryCols[1].length ? 0 : 1;
+      const col = state.summaryCols.reduce((mi, c, i, a) => c.length < a[mi].length ? i : mi, 0);
       state.summaryCols[col].push(cat.id);
     }
   });
@@ -484,6 +498,9 @@ function makeSummaryItem({ hk, def, keyId }) {
 
   const item = document.createElement('div');
   item.className = 'summary-item';
+  item.dataset.keyId = keyId;
+  item.addEventListener('mouseenter', () => setHoverHighlight(keyId));
+  item.addEventListener('mouseleave', clearHoverHighlight);
 
   const keyCell = document.createElement('div');
   keyCell.className = 'summary-key-cell';
@@ -609,7 +626,7 @@ function renderSummary() {
   const colsEl = document.createElement('div');
   colsEl.className = 'summary-columns';
 
-  [0, 1].forEach(colIdx => {
+  [0, 1, 2].forEach(colIdx => {
     const colEl = document.createElement('div');
     colEl.className = 'summary-col';
     colEl.dataset.col = colIdx;
@@ -828,6 +845,67 @@ function importMap(file) {
   reader.readAsText(file);
 }
 
+/* ── Presets ──────────────────────────────────────────────────── */
+function openPresetsModal() {
+  document.getElementById('preset-modal').classList.remove('hidden');
+  document.getElementById('preset-overlay').classList.remove('hidden');
+}
+
+function closePresetsModal() {
+  document.getElementById('preset-modal').classList.add('hidden');
+  document.getElementById('preset-overlay').classList.add('hidden');
+}
+
+function loadPreset(preset) {
+  if (Object.keys(state.hotkeys).length > 0 &&
+      !confirm(`Load "${preset.name}"? This will replace your current map.`)) return;
+
+  state.hotkeys = Object.fromEntries(
+    Object.entries(preset.hotkeys).map(([k, v]) => [k, { ...v }])
+  );
+  document.getElementById('map-name').value = preset.name;
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
+  saveToStorage();
+  closePresetsModal();
+}
+
+function initPresets() {
+  const grid = document.getElementById('preset-grid');
+
+  PRESETS.forEach(preset => {
+    const count = Object.keys(preset.hotkeys).length;
+    const tile = document.createElement('button');
+    tile.className = 'preset-tile';
+    tile.dataset.category = preset.appCategory;
+    tile.innerHTML = `
+      <span class="preset-icon">${preset.icon}</span>
+      <span class="preset-name">${preset.name}</span>
+      <span class="preset-meta">
+        <span class="preset-badge">${preset.appCategory}</span>
+        <span class="preset-count">${count} keys</span>
+      </span>`;
+    tile.addEventListener('click', () => loadPreset(preset));
+    grid.appendChild(tile);
+  });
+
+  document.querySelectorAll('.preset-tab').forEach(tab => {
+    tab.addEventListener('click', () => {
+      document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+      tab.classList.add('active');
+      const cat = tab.dataset.cat;
+      document.querySelectorAll('.preset-tile').forEach(tile => {
+        tile.classList.toggle('hidden', cat !== 'all' && tile.dataset.category !== cat);
+      });
+    });
+  });
+
+  document.getElementById('btn-presets').addEventListener('click', openPresetsModal);
+  document.getElementById('preset-close').addEventListener('click', closePresetsModal);
+  document.getElementById('preset-overlay').addEventListener('click', closePresetsModal);
+}
+
 /* ── Layout controls ──────────────────────────────────────────── */
 function initLayoutControls() {
   const layoutSel  = document.getElementById('select-layout');
@@ -866,7 +944,9 @@ function initEvents() {
   });
 
   document.addEventListener('keydown', e => {
-    if (e.key === 'Escape' && activeKeyId) closePopover();
+    if (e.key !== 'Escape') return;
+    if (activeKeyId) closePopover();
+    else if (!document.getElementById('preset-modal').classList.contains('hidden')) closePresetsModal();
   });
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
@@ -904,6 +984,7 @@ function init() {
   renderSummary();
   initEvents();
   initLayoutControls();
+  initPresets();
 }
 
 document.addEventListener('DOMContentLoaded', init);
