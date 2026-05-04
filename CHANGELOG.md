@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.3] – 2026-05-03
+
+### Fixed
+
+- **Keyboard container box** — `keyboard-section` no longer carries `overflow-x: auto`, which caused the browser to force `overflow-y` to `auto` and render the section as a visible scroll container with a compositing-layer grey background. Replaced with a two-element structure: `keyboard-section` (pure flex centering wrapper, no overflow) and an inner `keyboard-scroll` div (no overflow either); the existing `body { overflow-x: hidden }` handles narrow-viewport clipping at the page level.
+- **Top of keyboard clipped** — added `padding-top: 8px` to `keyboard-section` so the keyboard's 1px outline box-shadow is never clipped at the container's top edge.
+- **Grey halo in light mode** — the keyboard drop shadow (`0 32px 80px rgba(0,0,0,0.7)`) was calibrated for dark mode; on the light lavender background it rendered as a visible dark grey cloud. Introduced a `--keyboard-shadow` CSS variable: dark mode keeps the original dramatic shadow; light mode uses a much softer `0 8px 32px rgba(0,0,0,0.12)` equivalent. Applied to both the standard `.keyboard` shell and `.zsa-split-mode .zsa-half`.
+- **Double-border "box" in light mode** — `--keyboard-outline` in `[data-theme="light"]` changed from the solid `#9094b4` ring (which combined with the existing `border` to produce a visible double border) to `rgba(0,0,0,0.12)`, blending with the keyboard case edge instead of framing it.
+
+---
+
 ## [0.2.2] – 2026-05-03
 
 ### Changed

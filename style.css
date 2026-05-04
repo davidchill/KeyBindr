@@ -17,6 +17,7 @@
   --danger:          #ef4444;
   --keyboard-bg:     #1c2038;
   --keyboard-outline:#070810;
+  --keyboard-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 8px 24px rgba(0,0,0,0.4);
   --popover-bg:      #191b2a;
   --key-sub:         #5c6490;
   --key-mod:         #8890c4;
@@ -46,7 +47,8 @@
   --accent-h:        #4f52d4;
   --keyboard-bg:     #b0b4d0;
   --keyboard-bg-top: #c4c8e0;
-  --keyboard-outline:#9094b4;
+  --keyboard-outline:rgba(0,0,0,0.12);
+  --keyboard-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
   --key-face-top:    #eaedf8;
   --key-hover-top:   #dce0f0;
   --popover-bg:      #ffffff;
@@ -200,11 +202,13 @@ body {
 /* ── Keyboard section ─────────────────────────────────────────── */
 .keyboard-section {
   width: 100%;
-  overflow-x: auto;
-  overflow-y: visible;
   display: flex;
   justify-content: center;
-  padding-bottom: 4px;
+  padding: 8px 0 4px;
+}
+
+.keyboard-scroll {
+  padding-bottom: 8px;
 }
 
 /* ── Keyboard shell ───────────────────────────────────────────── */
@@ -216,8 +220,7 @@ body {
   border: 1px solid var(--border);
   box-shadow:
     0 0 0 1px var(--keyboard-outline),
-    0 32px 80px rgba(0,0,0,0.7),
-    0 8px 24px rgba(0,0,0,0.4),
+    var(--keyboard-shadow),
     inset 0 1px 0 rgba(255,255,255,0.06),
     inset 0 -2px 0 rgba(0,0,0,0.3);
   flex-shrink: 0;
@@ -316,8 +319,7 @@ body {
   border: 1px solid var(--border);
   box-shadow:
     0 0 0 1px var(--keyboard-outline),
-    0 32px 80px rgba(0,0,0,0.7),
-    0 8px 24px rgba(0,0,0,0.4),
+    var(--keyboard-shadow),
     inset 0 1px 0 rgba(255,255,255,0.06),
     inset 0 -2px 0 rgba(0,0,0,0.3);
 }
