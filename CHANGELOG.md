@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.2.2] – 2026-05-03
+
+### Changed
+
+- **Renamed "Presets" to "Templates"** — `presets.js` renamed to `templates.js`; `PRESETS` constant renamed to `TEMPLATES`; all IDs, CSS classes, function names, and user-facing labels updated consistently (`btn-templates`, `template-modal`, `template-tile`, etc.)
+- **Inter font** — Google Fonts Inter (400/500/600/700) added via `<link>` preconnect; browser button/input default font override added to reset so all form elements inherit the font stack correctly
+- **Key visual depth** — key face now uses a top-to-bottom gradient (`--key-face-top` → `--key-face`) with an inset top-light highlight and inset bottom shadow; hover and active states updated to match; keyboard shell border-radius increased from 14px to 16px with a stronger layered drop shadow
+- **Non-alpha key brightening** — modifier, function, navigation, and numpad keys use a dedicated lighter face gradient (`--key-mod-face-top` / `--key-mod-face`) and a new brighter label color (`--key-mod: #8890c4`); both variables defined for dark and light themes
+- **Alpha key typography** — `font-weight: 500` and `letter-spacing: 0.01em` applied to single-character alpha/digit key labels
+- **Layout bar reorganised** — Templates button, Clear All button, and map name input moved from the header into the layout bar (in that order, left to right), separated from the form factor and key map selectors by a vertical divider; header now contains only the brand, theme picker, Export JSON, and Import JSON
+
+---
+
 ## [0.2.1] – 2026-05-01
 
 ### Added

@@ -1,4 +1,4 @@
-const PRESETS = [
+const TEMPLATES = [
   {
     id: 'photoshop',
     name: 'Adobe Photoshop',

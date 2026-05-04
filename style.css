@@ -6,6 +6,8 @@
   --border:          #252840;
   --border-2:        #363a55;
   --key-face:        #1f2235;
+  --key-mod-face-top:#2b2f4c;
+  --key-mod-face:    #242840;
   --key-hover:       #272b40;
   --key-ridge:       #090a12;
   --text:            #dde0f0;
@@ -17,6 +19,7 @@
   --keyboard-outline:#070810;
   --popover-bg:      #191b2a;
   --key-sub:         #5c6490;
+  --key-mod:         #8890c4;
   --key-alpha:       #a8aed8;
   --placeholder:     #30334e;
   --scrollbar-h:     #4a4f6a;
@@ -24,7 +27,7 @@
   --unit:            44px;
   --gap:             4px;
   --r:               6px;
-  --font:            -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
+  --font:            'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', system-ui, sans-serif;
 }
 
 [data-theme="light"] {
@@ -34,15 +37,21 @@
   --border:          #d4d7ee;
   --border-2:        #b4b8d8;
   --key-face:        #dde0f2;
+  --key-mod-face-top:#d4d8ee;
+  --key-mod-face:    #cbcee6;
   --key-hover:       #cdd0e8;
   --key-ridge:       #a8accc;
   --text:            #191b2d;
   --text-muted:      #5860a0;
   --accent-h:        #4f52d4;
   --keyboard-bg:     #b0b4d0;
+  --keyboard-bg-top: #c4c8e0;
   --keyboard-outline:#9094b4;
+  --key-face-top:    #eaedf8;
+  --key-hover-top:   #dce0f0;
   --popover-bg:      #ffffff;
   --key-sub:         #6470aa;
+  --key-mod:         #4e5898;
   --key-alpha:       #3a4285;
   --placeholder:     #9ea4cc;
   --scrollbar-h:     #8890c0;
@@ -51,6 +60,7 @@
 
 /* ── Reset ────────────────────────────────────────────────────── */
 *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+button, input, select, textarea { font-family: inherit; }
 
 body {
   font-family: var(--font);
@@ -94,21 +104,19 @@ body {
   white-space: nowrap;
 }
 
-.header-map-name { flex: 1; max-width: 280px; }
-
-.header-map-name input {
-  width: 100%;
+.map-name-input {
   background: var(--surface-2);
   border: 1px solid var(--border);
   color: var(--text);
-  padding: 6px 12px;
+  padding: 5px 12px;
   border-radius: var(--r);
   font-size: 0.88rem;
   font-family: var(--font);
   outline: none;
+  width: 200px;
   transition: border-color 0.15s;
 }
-.header-map-name input:focus { border-color: var(--accent); }
+.map-name-input:focus { border-color: var(--accent); }
 
 .header-actions {
   display: flex;
@@ -193,6 +201,7 @@ body {
 .keyboard-section {
   width: 100%;
   overflow-x: auto;
+  overflow-y: visible;
   display: flex;
   justify-content: center;
   padding-bottom: 4px;
@@ -202,13 +211,15 @@ body {
 .keyboard {
   display: inline-block;
   padding: 18px 18px 20px;
-  background: var(--keyboard-bg);
-  border-radius: 14px;
+  background: linear-gradient(180deg, var(--keyboard-bg-top, #222640) 0%, var(--keyboard-bg) 100%);
+  border-radius: 16px;
   border: 1px solid var(--border);
   box-shadow:
     0 0 0 1px var(--keyboard-outline),
-    0 24px 64px rgba(0,0,0,0.6),
-    inset 0 1px 0 rgba(255,255,255,0.04);
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -2px 0 rgba(0,0,0,0.3);
   flex-shrink: 0;
 }
 
@@ -238,9 +249,13 @@ body {
   justify-content: center;
   height: var(--unit);
   border-radius: var(--r);
-  background: var(--key-face);
-  border: 1px solid #0e1020;
-  box-shadow: 0 3px 0 var(--key-ridge), 0 1px 2px rgba(0,0,0,0.5);
+  background: linear-gradient(180deg, var(--key-face-top, #252840) 0%, var(--key-face) 100%);
+  border: 1px solid #0a0c1a;
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.07),
+    inset 0 -1px 0 rgba(0,0,0,0.3),
+    0 3px 0 var(--key-ridge),
+    0 4px 8px rgba(0,0,0,0.45);
   cursor: pointer;
   position: relative;
   overflow: hidden;
@@ -252,14 +267,20 @@ body {
 }
 
 .key:hover {
-  background: var(--key-hover);
+  background: linear-gradient(180deg, var(--key-hover-top, #2e3250) 0%, var(--key-hover) 100%);
   transform: translateY(-1px);
-  box-shadow: 0 4px 0 var(--key-ridge), 0 2px 6px rgba(0,0,0,0.4);
+  box-shadow:
+    inset 0 1px 0 rgba(255,255,255,0.1),
+    inset 0 -1px 0 rgba(0,0,0,0.2),
+    0 4px 0 var(--key-ridge),
+    0 6px 12px rgba(0,0,0,0.5);
 }
 
 .key:active {
   transform: translateY(2px);
-  box-shadow: 0 1px 0 var(--key-ridge);
+  box-shadow:
+    inset 0 1px 0 rgba(0,0,0,0.2),
+    0 1px 0 var(--key-ridge);
 }
 
 .key:focus-visible,
@@ -272,6 +293,73 @@ body {
 /* fn row keys are shorter */
 .fn-row .key { height: 30px; }
 .fn-row .key-gap { height: 30px; }
+
+/* ── ZSA split ergonomic keyboards ───────────────────────────── */
+.zsa-halves {
+  display: flex;
+  align-items: flex-start;
+}
+
+/* When in split mode each half gets its own keyboard shell;
+   the outer #keyboard wrapper becomes invisible */
+.keyboard.zsa-split-mode {
+  background: transparent;
+  border: none;
+  box-shadow: none;
+  padding: 0;
+}
+
+.zsa-split-mode .zsa-half {
+  padding: 18px 18px 20px;
+  background: linear-gradient(180deg, var(--keyboard-bg-top, #222640) 0%, var(--keyboard-bg) 100%);
+  border-radius: 16px;
+  border: 1px solid var(--border);
+  box-shadow:
+    0 0 0 1px var(--keyboard-outline),
+    0 32px 80px rgba(0,0,0,0.7),
+    0 8px 24px rgba(0,0,0,0.4),
+    inset 0 1px 0 rgba(255,255,255,0.06),
+    inset 0 -2px 0 rgba(0,0,0,0.3);
+}
+
+.zsa-half {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+}
+
+.zsa-columns {
+  display: flex;
+  gap: var(--gap);
+  align-items: flex-start;
+}
+
+.zsa-col {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.zsa-thumb-area {
+  display: flex;
+}
+
+.zsa-thumb-grid {
+  display: grid;
+  gap: var(--gap);
+}
+
+/* Moonlander-style thumb: wide main key above a row of 3 */
+.zsa-mndr-thumb {
+  display: flex;
+  flex-direction: column;
+  gap: var(--gap);
+}
+
+.zsa-mndr-row {
+  display: flex;
+  gap: var(--gap);
+}
 
 /* ── Key label display (unassigned) ───────────────────────────── */
 .key-inner {
@@ -294,7 +382,7 @@ body {
 .key-primary {
   font-size: 11px;
   font-weight: 500;
-  color: var(--text-muted);
+  color: var(--key-mod);
   line-height: 1;
   text-align: center;
   max-width: 100%;
@@ -304,9 +392,16 @@ body {
   padding: 0 3px;
 }
 
+/* Slightly lighter face for non-alpha keys */
+.key:not([data-alpha]) {
+  background: linear-gradient(180deg, var(--key-mod-face-top) 0%, var(--key-mod-face) 100%);
+}
+
 /* Larger label for single-char alpha/digit keys */
 .key[data-alpha] .key-primary {
   font-size: 13px;
+  font-weight: 500;
+  letter-spacing: 0.01em;
   color: var(--key-alpha);
 }
 
@@ -615,6 +710,13 @@ body {
   flex-shrink: 0;
 }
 
+.layout-bar-divider {
+  width: 1px;
+  height: 20px;
+  background: var(--border-2);
+  flex-shrink: 0;
+}
+
 .layout-group {
   display: flex;
   align-items: center;
@@ -850,8 +952,8 @@ body {
   padding: 0;
 }
 .theme-btn:hover { color: var(--text); background: var(--surface); }
-/* ── Preset modal ─────────────────────────────────────────────── */
-.preset-modal {
+/* ── Template modal ───────────────────────────────────────────── */
+.template-modal {
   position: fixed;
   top: 50%;
   left: 50%;
@@ -865,7 +967,7 @@ body {
   overflow: hidden;
 }
 
-.preset-modal-header {
+.template-modal-header {
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -873,20 +975,20 @@ body {
   border-bottom: 1px solid var(--border);
 }
 
-.preset-modal-title {
+.template-modal-title {
   font-size: 0.95rem;
   font-weight: 700;
   color: var(--text);
 }
 
-.preset-tabs {
+.template-tabs {
   display: flex;
   gap: 4px;
   padding: 12px 16px 0;
   flex-wrap: wrap;
 }
 
-.preset-tab {
+.template-tab {
   padding: 5px 12px;
   border-radius: 20px;
   border: 1px solid var(--border);
@@ -898,17 +1000,17 @@ body {
   cursor: pointer;
   transition: all 0.12s;
 }
-.preset-tab:hover { border-color: var(--border-2); color: var(--text); }
-.preset-tab.active { background: var(--surface-2); border-color: var(--border-2); color: var(--text); }
+.template-tab:hover { border-color: var(--border-2); color: var(--text); }
+.template-tab.active { background: var(--surface-2); border-color: var(--border-2); color: var(--text); }
 
-.preset-grid {
+.template-grid {
   display: grid;
   grid-template-columns: repeat(3, 1fr);
   gap: 10px;
   padding: 14px 16px 18px;
 }
 
-.preset-tile {
+.template-tile {
   display: flex;
   flex-direction: column;
   align-items: flex-start;
@@ -922,28 +1024,28 @@ body {
   font-family: var(--font);
   transition: border-color 0.12s, background 0.12s;
 }
-.preset-tile:hover {
+.template-tile:hover {
   border-color: var(--accent);
   background: rgba(99,102,241,0.08);
 }
 
-.preset-icon { font-size: 1.5rem; line-height: 1; }
+.template-icon { font-size: 1.5rem; line-height: 1; }
 
-.preset-name {
+.template-name {
   font-size: 0.82rem;
   font-weight: 600;
   color: var(--text);
   line-height: 1.3;
 }
 
-.preset-meta {
+.template-meta {
   display: flex;
   align-items: center;
   gap: 6px;
   margin-top: 2px;
 }
 
-.preset-badge {
+.template-badge {
   display: inline-flex;
   padding: 2px 7px;
   background: rgba(99,102,241,0.15);
@@ -954,7 +1056,7 @@ body {
   color: var(--accent-h);
 }
 
-.preset-count {
+.template-count {
   font-size: 0.7rem;
   color: var(--text-muted);
 }

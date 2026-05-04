@@ -4,11 +4,16 @@ const GAP  = 4;
 const FN_H = 30;
 
 const LAYOUTS = [
-  { id: 'full',  name: 'Full (104-key)'    },
-  { id: 'tkl',   name: 'Tenkeyless (TKL)'  },
-  { id: '60',    name: '60%'               },
-  { id: 'split', name: 'Split'             },
+  { id: 'full',       name: 'Full (104-key)'    },
+  { id: 'tkl',        name: 'Tenkeyless (TKL)'  },
+  { id: '60',         name: '60%'               },
+  { id: 'split',      name: 'Split'             },
+  { id: 'voyager',    name: 'ZSA Voyager'       },
+  { id: 'moonlander', name: 'ZSA Moonlander'    },
+  { id: 'ergodox',    name: 'ErgoDox EZ'        },
 ];
+
+const ZSA_IDS = new Set(['voyager', 'moonlander', 'ergodox']);
 
 // Primary label overrides per key map (unrecognised keys fall through to default)
 const KEY_MAPS = {
@@ -182,6 +187,358 @@ const NUMPAD_KEYS = [
   { id:'NumpadDecimal',  label:'.', sub:'Del',  col:3, row:5, w:1, h:1 },
 ];
 
+/* ── ZSA Split Ergonomic Keyboards ───────────────────────────── */
+// Column-stagger layout: each column has a `stagger` (px drop from the top
+// reference line) and an array of `keys` stacked top-to-bottom.
+// thumbCols: column count for the thumb key grid (1 = flat row).
+// thumbOffset: left margin (px) of the thumb area — right-align on left halves.
+
+const ZSA_STAGGER = { outer:20, pinky:12, ring:6, mid:0, index:6, inner:10, extra:58 };
+
+const ZSA_KEYBOARDS = {
+  voyager: {
+    halfGap: 40,
+    halves: [
+      {
+        side: 'left', thumbCols: 2,
+        columns: [
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Escape',    label:'Esc'   },
+            { id:'Tab',       label:'Tab'   },
+            { id:'CapsLock',  label:'Caps'  },
+            { id:'ShiftLeft', label:'⇧'    },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit1', label:'1', sub:'!' },
+            { id:'KeyQ',   label:'Q', alpha:true },
+            { id:'KeyA',   label:'A', alpha:true },
+            { id:'KeyZ',   label:'Z', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit2', label:'2', sub:'@' },
+            { id:'KeyW',   label:'W', alpha:true },
+            { id:'KeyS',   label:'S', alpha:true },
+            { id:'KeyX',   label:'X', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit3', label:'3', sub:'#' },
+            { id:'KeyE',   label:'E', alpha:true },
+            { id:'KeyD',   label:'D', alpha:true },
+            { id:'KeyC',   label:'C', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit4', label:'4', sub:'$' },
+            { id:'KeyR',   label:'R', alpha:true },
+            { id:'KeyF',   label:'F', alpha:true },
+            { id:'KeyV',   label:'V', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit5', label:'5', sub:'%' },
+            { id:'KeyT',   label:'T', alpha:true },
+            { id:'KeyG',   label:'G', alpha:true },
+            { id:'KeyB',   label:'B', alpha:true },
+          ]},
+        ],
+        thumbs: [
+          { id:'VoyThL1', label:'' },
+          { id:'VoyThL2', label:'' },
+        ],
+      },
+      {
+        side: 'right', thumbCols: 2,
+        columns: [
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit6', label:'6', sub:'^' },
+            { id:'KeyY',   label:'Y', alpha:true },
+            { id:'KeyH',   label:'H', alpha:true },
+            { id:'KeyN',   label:'N', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit7', label:'7', sub:'&' },
+            { id:'KeyU',   label:'U', alpha:true },
+            { id:'KeyJ',   label:'J', alpha:true },
+            { id:'KeyM',   label:'M', alpha:true },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit8', label:'8', sub:'*' },
+            { id:'KeyI',   label:'I', alpha:true },
+            { id:'KeyK',   label:'K', alpha:true },
+            { id:'Comma',  label:',', sub:'<' },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit9',    label:'9', sub:'(' },
+            { id:'KeyO',      label:'O', alpha:true },
+            { id:'KeyL',      label:'L', alpha:true },
+            { id:'Period',    label:'.', sub:'>' },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit0',    label:'0', sub:')' },
+            { id:'KeyP',      label:'P', alpha:true },
+            { id:'Semicolon', label:';', sub:':' },
+            { id:'Slash',     label:'/', sub:'?' },
+          ]},
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Minus',      label:'-', sub:'_' },
+            { id:'Equal',      label:'=', sub:'+' },
+            { id:'Quote',      label:"'", sub:'"' },
+            { id:'ShiftRight', label:'⇧' },
+          ]},
+        ],
+        thumbs: [
+          { id:'VoyThR1', label:'' },
+          { id:'VoyThR2', label:'' },
+        ],
+      },
+    ],
+  },
+
+  moonlander: {
+    halfGap: 32,
+    halves: [
+      {
+        side: 'left', thumbCols: 3, thumbLayout: 'moonlander',
+        columns: [
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Escape',      label:'Esc'  },
+            { id:'Tab',         label:'Tab'  },
+            { id:'CapsLock',    label:'Caps' },
+            { id:'ShiftLeft',   label:'⇧'   },
+            { id:'Backquote',   label:'`', sub:'~' },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit1',   label:'1', sub:'!' },
+            { id:'KeyQ',     label:'Q', alpha:true },
+            { id:'KeyA',     label:'A', alpha:true },
+            { id:'KeyZ',     label:'Z', alpha:true },
+            { id:'AltLeft',  label:'Alt' },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit2',    label:'2', sub:'@' },
+            { id:'KeyW',      label:'W', alpha:true },
+            { id:'KeyS',      label:'S', alpha:true },
+            { id:'KeyX',      label:'X', alpha:true },
+            { id:'MetaLeft',  label:'⊞' },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit3',     label:'3', sub:'#' },
+            { id:'KeyE',       label:'E', alpha:true },
+            { id:'KeyD',       label:'D', alpha:true },
+            { id:'KeyC',       label:'C', alpha:true },
+            { id:'MndrBotL1',  label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit4',     label:'4', sub:'$' },
+            { id:'KeyR',       label:'R', alpha:true },
+            { id:'KeyF',       label:'F', alpha:true },
+            { id:'KeyV',       label:'V', alpha:true },
+            { id:'MndrBotL2',  label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit5',     label:'5', sub:'%' },
+            { id:'KeyT',       label:'T', alpha:true },
+            { id:'KeyG',       label:'G', alpha:true },
+            { id:'KeyB',       label:'B', alpha:true },
+            { id:'MndrBotL3',  label:'' },
+          ]},
+          // Inner extra column: starts at top-alpha row, 3 keys
+          { stagger: ZSA_STAGGER.extra, keys: [
+            { id:'BracketLeft', label:'[', sub:'{' },
+            { id:'MndrInL1',    label:'' },
+            { id:'MndrInL2',    label:'' },
+          ]},
+        ],
+        thumbs: [
+          { id:'MndrThL1', label:'', width:2 },  // main (large) key — 2 units wide
+          { id:'MndrThL2', label:'' },
+          { id:'MndrThL3', label:'' },
+          { id:'MndrThL4', label:'' },
+        ],
+      },
+      {
+        side: 'right', thumbCols: 3, thumbLayout: 'moonlander',
+        columns: [
+          // Inner extra column (mirrored, leftmost on right half)
+          { stagger: ZSA_STAGGER.extra, keys: [
+            { id:'BracketRight', label:']', sub:'}' },
+            { id:'MndrInR1',     label:'' },
+            { id:'MndrInR2',     label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit6',     label:'6', sub:'^' },
+            { id:'KeyY',       label:'Y', alpha:true },
+            { id:'KeyH',       label:'H', alpha:true },
+            { id:'KeyN',       label:'N', alpha:true },
+            { id:'MndrBotR1',  label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit7',     label:'7', sub:'&' },
+            { id:'KeyU',       label:'U', alpha:true },
+            { id:'KeyJ',       label:'J', alpha:true },
+            { id:'KeyM',       label:'M', alpha:true },
+            { id:'MndrBotR2',  label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit8',     label:'8', sub:'*' },
+            { id:'KeyI',       label:'I', alpha:true },
+            { id:'KeyK',       label:'K', alpha:true },
+            { id:'Comma',      label:',', sub:'<' },
+            { id:'MndrBotR3',  label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit9',    label:'9', sub:'(' },
+            { id:'KeyO',      label:'O', alpha:true },
+            { id:'KeyL',      label:'L', alpha:true },
+            { id:'Period',    label:'.', sub:'>' },
+            { id:'MetaRight', label:'⊞' },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit0',    label:'0', sub:')' },
+            { id:'KeyP',      label:'P', alpha:true },
+            { id:'Semicolon', label:';', sub:':' },
+            { id:'Slash',     label:'/', sub:'?' },
+            { id:'AltRight',  label:'Alt' },
+          ]},
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Minus',         label:'-', sub:'_' },
+            { id:'Equal',         label:'=', sub:'+' },
+            { id:'Quote',         label:"'", sub:'"' },
+            { id:'ShiftRight',    label:'⇧' },
+            { id:'ControlRight',  label:'Ctrl' },
+          ]},
+        ],
+        thumbs: [
+          { id:'MndrThR1', label:'', width:2 },  // main (large) key — 2 units wide
+          { id:'MndrThR2', label:'' },
+          { id:'MndrThR3', label:'' },
+          { id:'MndrThR4', label:'' },
+        ],
+      },
+    ],
+  },
+
+  ergodox: {
+    halfGap: 44,
+    halves: [
+      {
+        side: 'left', thumbCols: 2,
+        columns: [
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Escape',       label:'Esc'  },
+            { id:'Tab',          label:'Tab'  },
+            { id:'CapsLock',     label:'Caps' },
+            { id:'ShiftLeft',    label:'⇧'   },
+            { id:'ControlLeft',  label:'Ctrl' },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit1',   label:'1', sub:'!' },
+            { id:'KeyQ',     label:'Q', alpha:true },
+            { id:'KeyA',     label:'A', alpha:true },
+            { id:'KeyZ',     label:'Z', alpha:true },
+            { id:'AltLeft',  label:'Alt' },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit2',    label:'2', sub:'@' },
+            { id:'KeyW',      label:'W', alpha:true },
+            { id:'KeyS',      label:'S', alpha:true },
+            { id:'KeyX',      label:'X', alpha:true },
+            { id:'MetaLeft',  label:'⊞' },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit3',    label:'3', sub:'#' },
+            { id:'KeyE',      label:'E', alpha:true },
+            { id:'KeyD',      label:'D', alpha:true },
+            { id:'KeyC',      label:'C', alpha:true },
+            { id:'EdoxBotL1', label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit4',    label:'4', sub:'$' },
+            { id:'KeyR',      label:'R', alpha:true },
+            { id:'KeyF',      label:'F', alpha:true },
+            { id:'KeyV',      label:'V', alpha:true },
+            { id:'EdoxBotL2', label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit5',    label:'5', sub:'%' },
+            { id:'KeyT',      label:'T', alpha:true },
+            { id:'KeyG',      label:'G', alpha:true },
+            { id:'KeyB',      label:'B', alpha:true },
+            { id:'EdoxBotL3', label:'' },
+          ]},
+          // Inner extra column: 3 keys starting at top-alpha row
+          { stagger: ZSA_STAGGER.extra, keys: [
+            { id:'BracketLeft', label:'[', sub:'{' },
+            { id:'EdoxInL1',    label:'' },
+            { id:'EdoxInL2',    label:'' },
+          ]},
+        ],
+        thumbs: [
+          { id:'EdoxThL1', label:'' }, { id:'EdoxThL2', label:'' },
+          { id:'EdoxThL3', label:'' }, { id:'EdoxThL4', label:'' },
+          { id:'EdoxThL5', label:'' }, { id:'EdoxThL6', label:'' },
+        ],
+      },
+      {
+        side: 'right', thumbCols: 2,
+        columns: [
+          // Inner extra column (mirrored)
+          { stagger: ZSA_STAGGER.extra, keys: [
+            { id:'BracketRight', label:']', sub:'}' },
+            { id:'EdoxInR1',     label:'' },
+            { id:'EdoxInR2',     label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.inner, keys: [
+            { id:'Digit6',    label:'6', sub:'^' },
+            { id:'KeyY',      label:'Y', alpha:true },
+            { id:'KeyH',      label:'H', alpha:true },
+            { id:'KeyN',      label:'N', alpha:true },
+            { id:'EdoxBotR1', label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.index, keys: [
+            { id:'Digit7',    label:'7', sub:'&' },
+            { id:'KeyU',      label:'U', alpha:true },
+            { id:'KeyJ',      label:'J', alpha:true },
+            { id:'KeyM',      label:'M', alpha:true },
+            { id:'EdoxBotR2', label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.mid, keys: [
+            { id:'Digit8',    label:'8', sub:'*' },
+            { id:'KeyI',      label:'I', alpha:true },
+            { id:'KeyK',      label:'K', alpha:true },
+            { id:'Comma',     label:',', sub:'<' },
+            { id:'EdoxBotR3', label:'' },
+          ]},
+          { stagger: ZSA_STAGGER.ring, keys: [
+            { id:'Digit9',    label:'9', sub:'(' },
+            { id:'KeyO',      label:'O', alpha:true },
+            { id:'KeyL',      label:'L', alpha:true },
+            { id:'Period',    label:'.', sub:'>' },
+            { id:'MetaRight', label:'⊞' },
+          ]},
+          { stagger: ZSA_STAGGER.pinky, keys: [
+            { id:'Digit0',    label:'0', sub:')' },
+            { id:'KeyP',      label:'P', alpha:true },
+            { id:'Semicolon', label:';', sub:':' },
+            { id:'Slash',     label:'/', sub:'?' },
+            { id:'AltRight',  label:'Alt' },
+          ]},
+          { stagger: ZSA_STAGGER.outer, keys: [
+            { id:'Backslash',     label:'\\', sub:'|' },
+            { id:'Quote',         label:"'",  sub:'"' },
+            { id:'ShiftRight',    label:'⇧'  },
+            { id:'ControlRight',  label:'Ctrl' },
+            { id:'Minus',         label:'-', sub:'_' },
+          ]},
+        ],
+        thumbs: [
+          { id:'EdoxThR1', label:'' }, { id:'EdoxThR2', label:'' },
+          { id:'EdoxThR3', label:'' }, { id:'EdoxThR4', label:'' },
+          { id:'EdoxThR5', label:'' }, { id:'EdoxThR6', label:'' },
+        ],
+      },
+    ],
+  },
+};
+
 /* ── App state ────────────────────────────────────────────────── */
 const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty' };
 let activeKeyId = null;
@@ -235,7 +592,19 @@ function findKeyDef(id) {
     const k = row.keys.find(k => k.id === id);
     if (k) return k;
   }
-  return NUMPAD_KEYS.find(k => k.id === id) || null;
+  const nk = NUMPAD_KEYS.find(k => k.id === id);
+  if (nk) return nk;
+  for (const kb of Object.values(ZSA_KEYBOARDS)) {
+    for (const half of kb.halves) {
+      for (const col of half.columns) {
+        const k = col.keys.find(k => k.id === id);
+        if (k) return k;
+      }
+      const tk = half.thumbs?.find(k => k.id === id);
+      if (tk) return tk;
+    }
+  }
+  return null;
 }
 
 /* ── Key element factory ──────────────────────────────────────── */
@@ -369,9 +738,102 @@ function renderNumpad(container) {
   container.appendChild(grid);
 }
 
+/* ── ZSA keyboard renderer ────────────────────────────────────── */
+function renderZSAKeyboard(kbId) {
+  const kb      = ZSA_KEYBOARDS[kbId];
+  const kbEl    = document.getElementById('keyboard');
+  kbEl.style.paddingBottom = '';
+  kbEl.classList.add('zsa-split-mode');
+
+  const wrap = document.createElement('div');
+  wrap.className = 'zsa-halves';
+  wrap.style.gap = kb.halfGap + 'px';
+
+  kb.halves.forEach(half => {
+    const halfEl = document.createElement('div');
+    halfEl.className = 'zsa-half';
+
+    // Main columnar block
+    const colsEl = document.createElement('div');
+    colsEl.className = 'zsa-columns';
+
+    half.columns.forEach(col => {
+      const colEl = document.createElement('div');
+      colEl.className = 'zsa-col';
+      colEl.style.marginTop = col.stagger + 'px';
+      col.keys.forEach(key => colEl.appendChild(makeKey(key)));
+      colsEl.appendChild(colEl);
+    });
+
+    halfEl.appendChild(colsEl);
+
+    // Thumb area
+    if (half.thumbs?.length) {
+      const thumbArea = document.createElement('div');
+      thumbArea.className = 'zsa-thumb-area';
+
+      // Push thumbs toward the inner (gap) edge of each half
+      const totalColW = half.columns.length * (UNIT + GAP) - GAP;
+      const thumbW    = half.thumbCols  * (UNIT + GAP) - GAP;
+      const offset    = half.side === 'left' ? totalColW - thumbW : 0;
+      thumbArea.style.marginLeft = offset + 'px';
+
+      if (half.thumbLayout === 'moonlander') {
+        // Left:  [ main (2-wide) ]        Right:      [ main (2-wide) ]
+        //        [ t1 ][ t2 ][ t3 ]               [ t1 ][ t2 ][ t3 ]
+        // Cluster rotated 40° CW (left) / 40° CCW (right) from its inner corner
+        const flex = document.createElement('div');
+        flex.className = 'zsa-mndr-thumb';
+
+        const mainKeyEl = makeKey(half.thumbs[0]);
+        if (half.side === 'right') mainKeyEl.style.marginLeft = 'auto';
+        flex.appendChild(mainKeyEl);
+
+        const row = document.createElement('div');
+        row.className = 'zsa-mndr-row';
+        half.thumbs.slice(1).forEach(key => row.appendChild(makeKey(key)));
+        flex.appendChild(row);
+
+        thumbArea.appendChild(flex);
+
+        // Nudge clusters: 75px down, 70px inward toward the centre gap
+        thumbArea.style.marginTop  = '75px';
+        thumbArea.style.marginLeft = (half.side === 'left' ? offset + 70 : -70) + 'px';
+
+        // Rotate around the inner top corner (where the cluster meets the keyboard body)
+        const angle  = half.side === 'left' ? 40 : -40;
+        const origin = half.side === 'left' ? 'top right' : 'top left';
+        thumbArea.style.transform       = `rotate(${angle}deg)`;
+        thumbArea.style.transformOrigin = origin;
+      } else {
+        const thumbGrid = document.createElement('div');
+        thumbGrid.className = 'zsa-thumb-grid';
+        if (half.thumbCols > 1) {
+          thumbGrid.style.gridTemplateColumns = `repeat(${half.thumbCols}, ${u(1)}px)`;
+        }
+        half.thumbs.forEach(key => thumbGrid.appendChild(makeKey(key)));
+        thumbArea.appendChild(thumbGrid);
+      }
+
+      halfEl.appendChild(thumbArea);
+    }
+
+    wrap.appendChild(halfEl);
+  });
+
+  document.getElementById('keyboard').appendChild(wrap);
+}
+
 function renderKeyboard() {
   const kb = document.getElementById('keyboard');
   kb.innerHTML = '';
+  kb.classList.remove('zsa-split-mode');
+
+  if (ZSA_IDS.has(state.layout)) {
+    renderZSAKeyboard(state.layout);
+    return;
+  }
+  kb.style.paddingBottom = '';
 
   const hideFn    = state.layout === '60' || state.layout === 'split';
   const showNav   = state.layout === 'full' || state.layout === 'tkl';
@@ -486,9 +948,17 @@ function getOrderedHotkeys() {
     seen.add(key.id);
     result.push({ keyId: key.id, hk: state.hotkeys[key.id], def: findKeyDef(key.id) });
   };
-  MAIN_ROWS.forEach(row => row.keys && row.keys.forEach(add));
-  NAV_ROWS.forEach(row => row.keys && row.keys.forEach(add));
-  NUMPAD_KEYS.forEach(add);
+  if (ZSA_IDS.has(state.layout)) {
+    const kb = ZSA_KEYBOARDS[state.layout];
+    kb.halves.forEach(half => {
+      half.columns.forEach(col => col.keys.forEach(add));
+      half.thumbs?.forEach(add);
+    });
+  } else {
+    MAIN_ROWS.forEach(row => row.keys && row.keys.forEach(add));
+    NAV_ROWS.forEach(row => row.keys && row.keys.forEach(add));
+    NUMPAD_KEYS.forEach(add);
+  }
   return result;
 }
 
@@ -716,7 +1186,7 @@ function populateCategorySelect() {
 function openPopover(keyId) {
   activeKeyId = keyId;
   const def = findKeyDef(keyId);
-  const label = def ? getKeyLabel(def) : keyId;
+  const label = (def ? getKeyLabel(def) : '') || keyId;
 
   document.getElementById('popover-key-badge').textContent = label;
   document.getElementById('popover-title').textContent = label;
@@ -845,65 +1315,65 @@ function importMap(file) {
   reader.readAsText(file);
 }
 
-/* ── Presets ──────────────────────────────────────────────────── */
-function openPresetsModal() {
-  document.getElementById('preset-modal').classList.remove('hidden');
-  document.getElementById('preset-overlay').classList.remove('hidden');
+/* ── Templates ────────────────────────────────────────────────── */
+function openTemplatesModal() {
+  document.getElementById('template-modal').classList.remove('hidden');
+  document.getElementById('template-overlay').classList.remove('hidden');
 }
 
-function closePresetsModal() {
-  document.getElementById('preset-modal').classList.add('hidden');
-  document.getElementById('preset-overlay').classList.add('hidden');
+function closeTemplatesModal() {
+  document.getElementById('template-modal').classList.add('hidden');
+  document.getElementById('template-overlay').classList.add('hidden');
 }
 
-function loadPreset(preset) {
+function loadTemplate(template) {
   if (Object.keys(state.hotkeys).length > 0 &&
-      !confirm(`Load "${preset.name}"? This will replace your current map.`)) return;
+      !confirm(`Load "${template.name}"? This will replace your current map.`)) return;
 
   state.hotkeys = Object.fromEntries(
-    Object.entries(preset.hotkeys).map(([k, v]) => [k, { ...v }])
+    Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
   );
-  document.getElementById('map-name').value = preset.name;
+  document.getElementById('map-name').value = template.name;
   renderKeyboard();
   renderLegend();
   renderSummary();
   saveToStorage();
-  closePresetsModal();
+  closeTemplatesModal();
 }
 
-function initPresets() {
-  const grid = document.getElementById('preset-grid');
+function initTemplates() {
+  const grid = document.getElementById('template-grid');
 
-  PRESETS.forEach(preset => {
-    const count = Object.keys(preset.hotkeys).length;
+  TEMPLATES.forEach(template => {
+    const count = Object.keys(template.hotkeys).length;
     const tile = document.createElement('button');
-    tile.className = 'preset-tile';
-    tile.dataset.category = preset.appCategory;
+    tile.className = 'template-tile';
+    tile.dataset.category = template.appCategory;
     tile.innerHTML = `
-      <span class="preset-icon">${preset.icon}</span>
-      <span class="preset-name">${preset.name}</span>
-      <span class="preset-meta">
-        <span class="preset-badge">${preset.appCategory}</span>
-        <span class="preset-count">${count} keys</span>
+      <span class="template-icon">${template.icon}</span>
+      <span class="template-name">${template.name}</span>
+      <span class="template-meta">
+        <span class="template-badge">${template.appCategory}</span>
+        <span class="template-count">${count} keys</span>
       </span>`;
-    tile.addEventListener('click', () => loadPreset(preset));
+    tile.addEventListener('click', () => loadTemplate(template));
     grid.appendChild(tile);
   });
 
-  document.querySelectorAll('.preset-tab').forEach(tab => {
+  document.querySelectorAll('.template-tab').forEach(tab => {
     tab.addEventListener('click', () => {
-      document.querySelectorAll('.preset-tab').forEach(t => t.classList.remove('active'));
+      document.querySelectorAll('.template-tab').forEach(t => t.classList.remove('active'));
       tab.classList.add('active');
       const cat = tab.dataset.cat;
-      document.querySelectorAll('.preset-tile').forEach(tile => {
+      document.querySelectorAll('.template-tile').forEach(tile => {
         tile.classList.toggle('hidden', cat !== 'all' && tile.dataset.category !== cat);
       });
     });
   });
 
-  document.getElementById('btn-presets').addEventListener('click', openPresetsModal);
-  document.getElementById('preset-close').addEventListener('click', closePresetsModal);
-  document.getElementById('preset-overlay').addEventListener('click', closePresetsModal);
+  document.getElementById('btn-templates').addEventListener('click', openTemplatesModal);
+  document.getElementById('template-close').addEventListener('click', closeTemplatesModal);
+  document.getElementById('template-overlay').addEventListener('click', closeTemplatesModal);
 }
 
 /* ── Layout controls ──────────────────────────────────────────── */
@@ -946,7 +1416,7 @@ function initEvents() {
   document.addEventListener('keydown', e => {
     if (e.key !== 'Escape') return;
     if (activeKeyId) closePopover();
-    else if (!document.getElementById('preset-modal').classList.contains('hidden')) closePresetsModal();
+    else if (!document.getElementById('template-modal').classList.contains('hidden')) closeTemplatesModal();
   });
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
@@ -984,7 +1454,7 @@ function init() {
   renderSummary();
   initEvents();
   initLayoutControls();
-  initPresets();
+  initTemplates();
 }
 
 document.addEventListener('DOMContentLoaded', init);
