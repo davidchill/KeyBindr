@@ -1,6 +1,6 @@
 {
   "name": "keybindr",
-  "version": "0.2.4",
+  "version": "0.2.5",
   "description": "Interactive 104-key keyboard mapper for visualizing hotkeys and shortcuts",
   "homepage": "https://github.com/davidchill/KeyBindr.app"
 }

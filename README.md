@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.2.4 — work in progress, active development.
+**Version:** 0.2.5 — work in progress, active development.
 
 ---
 
@@ -41,11 +41,14 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 - **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another column; arrangement persists
 - **Hover cross-highlight** — hovering an assigned key highlights its summary row, and hovering a summary row highlights the key on the keyboard
 
-### Data
+### Data & export
 
 - **Named maps** — editable map name in the layout bar (ghost style at rest, styled on hover/focus)
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
+- **Copy as Text** — copies the full hotkey summary to the clipboard as formatted plain text, grouped by category
+- **Copy as Markdown** — copies the summary as a Markdown document with category headings and shortcut tables, ready to paste into Notion, GitHub, or any Markdown editor
+- **Print** — renders the keyboard and summary as a clean printable page; UI chrome is hidden via `@media print`
 - **Persistent** — all assignments, map name, layout, key map, summary arrangement, and custom categories saved to `localStorage`
 
 ---

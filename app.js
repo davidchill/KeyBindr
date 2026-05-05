@@ -1291,6 +1291,81 @@ function loadFromStorage() {
   } catch (_) {}
 }
 
+/* ── Copy / Print ─────────────────────────────────────────────── */
+function formatShortcut(hk, def) {
+  const keyLabel = def ? getKeyLabel(def) : '';
+  return [...(hk.modifiers || []), keyLabel].filter(Boolean).join('+');
+}
+
+function buildSummaryBuckets() {
+  const entries = getOrderedHotkeys();
+  const buckets = {};
+  const uncategorized = [];
+  entries.forEach(entry => {
+    const id = entry.hk.category;
+    if (id) { (buckets[id] = buckets[id] || []).push(entry); }
+    else uncategorized.push(entry);
+  });
+  return { buckets, uncategorized };
+}
+
+function buildPlainText() {
+  const mapName = document.getElementById('map-name').value || 'Hotkey Map';
+  const { buckets, uncategorized } = buildSummaryBuckets();
+  const lines = [mapName, '='.repeat(mapName.length), ''];
+
+  const addGroup = (name, items) => {
+    lines.push(name);
+    items.forEach(({ hk, def }) => {
+      const shortcut = formatShortcut(hk, def).padEnd(20);
+      let line = `  ${shortcut}  ${hk.label}`;
+      if (hk.description) line += `  — ${hk.description}`;
+      lines.push(line);
+    });
+    lines.push('');
+  };
+
+  allCategories().forEach(cat => {
+    if (buckets[cat.id]?.length) addGroup(cat.name, buckets[cat.id]);
+  });
+  if (uncategorized.length) addGroup('Uncategorized', uncategorized);
+
+  return lines.join('\n').trimEnd();
+}
+
+function buildMarkdown() {
+  const mapName = document.getElementById('map-name').value || 'Hotkey Map';
+  const { buckets, uncategorized } = buildSummaryBuckets();
+  const lines = [`# ${mapName}`, ''];
+
+  const addGroup = (name, items) => {
+    lines.push(`## ${name}`, '');
+    lines.push('| Shortcut | Action | Description |');
+    lines.push('|----------|--------|-------------|');
+    items.forEach(({ hk, def }) => {
+      const shortcut = formatShortcut(hk, def);
+      lines.push(`| ${shortcut} | ${hk.label} | ${hk.description || ''} |`);
+    });
+    lines.push('');
+  };
+
+  allCategories().forEach(cat => {
+    if (buckets[cat.id]?.length) addGroup(cat.name, buckets[cat.id]);
+  });
+  if (uncategorized.length) addGroup('Uncategorized', uncategorized);
+
+  return lines.join('\n').trimEnd();
+}
+
+async function copyToClipboard(text, btn) {
+  try {
+    await navigator.clipboard.writeText(text);
+    const orig = btn.textContent;
+    btn.textContent = 'Copied!';
+    setTimeout(() => { btn.textContent = orig; }, 1800);
+  } catch (_) {}
+}
+
 /* ── Export / Import ──────────────────────────────────────────── */
 function exportMap() {
   const name = document.getElementById('map-name').value || 'hotkey-map';
@@ -1540,6 +1615,16 @@ function initEvents() {
     }
   });
 
+  document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  document.getElementById('btn-copy-text').addEventListener('click', e => {
+    copyToClipboard(buildPlainText(), e.currentTarget);
+  });
+
+  document.getElementById('btn-copy-md').addEventListener('click', e => {
+    copyToClipboard(buildMarkdown(), e.currentTarget);
+  });
+
   document.getElementById('btn-export').addEventListener('click', exportMap);
 
   document.getElementById('btn-import').addEventListener('click', () => {
@@ -1587,8 +1672,24 @@ function initCustomCategories() {
   });
 }
 
+/* ── Coming soon ──────────────────────────────────────────────── */
+const CS_KEY = 'keybindr-preview-unlocked';
+
+function initComingSoon() {
+  const overlay = document.getElementById('coming-soon');
+  if (localStorage.getItem(CS_KEY)) {
+    overlay.classList.add('hidden');
+    return;
+  }
+  document.getElementById('cs-preview').addEventListener('click', () => {
+    localStorage.setItem(CS_KEY, '1');
+    overlay.classList.add('hidden');
+  });
+}
+
 /* ── Init ─────────────────────────────────────────────────────── */
 function init() {
+  initComingSoon();
   initTheme();
   loadFromStorage();
   renderKeyboard();

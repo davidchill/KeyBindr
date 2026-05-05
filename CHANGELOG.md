@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.2.5] – 2026-05-05
+
+### Added
+
+- **Print** — "Print" button in the header triggers `window.print()`; a `@media print` CSS rule hides the header, layout bar, category legend, and copy buttons so only the keyboard and hotkey summary render on the printed page; basic light-mode print styles applied for ink clarity
+- **Copy as Text** — "Copy Text" button in the hotkey summary header copies all assigned shortcuts to the clipboard as formatted plain text, grouped by category with shortcut strings padded for alignment; button briefly shows "Copied!" as confirmation feedback
+- **Copy as Markdown** — "Copy Markdown" button copies the summary as a Markdown document with `## Category` headings and `| Shortcut | Action | Description |` tables per group, ready to paste into Notion, GitHub, or any Markdown editor
+- **Coming Soon overlay** — full-page overlay shown to first-time visitors displaying the KeyBindr logo, "Coming Soon" headline, and tagline; a subtle "Preview the app →" link dismisses it and saves state to `localStorage` under `keybindr-preview-unlocked` so returning visitors go straight to the app
+
+---
+
 ## [0.2.4] – 2026-05-04
 
 ### Added

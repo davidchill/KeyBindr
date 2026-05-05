@@ -842,7 +842,20 @@ body {
 }
 
 .summary-header-row {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
   margin-bottom: 10px;
+}
+
+.summary-actions {
+  display: flex;
+  gap: 4px;
+}
+
+.btn-sm {
+  font-size: 0.72rem;
+  padding: 4px 10px;
 }
 
 .summary-empty {
@@ -1191,4 +1204,125 @@ body {
   background: var(--surface);
   color: var(--accent);
   box-shadow: 0 1px 3px rgba(0,0,0,0.15);
+}
+
+/* ── Coming soon overlay ──────────────────────────────────────── */
+.coming-soon {
+  position: fixed;
+  inset: 0;
+  background: var(--bg);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  z-index: 500;
+  padding: 24px;
+}
+
+.coming-soon.hidden { display: none !important; }
+
+.cs-card {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 20px;
+  max-width: 420px;
+  width: 100%;
+}
+
+.cs-brand {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  color: var(--accent);
+}
+
+.cs-icon { width: 36px; height: 36px; }
+
+.cs-brand-name {
+  font-size: 1.5rem;
+  font-weight: 700;
+  letter-spacing: -0.03em;
+  color: var(--text);
+}
+
+.cs-headline {
+  font-size: 2.8rem;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+  color: var(--text);
+  line-height: 1.1;
+}
+
+.cs-tagline {
+  font-size: 1rem;
+  color: var(--text-muted);
+  line-height: 1.6;
+}
+
+.cs-preview-link {
+  margin-top: 16px;
+  background: transparent;
+  border: none;
+  font-family: var(--font);
+  font-size: 0.78rem;
+  color: var(--text-muted);
+  cursor: pointer;
+  padding: 4px 0;
+  border-bottom: 1px solid transparent;
+  transition: color 0.15s, border-color 0.15s;
+  letter-spacing: 0.02em;
+}
+
+.cs-preview-link:hover {
+  color: var(--text);
+  border-bottom-color: var(--border-2);
+}
+
+/* ── Print ────────────────────────────────────────────────────── */
+@media print {
+  .app-header,
+  .layout-bar,
+  .legend-section,
+  .summary-actions,
+  .popover-overlay,
+  .popover,
+  .template-modal { display: none !important; }
+
+  body {
+    background: #fff;
+    color: #111;
+  }
+
+  .app-main { padding: 12px; }
+
+  .keyboard-section { page-break-after: avoid; }
+
+  .keyboard {
+    box-shadow: none;
+    border-color: #ccc;
+  }
+
+  .summary-card {
+    border: none;
+    box-shadow: none;
+    background: transparent;
+  }
+
+  .summary-item {
+    background: #f5f5f5;
+    border-color: #ddd;
+    break-inside: avoid;
+  }
+
+  .summary-chip {
+    background: #e8e8e8;
+    border-color: #ccc;
+    color: #111;
+    box-shadow: none;
+  }
+
+  .summary-action { color: #111; }
+  .summary-desc   { color: #555; }
+  .summary-group-name { color: #555; }
 }
