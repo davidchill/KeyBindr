@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.2.4] – 2026-05-04
+
+### Added
+
+- **New Map tile in Templates modal** — a dashed-border "New Map" tile is always visible at the top of the template grid; clicking it expands inline (spanning 2 columns) to show a name input pre-filled with the current map name, plus Create and Cancel buttons; Create clears all hotkeys, sets the map name, saves to `localStorage`, and closes the modal; the tile collapses when the modal closes; tab filters never hide it
+- **"New" button in layout bar** — ghost button to the left of the map name; clears both the map name and all assigned hotkeys with a confirmation prompt if either is non-empty
+- **"Save" button in layout bar** — ghost button between the map name and Clear All; opens the Templates modal
+- **Custom categories** — `+` icon button next to the CATEGORIES label opens an inline form (name text input + native color picker + Add + Cancel); new categories are appended to the built-in list via `allCategories()`, appear immediately in the legend chips, key-assignment category dropdown, and hotkey summary; custom categories are persisted to `localStorage` under `customCategories` in the `keybindr` key and restored on load; Enter confirms, Escape cancels
+
+### Changed
+
+- **Layout bar order** — reorganised to: New → map name → Save → Clear All | Templates | Form Factor → Key Map; Templates button now sits between two vertical dividers in the centre of the bar
+- **Clear All auto-names** — after clearing all hotkeys the map name field is set to "New Template"
+- **Layout bar visual refresh** — deeper layered box-shadow (`0 4px 20px`), border tightened to `--border-2`, corner radius increased to 14px, inner top-edge highlight added; gap reduced to 6px with spacer margin on dividers
+- **Ghost buttons** — `.btn-ghost` border is now `transparent` at rest (only appears on hover), making the bar feel less cluttered; applies to New, Save, and Clear All
+- **Map name input** — transparent background and border at rest; border and surface-2 background appear on hover/focus; font bumped to 0.9rem 600 weight so it reads as a title
+- **Templates button accent** — subtle accent-color tint on border and background (`color-mix`) with stronger tint on hover, making it visually distinct from the ghost buttons
+- **Layout selects** — same ghost treatment as ghost buttons: transparent border/bg at rest, styled on hover/focus; label opacity reduced to 0.7
+- **Legend bar** — border tightened to `--border-2`, corner radius increased to 14px, matching shadow applied
+- **Category chips** — each chip receives a `--cat-color` CSS custom property set from its category color; border and background are subtly tinted using `color-mix(in srgb, var(--cat-color) …%, …)`; hover deepens the tint; swatch gets a soft `box-shadow` glow in the category color
+- **Header Export/Import buttons** — font-size reduced to 0.78rem, weight 600, letter-spacing 0.02em for a tighter, more refined label
+
+---
+
 ## [0.2.3] – 2026-05-03
 
 ### Fixed

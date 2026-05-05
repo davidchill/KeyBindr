@@ -540,7 +540,11 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty' };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', customCategories: [] };
+
+function allCategories() {
+  return [...CATEGORIES, ...state.customCategories];
+}
 let activeKeyId = null;
 
 /* ── Theme ───────────────────────────────────────────────────── */
@@ -634,7 +638,7 @@ function refreshKeyEl(el, key) {
 
   if (hotkey) {
     el.classList.add('has-hotkey');
-    const cat = CATEGORIES.find(c => c.id === hotkey.category);
+    const cat = allCategories().find(c => c.id === hotkey.category);
     const color = cat ? cat.color : '#4a4f6a';
     el.style.background = color;
     el.style.setProperty('box-shadow', `0 3px 0 color-mix(in srgb, ${color} 40%, black), 0 1px 2px rgba(0,0,0,0.5)`);
@@ -890,16 +894,17 @@ let _dragCatId = null;
 
 function initSummaryCols() {
   if (!state.summaryCols || state.summaryCols.length !== 3) {
-    const third = Math.ceil(CATEGORIES.length / 3);
+    const cats = allCategories();
+    const third = Math.ceil(cats.length / 3);
     state.summaryCols = [
-      CATEGORIES.slice(0, third).map(c => c.id),
-      CATEGORIES.slice(third, third * 2).map(c => c.id),
-      CATEGORIES.slice(third * 2).map(c => c.id),
+      cats.slice(0, third).map(c => c.id),
+      cats.slice(third, third * 2).map(c => c.id),
+      cats.slice(third * 2).map(c => c.id),
     ];
   }
   // Ensure any category not yet in a column is added to the shortest one
   const present = new Set(state.summaryCols.flat());
-  CATEGORIES.forEach(cat => {
+  allCategories().forEach(cat => {
     if (!present.has(cat.id)) {
       const col = state.summaryCols.reduce((mi, c, i, a) => c.length < a[mi].length ? i : mi, 0);
       state.summaryCols[col].push(cat.id);
@@ -1104,7 +1109,7 @@ function renderSummary() {
     state.summaryCols[colIdx].forEach(catId => {
       const items = buckets[catId];
       if (!items?.length) return;
-      const cat = CATEGORIES.find(c => c.id === catId);
+      const cat = allCategories().find(c => c.id === catId);
       if (cat) colEl.appendChild(makeSummaryGroup(cat, items));
     });
 
@@ -1154,9 +1159,10 @@ function renderLegend() {
     if (hk.category) counts[hk.category] = (counts[hk.category] || 0) + 1;
   });
 
-  CATEGORIES.forEach(cat => {
+  allCategories().forEach(cat => {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
+    chip.style.setProperty('--cat-color', cat.color);
     chip.innerHTML = `
       <span class="cat-swatch" style="background:${cat.color}"></span>
       <span>${cat.name}</span>
@@ -1174,7 +1180,7 @@ function renderLegend() {
 function populateCategorySelect() {
   const sel = document.getElementById('hotkey-category');
   sel.innerHTML = '<option value="">— No category —</option>';
-  CATEGORIES.forEach(cat => {
+  allCategories().forEach(cat => {
     const opt = document.createElement('option');
     opt.value = cat.id;
     opt.textContent = cat.name;
@@ -1261,11 +1267,12 @@ function clearHotkey() {
 function saveToStorage() {
   try {
     localStorage.setItem('keybindr', JSON.stringify({
-      hotkeys:     state.hotkeys,
-      mapName:     document.getElementById('map-name').value,
-      layout:      state.layout,
-      keyMap:      state.keyMap,
-      summaryCols: state.summaryCols,
+      hotkeys:          state.hotkeys,
+      mapName:          document.getElementById('map-name').value,
+      layout:           state.layout,
+      keyMap:           state.keyMap,
+      summaryCols:      state.summaryCols,
+      customCategories: state.customCategories,
     }));
   } catch (_) {}
 }
@@ -1279,7 +1286,8 @@ function loadFromStorage() {
     if (data.mapName) document.getElementById('map-name').value = data.mapName;
     if (data.layout)      state.layout      = data.layout;
     if (data.keyMap)      state.keyMap      = data.keyMap;
-    if (data.summaryCols) state.summaryCols = data.summaryCols;
+    if (data.summaryCols)      state.summaryCols      = data.summaryCols;
+    if (data.customCategories) state.customCategories = data.customCategories;
   } catch (_) {}
 }
 
@@ -1316,6 +1324,8 @@ function importMap(file) {
 }
 
 /* ── Templates ────────────────────────────────────────────────── */
+let _collapseNewTile = null;
+
 function openTemplatesModal() {
   document.getElementById('template-modal').classList.remove('hidden');
   document.getElementById('template-overlay').classList.remove('hidden');
@@ -1324,6 +1334,7 @@ function openTemplatesModal() {
 function closeTemplatesModal() {
   document.getElementById('template-modal').classList.add('hidden');
   document.getElementById('template-overlay').classList.add('hidden');
+  if (_collapseNewTile) _collapseNewTile();
 }
 
 function loadTemplate(template) {
@@ -1344,6 +1355,87 @@ function loadTemplate(template) {
 function initTemplates() {
   const grid = document.getElementById('template-grid');
 
+  // New Map tile
+  const newTile = document.createElement('div');
+  newTile.className = 'template-tile template-tile-new';
+  newTile.dataset.new = 'true';
+
+  const prompt = document.createElement('div');
+  prompt.className = 'template-new-prompt';
+  prompt.innerHTML = `
+    <span class="template-new-plus">+</span>
+    <span class="template-name">New Map</span>
+    <span class="template-meta"><span class="template-badge template-badge-blank">Blank</span></span>
+  `;
+
+  const form = document.createElement('div');
+  form.className = 'template-new-form hidden';
+
+  const nameInput = document.createElement('input');
+  nameInput.type = 'text';
+  nameInput.className = 'template-name-input';
+  nameInput.placeholder = 'Map name…';
+  nameInput.maxLength = 60;
+  nameInput.autocomplete = 'off';
+
+  const actions = document.createElement('div');
+  actions.className = 'template-new-actions';
+
+  const createBtn = document.createElement('button');
+  createBtn.className = 'btn btn-primary';
+  createBtn.textContent = 'Create';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'btn btn-ghost';
+  cancelBtn.textContent = 'Cancel';
+
+  actions.appendChild(createBtn);
+  actions.appendChild(cancelBtn);
+  form.appendChild(nameInput);
+  form.appendChild(actions);
+  newTile.appendChild(prompt);
+  newTile.appendChild(form);
+
+  const collapse = () => {
+    form.classList.add('hidden');
+    prompt.classList.remove('hidden');
+    newTile.classList.remove('expanded');
+  };
+  _collapseNewTile = collapse;
+
+  const expand = () => {
+    prompt.classList.add('hidden');
+    form.classList.remove('hidden');
+    newTile.classList.add('expanded');
+    nameInput.value = document.getElementById('map-name').value || '';
+    nameInput.select();
+    setTimeout(() => nameInput.focus(), 30);
+  };
+
+  const doCreate = () => {
+    const name = nameInput.value.trim() || 'Untitled Map';
+    if (Object.keys(state.hotkeys).length > 0 &&
+        !confirm(`Start a new map named "${name}"? This will clear your current map.`)) return;
+    state.hotkeys = {};
+    document.getElementById('map-name').value = name;
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+    closeTemplatesModal();
+  };
+
+  prompt.addEventListener('click', expand);
+  createBtn.addEventListener('click', doCreate);
+  cancelBtn.addEventListener('click', collapse);
+  nameInput.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doCreate();
+    if (e.key === 'Escape') collapse();
+  });
+
+  grid.appendChild(newTile);
+
+  // Existing template tiles
   TEMPLATES.forEach(template => {
     const count = Object.keys(template.hotkeys).length;
     const tile = document.createElement('button');
@@ -1366,6 +1458,7 @@ function initTemplates() {
       tab.classList.add('active');
       const cat = tab.dataset.cat;
       document.querySelectorAll('.template-tile').forEach(tile => {
+        if (tile.dataset.new) return;
         tile.classList.toggle('hidden', cat !== 'all' && tile.dataset.category !== cat);
       });
     });
@@ -1421,10 +1514,25 @@ function initEvents() {
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
 
+  document.getElementById('btn-save').addEventListener('click', openTemplatesModal);
+
+  document.getElementById('btn-new').addEventListener('click', () => {
+    if (Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim()) {
+      if (!confirm('Start a new map? This will clear the name and all assigned hotkeys.')) return;
+    }
+    state.hotkeys = {};
+    document.getElementById('map-name').value = '';
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+  });
+
   document.getElementById('btn-clear-all').addEventListener('click', () => {
     if (!Object.keys(state.hotkeys).length) return;
     if (confirm('Clear all assigned hotkeys from this map?')) {
       state.hotkeys = {};
+      document.getElementById('map-name').value = 'New Template';
       renderKeyboard();
       renderLegend();
       renderSummary();
@@ -1444,6 +1552,41 @@ function initEvents() {
   });
 }
 
+/* ── Custom categories ────────────────────────────────────────── */
+function initCustomCategories() {
+  const form    = document.getElementById('new-category-form');
+  const nameIn  = document.getElementById('new-cat-name');
+  const colorIn = document.getElementById('new-cat-color');
+
+  document.getElementById('btn-add-cat').addEventListener('click', () => {
+    form.classList.toggle('hidden');
+    if (!form.classList.contains('hidden')) setTimeout(() => nameIn.focus(), 30);
+  });
+
+  document.getElementById('btn-new-cat-cancel').addEventListener('click', () => {
+    form.classList.add('hidden');
+    nameIn.value = '';
+  });
+
+  const doAdd = () => {
+    const name = nameIn.value.trim();
+    if (!name) { nameIn.focus(); return; }
+    const id = 'custom_' + Date.now();
+    state.customCategories.push({ id, name, color: colorIn.value });
+    nameIn.value = '';
+    form.classList.add('hidden');
+    populateCategorySelect();
+    renderLegend();
+    saveToStorage();
+  };
+
+  document.getElementById('btn-new-cat-add').addEventListener('click', doAdd);
+  nameIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter') doAdd();
+    if (e.key === 'Escape') document.getElementById('btn-new-cat-cancel').click();
+  });
+}
+
 /* ── Init ─────────────────────────────────────────────────────── */
 function init() {
   initTheme();
@@ -1455,6 +1598,7 @@ function init() {
   initEvents();
   initLayoutControls();
   initTemplates();
+  initCustomCategories();
 }
 
 document.addEventListener('DOMContentLoaded', init);

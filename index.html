@@ -50,9 +50,12 @@
   </header>
 
   <div class="layout-bar">
-    <button id="btn-clear-all" class="btn btn-ghost">Clear All</button>
-    <button id="btn-templates" class="btn btn-secondary">Templates</button>
+    <button id="btn-new" class="btn btn-ghost">New</button>
     <input type="text" id="map-name" class="map-name-input" placeholder="Map name…" autocomplete="off" spellcheck="false" value="My Keyboard Map">
+    <button id="btn-save" class="btn btn-ghost">Save</button>
+    <button id="btn-clear-all" class="btn btn-ghost">Clear All</button>
+    <div class="layout-bar-divider"></div>
+    <button id="btn-templates" class="btn btn-secondary">Templates</button>
     <div class="layout-bar-divider"></div>
     <div class="layout-group">
       <label class="layout-label" for="select-layout">Form factor</label>
@@ -85,7 +88,16 @@
   <main class="app-main">
     <div class="legend-section">
       <div class="legend">
-        <span class="legend-title">Categories</span>
+        <div class="legend-title-row">
+          <span class="legend-title">Categories</span>
+          <button id="btn-add-cat" class="icon-btn" title="Add category">+</button>
+        </div>
+        <div id="new-category-form" class="new-cat-form hidden">
+          <input type="text" id="new-cat-name" class="new-cat-name-input" placeholder="Name…" maxlength="30" autocomplete="off">
+          <input type="color" id="new-cat-color" class="new-cat-color-input" value="#6366f1">
+          <button id="btn-new-cat-add" class="btn btn-primary">Add</button>
+          <button id="btn-new-cat-cancel" class="icon-btn">✕</button>
+        </div>
         <div id="category-list" class="category-list"></div>
         <span id="stat-assigned" class="legend-stat">0 keys assigned</span>
       </div>

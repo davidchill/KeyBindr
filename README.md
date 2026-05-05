@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.2.3 — work in progress, active development.
+**Version:** 0.2.4 — work in progress, active development.
 
 ---
 
@@ -22,11 +22,13 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
   - Optional description
   - Color category
 - **8 built-in categories** with distinct colors: Movement, Edit/Undo, Selection, File/Save, View/Zoom, Tool/Mode, Combat, Custom
+- **Custom categories** — create your own categories with a name and color picker; they appear in the legend, the key-assignment dropdown, and the summary, and are persisted to `localStorage`
 - **Modifier pills** and action labels displayed directly on assigned key faces, filled with the category color
 
-### Templates
+### Templates & map management
 
 - **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button in the layout bar
+- **New Map** — "New Map" tile in the Templates modal; enter a name and create a blank map in one step
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template
 
@@ -41,10 +43,10 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 
 ### Data
 
-- **Named maps** — editable map name in the layout bar
+- **Named maps** — editable map name in the layout bar (ghost style at rest, styled on hover/focus)
+- **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
-- **Clear All** — wipe all assignments with a confirmation prompt
-- **Persistent** — all assignments, map name, layout, key map, and summary arrangement saved to `localStorage`
+- **Persistent** — all assignments, map name, layout, key map, summary arrangement, and custom categories saved to `localStorage`
 
 ---
 
@@ -58,10 +60,11 @@ App state:
 
 ```js
 {
-  hotkeys:     { [keyId]: { label, description, category, modifiers[] } },
-  layout:      'full' | 'tkl' | '60' | 'split',
-  keyMap:      'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
-  summaryCols: [ [catId, ...], [catId, ...], [catId, ...] ]
+  hotkeys:          { [keyId]: { label, description, category, modifiers[] } },
+  layout:           'full' | 'tkl' | '60' | 'split',
+  keyMap:           'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
+  summaryCols:      [ [catId, ...], [catId, ...], [catId, ...] ],
+  customCategories: [ { id, name, color } ]
 }
 ```
 
