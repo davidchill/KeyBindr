@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.3.2] – 2026-05-06
+
+### Changed
+
+- **Dark mode depth** — keyboard shell darkened (`#1c2038` → `#0e1122`) and key faces brightened (`#1f2235` → `#252840`) to create a clear visual separation between shell and keys; key-face gradients richer with distinct top/bottom stops; key label colors pushed brighter across all three tiers (`--key-alpha`, `--key-mod`, `--key-sub`); drop shadow intensified for stronger depth; `--text-muted` brightened for better secondary text legibility
+- **Light mode depth** — equivalent changes mirrored: keyboard shell darkened (`#b0b4d0` → `#9299c0`) and key faces lightened toward near-white (`--key-face-top: #f2f5ff`); key ridge darkened for a stronger shadow line under each key; shell shadow strengthened to match dark mode improvements
+- **Brand logo** — generic SVG keyboard icon in the header replaced with the KeyBindr app icon PNG (`logos/icon-app.png`), rendered at 28px with a 7px border-radius; three logo files added to `site/logos/` (`icon-app.png`, `logo-square.png`, `logo-wide.png`)
+- **Brand gradient** — "KeyBindr" wordmark now renders with a blue → indigo → magenta gradient (`#5ab5f5` → `#818cf8` → `#c040e0`) via `background-clip: text`, pulled directly from the logo key gradient; `--brand-gradient` CSS variable added to `:root` for future reuse
+- **Primary button gradient** — Save / primary action button uses `--brand-gradient` instead of flat indigo; hover applies `filter: brightness(1.12)` so the gradient lightens uniformly
+- **Header wordmark size** — "KeyBindr" brand name in the header increased from `1.05rem` to `1.3rem` (~4px larger) for stronger presence in the toolbar
+- **Coming Soon page** — generic SVG keyboard icon replaced with the app icon PNG at 96px; "KeyBindr" wordmark on the overlay now uses the brand gradient, matching the header treatment
+- **Brand wordmark weight** — "KeyBindr" font weight bumped to `800` (extra bold) in both the header and Coming Soon overlay; Google Fonts import updated to include weight 800
+- **Logo updated** — switched to `main_nobackground.png` across header and Coming Soon overlay; all four logo assets now in `site/logos/`
+- **Header icon sizing** — brand icon in the navbar increased to 36px; header vertical padding reduced from 10px to 6px to keep the navbar height unchanged
+
+---
+
 ## [0.3.1] – 2026-05-06
 
 ### Added

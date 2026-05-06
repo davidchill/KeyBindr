@@ -1,30 +1,34 @@
 /* ── Variables ────────────────────────────────────────────────── */
 :root {
   --bg:              #090b14;
-  --surface:         #141620;
-  --surface-2:       #1c1f2e;
+  --surface:         #111420;
+  --surface-2:       #191d2e;
   --border:          #252840;
-  --border-2:        #363a55;
-  --key-face:        #1f2235;
-  --key-mod-face-top:#2b2f4c;
-  --key-mod-face:    #242840;
-  --key-hover:       #272b40;
-  --key-ridge:       #090a12;
-  --text:            #dde0f0;
-  --text-muted:      #6e75a0;
+  --border-2:        #363a5a;
+  --key-face:        #252840;
+  --key-face-top:    #30344e;
+  --key-mod-face-top:#28304a;
+  --key-mod-face:    #1e2238;
+  --key-hover:       #2e3452;
+  --key-hover-top:   #373e62;
+  --key-ridge:       #07080f;
+  --text:            #e4e8f8;
+  --text-muted:      #7880b8;
   --accent:          #6366f1;
   --accent-h:        #818cf8;
   --danger:          #ef4444;
-  --keyboard-bg:     #1c2038;
-  --keyboard-outline:#070810;
-  --keyboard-shadow: 0 32px 80px rgba(0,0,0,0.7), 0 8px 24px rgba(0,0,0,0.4);
-  --popover-bg:      #191b2a;
-  --key-sub:         #5c6490;
-  --key-mod:         #8890c4;
-  --key-alpha:       #a8aed8;
-  --placeholder:     #30334e;
-  --scrollbar-h:     #4a4f6a;
-  --btn-sec-hover:   #222538;
+  --keyboard-bg:     #0e1122;
+  --keyboard-bg-top: #141730;
+  --keyboard-outline:#040508;
+  --keyboard-shadow: 0 32px 80px rgba(0,0,0,0.85), 0 8px 24px rgba(0,0,0,0.55);
+  --popover-bg:      #171a2c;
+  --key-sub:         #6870a8;
+  --key-mod:         #9aa4d8;
+  --key-alpha:       #bec6ee;
+  --placeholder:     #2e3250;
+  --scrollbar-h:     #505580;
+  --btn-sec-hover:   #1e2238;
+  --brand-gradient:  linear-gradient(135deg, #5ab5f5 0%, #818cf8 55%, #c040e0 100%);
   --unit:            44px;
   --gap:             4px;
   --r:               6px;
@@ -34,27 +38,27 @@
 [data-theme="light"] {
   --bg:              #e8eaf6;
   --surface:         #ffffff;
-  --surface-2:       #e0e2f4;
-  --border:          #d4d7ee;
-  --border-2:        #b4b8d8;
-  --key-face:        #dde0f2;
-  --key-mod-face-top:#d4d8ee;
-  --key-mod-face:    #cbcee6;
-  --key-hover:       #cdd0e8;
-  --key-ridge:       #a8accc;
+  --surface-2:       #e4e7f5;
+  --border:          #cdd0e8;
+  --border-2:        #b0b5d5;
+  --key-face:        #e6eaf8;
+  --key-face-top:    #f2f5ff;
+  --key-mod-face-top:#dce0f5;
+  --key-mod-face:    #d2d6ee;
+  --key-hover:       #d5d9f0;
+  --key-hover-top:   #e4e8f8;
+  --key-ridge:       #9298bc;
   --text:            #191b2d;
-  --text-muted:      #5860a0;
+  --text-muted:      #5258a0;
   --accent-h:        #4f52d4;
-  --keyboard-bg:     #b0b4d0;
-  --keyboard-bg-top: #c4c8e0;
-  --keyboard-outline:rgba(0,0,0,0.12);
-  --keyboard-shadow: 0 8px 32px rgba(0,0,0,0.12), 0 2px 8px rgba(0,0,0,0.08);
-  --key-face-top:    #eaedf8;
-  --key-hover-top:   #dce0f0;
+  --keyboard-bg:     #9299c0;
+  --keyboard-bg-top: #adb3d0;
+  --keyboard-outline:rgba(0,0,0,0.18);
+  --keyboard-shadow: 0 8px 32px rgba(0,0,0,0.18), 0 2px 8px rgba(0,0,0,0.12);
   --popover-bg:      #ffffff;
-  --key-sub:         #6470aa;
-  --key-mod:         #4e5898;
-  --key-alpha:       #3a4285;
+  --key-sub:         #6070b0;
+  --key-mod:         #4a5595;
+  --key-alpha:       #363e82;
   --placeholder:     #9ea4cc;
   --scrollbar-h:     #8890c0;
   --btn-sec-hover:   #dde0f4;
@@ -79,7 +83,7 @@ body {
   display: flex;
   align-items: center;
   gap: 16px;
-  padding: 10px 24px;
+  padding: 6px 24px;
   background: var(--surface);
   border-bottom: 1px solid var(--border);
   flex-shrink: 0;
@@ -92,18 +96,28 @@ body {
   display: flex;
   align-items: center;
   gap: 9px;
-  color: var(--accent);
   flex-shrink: 0;
 }
 
-.brand-icon { width: 26px; height: 26px; }
+.brand-icon {
+  width: 36px;
+  height: 36px;
+  border-radius: 9px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: none;
+  outline: none;
+}
 
 .brand-name {
-  font-size: 1.05rem;
-  font-weight: 700;
+  font-size: 1.3rem;
+  font-weight: 800;
   letter-spacing: -0.02em;
-  color: var(--text);
   white-space: nowrap;
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .map-name-wrapper {
@@ -201,10 +215,10 @@ body {
 }
 
 .btn-primary {
-  background: var(--accent);
+  background: var(--brand-gradient);
   color: #fff;
 }
-.btn-primary:hover { background: var(--accent-h); }
+.btn-primary:hover { filter: brightness(1.12); }
 
 .btn-danger {
   background: transparent;
@@ -1345,16 +1359,26 @@ body {
   display: flex;
   align-items: center;
   gap: 10px;
-  color: var(--accent);
 }
 
-.cs-icon { width: 36px; height: 36px; }
+.cs-icon {
+  width: 96px;
+  height: 96px;
+  border-radius: 20px;
+  object-fit: cover;
+  flex-shrink: 0;
+  border: none;
+  outline: none;
+}
 
 .cs-brand-name {
-  font-size: 1.5rem;
-  font-weight: 700;
+  font-size: 2rem;
+  font-weight: 800;
   letter-spacing: -0.03em;
-  color: var(--text);
+  background: var(--brand-gradient);
+  -webkit-background-clip: text;
+  -webkit-text-fill-color: transparent;
+  background-clip: text;
 }
 
 .cs-headline {

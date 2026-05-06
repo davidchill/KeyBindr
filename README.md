@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.3.1 — work in progress, active development.
+**Version:** 0.3.2 — work in progress, active development.
 
 ---
 
@@ -109,6 +109,7 @@ site/
 ├── app.js          # All layout data, key maps, and application logic
 ├── templates.js    # Built-in template maps (loaded before app.js, exposes TEMPLATES array)
 ├── package.json    # Metadata only — no dependencies, no build tools
+├── logos/          # Brand assets (app icon, square logo, wide banner)
 └── CHANGELOG.md    # Version history
 ```
 
