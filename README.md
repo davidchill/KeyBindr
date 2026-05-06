@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.2.6 — work in progress, active development.
+**Version:** 0.3.0 — work in progress, active development.
 
 ---
 
@@ -32,22 +32,32 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template
 
+### Visualization & interaction
+
+- **Hover tooltips** — hovering any assigned key shows a floating tooltip with the action label, modifiers, description, and category
+- **Category filter** — click a category chip to dim all non-matching keys and highlight matching ones; click again to clear
+- **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to hot (dense clusters)
+- **Hover cross-highlight** — hovering an assigned key highlights its summary row, and vice versa
+
 ### UI & theming
 
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
 - **Inter font** — UI uses Inter (Google Fonts) for crisp, consistent rendering across all platforms
-- **Category legend** above the keyboard with per-category key counts
-- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 3 columns, showing modifier + key chips, action label, and description
+- **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
+- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 3 columns; searchable by label or description
 - **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another column; arrangement persists
-- **Hover cross-highlight** — hovering an assigned key highlights its summary row, and hovering a summary row highlights the key on the keyboard
 
 ### Data & export
 
 - **Named maps** — editable map name in the layout bar (ghost style at rest, styled on hover/focus)
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
+- **Share via URL** — "Share" button encodes the full map as base64 JSON in the URL hash and copies the link to clipboard; recipients open the URL to auto-load the map
 - **Copy as Text** — copies the full hotkey summary to the clipboard as formatted plain text, grouped by category
 - **Copy as Markdown** — copies the summary as a Markdown document with category headings and shortcut tables, ready to paste into Notion, GitHub, or any Markdown editor
+- **Undo / redo** — Ctrl+Z / Ctrl+Shift+Z (or buttons in the layout bar) with a 50-entry history covering all assignment changes
+- **Key conflict detection** — amber warning in the edit popover when typing a label already used on another key
+- **Label autocomplete** — typeahead dropdown on the Action Label field showing matching labels from other keys with key badge and divider
 - **Print** — renders the keyboard and summary as a clean printable page; UI chrome is hidden via `@media print`
 - **Persistent** — all assignments, map name, layout, key map, summary arrangement, and custom categories saved to `localStorage`
 
@@ -113,6 +123,7 @@ site/
 ## Planned
 
 - More built-in templates (community apps, additional games)
+- Modifier layer views (Base / Shift / Ctrl / Alt layers per key)
 - Export to machine or cloud storage (local file picker + cloud-synced folder)
 
 ---

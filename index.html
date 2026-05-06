@@ -43,6 +43,7 @@
           </svg>
         </button>
       </div>
+      <button id="btn-share" class="btn btn-secondary">Share</button>
       <button id="btn-print" class="btn btn-secondary">Print</button>
       <button id="btn-export" class="btn btn-secondary">Export JSON</button>
       <button id="btn-import" class="btn btn-secondary">Import JSON</button>
@@ -52,9 +53,21 @@
 
   <div class="layout-bar">
     <button id="btn-new" class="btn btn-ghost">New</button>
-    <input type="text" id="map-name" class="map-name-input" placeholder="Map name…" autocomplete="off" spellcheck="false" value="My Keyboard Map">
+    <div class="map-name-wrapper" title="Click to rename your map">
+      <input type="text" id="map-name" class="map-name-input" placeholder="Map name…" autocomplete="off" spellcheck="false" value="My Keyboard Map">
+      <svg class="map-name-icon" xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+    </div>
     <button id="btn-save" class="btn btn-ghost">Save</button>
+    <div class="undo-redo-group">
+      <button id="btn-undo" class="icon-btn" title="Undo (Ctrl+Z)" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 7v6h6"/><path d="M21 17a9 9 0 0 0-9-9 9 9 0 0 0-6 2.3L3 13"/></svg>
+      </button>
+      <button id="btn-redo" class="icon-btn" title="Redo (Ctrl+Shift+Z)" disabled>
+        <svg xmlns="http://www.w3.org/2000/svg" width="15" height="15" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 7v6h-6"/><path d="M3 17a9 9 0 0 1 9-9 9 9 0 0 1 6 2.3L21 13"/></svg>
+      </button>
+    </div>
     <button id="btn-clear-all" class="btn btn-ghost">Clear All</button>
+    <button id="btn-heatmap" class="btn btn-ghost">Heat Map</button>
     <div class="layout-bar-divider"></div>
     <button id="btn-templates" class="btn btn-secondary">Templates</button>
     <div class="layout-bar-divider"></div>
@@ -114,6 +127,7 @@
       <div class="summary-card">
         <div class="summary-header-row">
           <span class="legend-title">Hotkey Summary</span>
+          <input id="summary-search" class="summary-search" type="text" placeholder="Search…" autocomplete="off" spellcheck="false">
           <div class="summary-actions">
             <button id="btn-copy-text" class="btn btn-ghost btn-sm">Copy Text</button>
             <button id="btn-copy-md" class="btn btn-ghost btn-sm">Copy Markdown</button>
@@ -164,9 +178,10 @@
           <label class="mod-chip"><input type="checkbox" value="Win"><span>⊞ Win</span></label>
         </div>
       </div>
-      <div class="form-group">
+      <div class="form-group label-autocomplete-group">
         <label class="form-label" for="hotkey-label">Action Label</label>
         <input id="hotkey-label" type="text" class="form-input" placeholder="e.g. Undo, Save, Jump" maxlength="40" autocomplete="off">
+        <div id="label-suggestions" class="label-suggestions" hidden></div>
       </div>
       <div class="form-group">
         <label class="form-label" for="hotkey-desc">Description <span class="form-optional">(optional)</span></label>
@@ -175,6 +190,10 @@
       <div class="form-group">
         <label class="form-label" for="hotkey-category">Category</label>
         <select id="hotkey-category" class="form-input form-select"></select>
+      </div>
+      <div id="conflict-warning" class="conflict-warning" hidden>
+        <svg xmlns="http://www.w3.org/2000/svg" width="13" height="13" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"/><line x1="12" y1="9" x2="12" y2="13"/><line x1="12" y1="17" x2="12.01" y2="17"/></svg>
+        <span id="conflict-warning-text"></span>
       </div>
       <div class="popover-footer">
         <button id="btn-save-hotkey" class="btn btn-primary">Save</button>
@@ -199,6 +218,13 @@
       <h1 class="cs-headline">Coming Soon</h1>
       <p class="cs-tagline">A visual keyboard shortcut builder,<br>crafted for power users.</p>
     </div>
+  </div>
+
+  <div id="key-tooltip" class="key-tooltip" hidden>
+    <div class="kt-label"></div>
+    <div class="kt-mods"></div>
+    <div class="kt-desc"></div>
+    <div class="kt-cat"></div>
   </div>
 
   <script src="templates.js"></script>

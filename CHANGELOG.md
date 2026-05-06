@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.3.0] – 2026-05-05
+
+### Added
+
+- **Hover tooltips on keys** — hovering any assigned key shows a floating tooltip with the action label, modifier pills, optional description, and category swatch; tooltip auto-positions above the key and flips below if near the top of the viewport
+- **Category filter highlighting** — clicking a category chip in the legend dims all non-matching keys to 15% opacity and outlines matching keys with a white ring; click the same chip again to clear the filter; active chip gets a colored glow ring; filter state persists across keyboard re-renders
+- **Key conflict detection** — typing in the Action Label field in the edit popover shows an amber warning banner if the same label is already assigned to another key; non-blocking (user can still save); warning clears automatically when the label no longer conflicts
+- **Label autocomplete** — typeahead dropdown on the Action Label input shows all matching labels from other assigned keys as the user types; each suggestion shows a miniature key badge (matching the popover header style) on the left and the label on the right, separated by a `|` divider; keyboard-navigable (↑ ↓ Enter Escape); selecting a suggestion fills the input and fires the conflict check
+- **Undo / redo** — 50-entry undo stack covering all hotkey mutations (save, clear single key, clear all); Ctrl+Z to undo, Ctrl+Shift+Z or Ctrl+Y to redo; undo/redo icon buttons added to the layout bar (disabled when stack is empty)
+- **Popover key name** — popover header now shows two distinct values: left badge displays the short key label (e.g. `Alt`, `F5`, `7`), right title displays the full descriptive name (e.g. `Right Alt`, `Function 5`, `Number 7`); covers all disambiguated keys: sided modifiers (Left/Right Shift/Ctrl/Alt/Win), F1–F12 as "Function N", number row Digit0–9 as "Number N", arrow keys, numpad keys, Page Up/Down, and symbol keys
+- **Coverage indicator** — legend stat updated from "X keys assigned" to "X / Y keys assigned" where Y is the total number of renderable keys in the current layout; updates automatically when the layout changes
+- **Search in hotkey summary** — live-filter text input in the summary header; matches against both action label and description; hides non-matching items and collapses entire category groups when nothing in them matches; input clears on map load or template switch
+- **Share via URL** — "Share" button in the header encodes the full current map (hotkeys, map name, layout, key map, custom categories) as base64 JSON in the URL hash (`#map=…`); URL is copied to clipboard with "Copied!" feedback; visiting a share link auto-loads the map on page open and immediately clears the hash from the address bar
+- **Heat map mode** — "Heat Map" toggle button in the layout bar; when active, every key is colored by a Gaussian proximity score relative to all assigned keys — keys surrounded by dense clusters render hot (red → orange → yellow) and isolated or unassigned areas render cool (green → blue); button shows an accent-colored active state; heat map re-applies automatically when the layout changes; toggling off restores category colors
+
+### Changed
+
+- **Map name input** — now always shows a visible background and border (was transparent at rest); pencil icon added to the right edge of the field to make its editability explicit
+- **Autocomplete key badge** — uses the same visual style as the popover header key badge (surface background, border, bottom ridge shadow) at a smaller scale (22px height) for visual consistency
+
+---
+
 ## [0.2.6] – 2026-05-05
 
 ### Changed

@@ -835,6 +835,8 @@ function renderKeyboard() {
 
   if (ZSA_IDS.has(state.layout)) {
     renderZSAKeyboard(state.layout);
+    reapplyFilter();
+    if (heatmapActive) applyHeatmap();
     return;
   }
   kb.style.paddingBottom = '';
@@ -869,6 +871,8 @@ function renderKeyboard() {
   }
 
   kb.appendChild(body);
+  reapplyFilter();
+  if (heatmapActive) applyHeatmap();
 }
 
 function refreshKey(keyId) {
@@ -883,10 +887,216 @@ function setHoverHighlight(keyId) {
   clearHoverHighlight();
   document.querySelector(`.key[data-id="${keyId}"]`)?.classList.add('pair-highlight');
   document.querySelector(`.summary-item[data-key-id="${keyId}"]`)?.classList.add('pair-highlight');
+  showKeyTooltip(keyId);
 }
 
 function clearHoverHighlight() {
   document.querySelectorAll('.pair-highlight').forEach(el => el.classList.remove('pair-highlight'));
+  hideKeyTooltip();
+}
+
+/* ── Key tooltip ──────────────────────────────────────────────── */
+let _tooltipTarget = null;
+
+function showKeyTooltip(keyId) {
+  const hotkey = state.hotkeys[keyId];
+  if (!hotkey) return;
+
+  const tip = document.getElementById('key-tooltip');
+  const keyEl = document.querySelector(`.key[data-id="${keyId}"]`);
+  if (!tip || !keyEl) return;
+
+  tip.querySelector('.kt-label').textContent = hotkey.label;
+
+  const modsEl = tip.querySelector('.kt-mods');
+  modsEl.innerHTML = '';
+  (hotkey.modifiers || []).forEach(m => {
+    const pill = document.createElement('span');
+    pill.className = 'kt-mod-pill';
+    pill.textContent = m;
+    modsEl.appendChild(pill);
+  });
+
+  tip.querySelector('.kt-desc').textContent = hotkey.description || '';
+
+  const catEl = tip.querySelector('.kt-cat');
+  const cat = allCategories().find(c => c.id === hotkey.category);
+  if (cat) {
+    catEl.innerHTML = `<span class="kt-cat-swatch" style="background:${cat.color}"></span><span>${cat.name}</span>`;
+  } else {
+    catEl.innerHTML = '';
+  }
+
+  tip.hidden = false;
+  _tooltipTarget = keyId;
+  positionTooltip(tip, keyEl);
+}
+
+function positionTooltip(tip, keyEl) {
+  const rect = keyEl.getBoundingClientRect();
+  const tipW = tip.offsetWidth || 180;
+  const tipH = tip.offsetHeight || 80;
+  const gap = 8;
+
+  let left = rect.left + rect.width / 2 - tipW / 2;
+  let top = rect.top - tipH - gap;
+
+  if (top < 8) top = rect.bottom + gap;
+  if (left < 8) left = 8;
+  if (left + tipW > window.innerWidth - 8) left = window.innerWidth - tipW - 8;
+
+  tip.style.left = left + 'px';
+  tip.style.top = top + 'px';
+}
+
+function hideKeyTooltip() {
+  const tip = document.getElementById('key-tooltip');
+  if (tip) tip.hidden = true;
+  _tooltipTarget = null;
+}
+
+/* ── Undo / Redo ──────────────────────────────────────────────── */
+const UNDO_LIMIT = 50;
+let undoStack = [];
+let redoStack = [];
+
+function snapshotState() {
+  return {
+    hotkeys: JSON.parse(JSON.stringify(state.hotkeys)),
+    mapName: document.getElementById('map-name').value,
+  };
+}
+
+function pushUndo() {
+  undoStack.push(snapshotState());
+  if (undoStack.length > UNDO_LIMIT) undoStack.shift();
+  redoStack = [];
+  updateUndoRedoButtons();
+}
+
+function applySnapshot(snap) {
+  state.hotkeys = snap.hotkeys;
+  document.getElementById('map-name').value = snap.mapName;
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
+  saveToStorage();
+  updateUndoRedoButtons();
+}
+
+function undoAction() {
+  if (!undoStack.length) return;
+  redoStack.push(snapshotState());
+  applySnapshot(undoStack.pop());
+}
+
+function redoAction() {
+  if (!redoStack.length) return;
+  undoStack.push(snapshotState());
+  applySnapshot(redoStack.pop());
+}
+
+function updateUndoRedoButtons() {
+  const btnUndo = document.getElementById('btn-undo');
+  const btnRedo = document.getElementById('btn-redo');
+  if (btnUndo) btnUndo.disabled = undoStack.length === 0;
+  if (btnRedo) btnRedo.disabled = redoStack.length === 0;
+}
+
+/* ── Heat map ─────────────────────────────────────────────────── */
+let heatmapActive = false;
+
+function applyHeatmap() {
+  const keys = [...document.querySelectorAll('#keyboard .key')];
+  if (!keys.length) return;
+
+  const assignedIds = new Set(Object.keys(state.hotkeys));
+  if (!assignedIds.size) return;
+
+  const centers = new Map();
+  keys.forEach(el => {
+    const r = el.getBoundingClientRect();
+    centers.set(el.dataset.id, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  });
+
+  const assignedCenters = [...assignedIds]
+    .map(id => centers.get(id))
+    .filter(Boolean);
+
+  const scores = new Map();
+  const SIGMA = 90;
+  keys.forEach(el => {
+    const c = centers.get(el.dataset.id);
+    if (!c) return;
+    let score = 0;
+    assignedCenters.forEach(ac => {
+      const dx = c.x - ac.x, dy = c.y - ac.y;
+      score += Math.exp(-(dx * dx + dy * dy) / (2 * SIGMA * SIGMA));
+    });
+    scores.set(el, score);
+  });
+
+  const vals = [...scores.values()];
+  const min = Math.min(...vals);
+  const max = Math.max(...vals);
+  const range = max - min || 1;
+
+  scores.forEach((score, el) => {
+    const t = (score - min) / range;
+    const hue = Math.round(240 - t * 240);
+    const sat = Math.round(45 + t * 40);
+    const lit = Math.round(20 + t * 22);
+    el.style.background = `hsl(${hue}, ${sat}%, ${lit}%)`;
+    el.style.setProperty('box-shadow',
+      `0 3px 0 hsl(${hue}, ${sat}%, ${lit - 10}%), 0 1px 2px rgba(0,0,0,0.5)`);
+  });
+}
+
+function clearHeatmap() {
+  document.querySelectorAll('#keyboard .key').forEach(el => {
+    el.style.background = '';
+    el.style.removeProperty('box-shadow');
+  });
+}
+
+function toggleHeatmap() {
+  heatmapActive = !heatmapActive;
+  document.getElementById('btn-heatmap').classList.toggle('btn-on', heatmapActive);
+  if (heatmapActive) {
+    applyHeatmap();
+  } else {
+    renderKeyboard();
+    renderLegend();
+  }
+}
+
+/* ── Category filter ──────────────────────────────────────────── */
+let filterCat = null;
+
+function applyFilter(catId) {
+  filterCat = filterCat === catId ? null : catId;
+  reapplyFilter();
+
+  document.querySelectorAll('.cat-chip').forEach(el => {
+    el.classList.toggle('cat-active', el.dataset.catId === filterCat);
+  });
+}
+
+function reapplyFilter() {
+  const kb = document.getElementById('keyboard');
+  if (!kb) return;
+
+  if (!filterCat) {
+    kb.classList.remove('cat-filtering');
+    kb.querySelectorAll('.key').forEach(el => el.classList.remove('cat-match'));
+    return;
+  }
+
+  kb.classList.add('cat-filtering');
+  kb.querySelectorAll('.key').forEach(el => {
+    const hk = state.hotkeys[el.dataset.id];
+    el.classList.toggle('cat-match', hk?.category === filterCat);
+  });
 }
 
 /* ── Hotkey summary ───────────────────────────────────────────── */
@@ -1079,6 +1289,8 @@ function renderSummary() {
   const container = document.getElementById('summary-grid');
   const empty     = document.getElementById('summary-empty');
   const entries   = getOrderedHotkeys();
+  const search    = document.getElementById('summary-search');
+  if (search) search.value = '';
 
   container.innerHTML = '';
 
@@ -1162,18 +1374,38 @@ function renderLegend() {
   allCategories().forEach(cat => {
     const chip = document.createElement('div');
     chip.className = 'cat-chip';
+    chip.dataset.catId = cat.id;
     chip.style.setProperty('--cat-color', cat.color);
     chip.innerHTML = `
       <span class="cat-swatch" style="background:${cat.color}"></span>
       <span>${cat.name}</span>
       ${counts[cat.id] ? `<span class="cat-count">${counts[cat.id]}</span>` : ''}
     `;
+    chip.addEventListener('click', () => applyFilter(cat.id));
+    if (cat.id === filterCat) chip.classList.add('cat-active');
     list.appendChild(chip);
   });
 
   const count = Object.keys(state.hotkeys).length;
+  const total = document.querySelectorAll('#keyboard .key').length;
   document.getElementById('stat-assigned').textContent =
-    count === 1 ? '1 key assigned' : `${count} keys assigned`;
+    total ? `${count} / ${total} keys assigned` : `${count} keys assigned`;
+}
+
+/* ── Summary search ───────────────────────────────────────────── */
+function filterSummary() {
+  const q = document.getElementById('summary-search').value.trim().toLowerCase();
+  document.querySelectorAll('.summary-group').forEach(group => {
+    let anyVisible = false;
+    group.querySelectorAll('.summary-item').forEach(item => {
+      const label = item.querySelector('.summary-action')?.textContent.toLowerCase() || '';
+      const desc  = item.querySelector('.summary-desc')?.textContent.toLowerCase()  || '';
+      const match = !q || label.includes(q) || desc.includes(q);
+      item.style.display = match ? '' : 'none';
+      if (match) anyVisible = true;
+    });
+    group.style.display = anyVisible ? '' : 'none';
+  });
 }
 
 /* ── Category select ──────────────────────────────────────────── */
@@ -1188,14 +1420,54 @@ function populateCategorySelect() {
   });
 }
 
+/* ── Key full names ───────────────────────────────────────────── */
+const KEY_FULL_NAMES = {
+  F1:'Function 1', F2:'Function 2', F3:'Function 3', F4:'Function 4',
+  F5:'Function 5', F6:'Function 6', F7:'Function 7', F8:'Function 8',
+  F9:'Function 9', F10:'Function 10', F11:'Function 11', F12:'Function 12',
+  Digit1:'Number 1', Digit2:'Number 2', Digit3:'Number 3', Digit4:'Number 4',
+  Digit5:'Number 5', Digit6:'Number 6', Digit7:'Number 7', Digit8:'Number 8',
+  Digit9:'Number 9', Digit0:'Number 0',
+  Escape:'Escape', Tab:'Tab', CapsLock:'Caps Lock', Space:'Space',
+  Backspace:'Backspace', Enter:'Enter', ContextMenu:'Context Menu',
+  ShiftLeft:'Left Shift',    ShiftRight:'Right Shift',
+  ControlLeft:'Left Ctrl',   ControlRight:'Right Ctrl',
+  AltLeft:'Left Alt',        AltRight:'Right Alt',
+  MetaLeft:'Left Win',       MetaRight:'Right Win',
+  PrintScreen:'Print Screen', ScrollLock:'Scroll Lock', Pause:'Pause',
+  Insert:'Insert', Home:'Home', End:'End',
+  PageUp:'Page Up', PageDown:'Page Down',
+  Delete:'Delete',
+  ArrowUp:'Up Arrow', ArrowDown:'Down Arrow',
+  ArrowLeft:'Left Arrow', ArrowRight:'Right Arrow',
+  NumLock:'Num Lock',
+  NumpadDivide:'Numpad /', NumpadMultiply:'Numpad ×',
+  NumpadSubtract:'Numpad −', NumpadAdd:'Numpad +',
+  NumpadEnter:'Numpad Enter', NumpadDecimal:'Numpad .',
+  Numpad0:'Numpad 0', Numpad1:'Numpad 1', Numpad2:'Numpad 2',
+  Numpad3:'Numpad 3', Numpad4:'Numpad 4', Numpad5:'Numpad 5',
+  Numpad6:'Numpad 6', Numpad7:'Numpad 7', Numpad8:'Numpad 8',
+  Numpad9:'Numpad 9',
+  Backquote:'Backtick ( ` )', Minus:'Minus ( - )', Equal:'Equals ( = )',
+  BracketLeft:'Left Bracket ( [ )', BracketRight:'Right Bracket ( ] )',
+  Backslash:'Backslash ( \\ )', Semicolon:'Semicolon ( ; )',
+  Quote:'Quote ( \' )', Comma:'Comma ( , )', Period:'Period ( . )',
+  Slash:'Slash ( / )',
+};
+
+function getKeyFullName(keyId, def) {
+  if (KEY_FULL_NAMES[keyId]) return KEY_FULL_NAMES[keyId];
+  return (def ? getKeyLabel(def) : '') || keyId;
+}
+
 /* ── Popover ──────────────────────────────────────────────────── */
 function openPopover(keyId) {
   activeKeyId = keyId;
   const def = findKeyDef(keyId);
   const label = (def ? getKeyLabel(def) : '') || keyId;
 
-  document.getElementById('popover-key-badge').textContent = label;
-  document.getElementById('popover-title').textContent = label;
+  document.getElementById('popover-key-badge').textContent = label || keyId;
+  document.getElementById('popover-title').textContent = getKeyFullName(keyId, def);
 
   // Reset
   document.querySelectorAll('.mod-chip').forEach(c => c.classList.remove('active'));
@@ -1216,6 +1488,7 @@ function openPopover(keyId) {
     });
   }
 
+  document.getElementById('conflict-warning').hidden = true;
   document.getElementById('popover').classList.remove('hidden');
   document.getElementById('popover-overlay').classList.remove('hidden');
   setTimeout(() => document.getElementById('hotkey-label').focus(), 30);
@@ -1223,8 +1496,99 @@ function openPopover(keyId) {
 
 function closePopover() {
   activeKeyId = null;
+  hideLabelSuggestions();
   document.getElementById('popover').classList.add('hidden');
   document.getElementById('popover-overlay').classList.add('hidden');
+}
+
+/* ── Label autocomplete ───────────────────────────────────────── */
+let _suggestionIdx = -1;
+
+function buildSuggestions(query) {
+  const q = query.toLowerCase();
+  return Object.entries(state.hotkeys)
+    .filter(([keyId, hk]) => keyId !== activeKeyId && hk.label.toLowerCase().includes(q))
+    .map(([keyId, hk]) => {
+      const def = findKeyDef(keyId);
+      return { label: hk.label, keyName: def ? (getKeyLabel(def) || keyId) : keyId };
+    })
+    .sort((a, b) => a.label.localeCompare(b.label));
+}
+
+function renderLabelSuggestions() {
+  const input = document.getElementById('hotkey-label');
+  const box = document.getElementById('label-suggestions');
+  const query = input.value.trim();
+
+  if (!query) { hideLabelSuggestions(); return; }
+
+  const matches = buildSuggestions(query);
+  if (!matches.length) { hideLabelSuggestions(); return; }
+
+  _suggestionIdx = -1;
+  box.innerHTML = '';
+  matches.forEach((m, i) => {
+    const item = document.createElement('div');
+    item.className = 'label-suggestion';
+    item.dataset.idx = i;
+    item.innerHTML = `<span class="label-suggestion-key">${m.keyName}</span><span class="label-suggestion-divider">|</span><span class="label-suggestion-text">${m.label}</span>`;
+    item.addEventListener('mousedown', e => {
+      e.preventDefault();
+      selectSuggestion(m.label);
+    });
+    box.appendChild(item);
+  });
+
+  box.hidden = false;
+}
+
+function hideLabelSuggestions() {
+  const box = document.getElementById('label-suggestions');
+  if (box) box.hidden = true;
+  _suggestionIdx = -1;
+}
+
+function selectSuggestion(label) {
+  const input = document.getElementById('hotkey-label');
+  input.value = label;
+  hideLabelSuggestions();
+  updateConflictWarning();
+  input.focus();
+}
+
+function moveSuggestionFocus(dir) {
+  const box = document.getElementById('label-suggestions');
+  if (!box || box.hidden) return;
+  const items = box.querySelectorAll('.label-suggestion');
+  if (!items.length) return;
+  items[_suggestionIdx]?.classList.remove('ls-focused');
+  _suggestionIdx = (_suggestionIdx + dir + items.length) % items.length;
+  items[_suggestionIdx].classList.add('ls-focused');
+  items[_suggestionIdx].scrollIntoView({ block: 'nearest' });
+}
+
+function checkConflict(label) {
+  if (!label) return null;
+  const lower = label.toLowerCase();
+  for (const [keyId, hk] of Object.entries(state.hotkeys)) {
+    if (keyId !== activeKeyId && hk.label.toLowerCase() === lower) return keyId;
+  }
+  return null;
+}
+
+function updateConflictWarning() {
+  const label = document.getElementById('hotkey-label').value.trim();
+  const warn = document.getElementById('conflict-warning');
+  const conflictKeyId = checkConflict(label);
+  if (conflictKeyId) {
+    const def = findKeyDef(conflictKeyId);
+    const keyName = def ? getKeyLabel(def) : conflictKeyId;
+    document.getElementById('conflict-warning-text').textContent =
+      `"${label}" is already assigned to ${keyName}`;
+    warn.hidden = false;
+  } else {
+    warn.hidden = true;
+  }
 }
 
 function saveHotkey() {
@@ -1237,6 +1601,7 @@ function saveHotkey() {
     return;
   }
 
+  pushUndo();
   const modifiers = [...document.querySelectorAll('.mod-chip input:checked')].map(cb => cb.value);
 
   state.hotkeys[activeKeyId] = {
@@ -1255,6 +1620,7 @@ function saveHotkey() {
 
 function clearHotkey() {
   if (!activeKeyId) return;
+  pushUndo();
   delete state.hotkeys[activeKeyId];
   refreshKey(activeKeyId);
   renderLegend();
@@ -1289,6 +1655,34 @@ function loadFromStorage() {
     if (data.summaryCols)      state.summaryCols      = data.summaryCols;
     if (data.customCategories) state.customCategories = data.customCategories;
   } catch (_) {}
+}
+
+/* ── Share via URL ────────────────────────────────────────────── */
+function buildShareUrl() {
+  const data = {
+    hotkeys:          state.hotkeys,
+    mapName:          document.getElementById('map-name').value,
+    layout:           state.layout,
+    keyMap:           state.keyMap,
+    customCategories: state.customCategories,
+  };
+  const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
+  return `${location.origin}${location.pathname}#map=${encoded}`;
+}
+
+function loadFromHash() {
+  try {
+    const hash = window.location.hash;
+    if (!hash.startsWith('#map=')) return false;
+    const data = JSON.parse(decodeURIComponent(atob(hash.slice(5))));
+    if (data.hotkeys)          state.hotkeys          = data.hotkeys;
+    if (data.mapName)          document.getElementById('map-name').value = data.mapName;
+    if (data.layout)           state.layout           = data.layout;
+    if (data.keyMap)           state.keyMap           = data.keyMap;
+    if (data.customCategories) state.customCategories = data.customCategories;
+    history.replaceState(null, '', location.pathname);
+    return true;
+  } catch (_) { return false; }
 }
 
 /* ── Copy / Print ─────────────────────────────────────────────── */
@@ -1576,9 +1970,37 @@ function initEvents() {
 
   document.getElementById('btn-save-hotkey').addEventListener('click', saveHotkey);
   document.getElementById('btn-clear-hotkey').addEventListener('click', clearHotkey);
+  document.getElementById('btn-undo').addEventListener('click', undoAction);
+  document.getElementById('btn-redo').addEventListener('click', redoAction);
 
+  document.getElementById('hotkey-label').addEventListener('input', () => {
+    renderLabelSuggestions();
+    updateConflictWarning();
+  });
   document.getElementById('hotkey-label').addEventListener('keydown', e => {
+    const box = document.getElementById('label-suggestions');
+    if (!box.hidden) {
+      if (e.key === 'ArrowDown') { e.preventDefault(); moveSuggestionFocus(1); return; }
+      if (e.key === 'ArrowUp')   { e.preventDefault(); moveSuggestionFocus(-1); return; }
+      if (e.key === 'Escape')    { hideLabelSuggestions(); return; }
+      if (e.key === 'Enter') {
+        const focused = box.querySelector('.ls-focused');
+        if (focused) { e.preventDefault(); selectSuggestion(focused.querySelector('.label-suggestion-text').textContent); return; }
+      }
+    }
     if (e.key === 'Enter') saveHotkey();
+  });
+  document.getElementById('hotkey-label').addEventListener('blur', () => {
+    setTimeout(hideLabelSuggestions, 150);
+  });
+
+  document.addEventListener('keydown', e => {
+    if ((e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') &&
+        e.target.id !== 'map-name') return;
+    if (e.ctrlKey && !e.altKey) {
+      if (e.key === 'z' && !e.shiftKey) { e.preventDefault(); undoAction(); }
+      if ((e.key === 'y') || (e.key === 'z' && e.shiftKey)) { e.preventDefault(); redoAction(); }
+    }
   });
 
   document.addEventListener('keydown', e => {
@@ -1603,9 +2025,12 @@ function initEvents() {
     saveToStorage();
   });
 
+  document.getElementById('btn-heatmap').addEventListener('click', toggleHeatmap);
+
   document.getElementById('btn-clear-all').addEventListener('click', () => {
     if (!Object.keys(state.hotkeys).length) return;
     if (confirm('Clear all assigned hotkeys from this map?')) {
+      pushUndo();
       state.hotkeys = {};
       document.getElementById('map-name').value = 'New Template';
       renderKeyboard();
@@ -1615,7 +2040,13 @@ function initEvents() {
     }
   });
 
+  document.getElementById('btn-share').addEventListener('click', e => {
+    copyToClipboard(buildShareUrl(), e.currentTarget);
+  });
+
   document.getElementById('btn-print').addEventListener('click', () => window.print());
+
+  document.getElementById('summary-search').addEventListener('input', filterSummary);
 
   document.getElementById('btn-copy-text').addEventListener('click', e => {
     copyToClipboard(buildPlainText(), e.currentTarget);
@@ -1696,6 +2127,7 @@ function init() {
   initComingSoon();
   initTheme();
   loadFromStorage();
+  loadFromHash();
   renderKeyboard();
   populateCategorySelect();
   renderLegend();
