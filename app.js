@@ -3,6 +3,11 @@ const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
 
+/* ── Keyboard scaling state ───────────────────────────────────── */
+let _kbNaturalW      = 0;
+let _kbNaturalH      = 0;
+let _kbScaleObserver = null;
+
 const LAYOUTS = [
   { id: 'full',       name: 'Full (104-key)'    },
   { id: 'tkl',        name: 'Tenkeyless (TKL)'  },
@@ -559,6 +564,53 @@ function applyTheme(pref) {
   });
 }
 
+/* ── Keyboard scale (ResizeObserver) ──────────────────────────── */
+function applyKbScale() {
+  const section = document.querySelector('.keyboard-section');
+  const kbEl    = document.getElementById('keyboard');
+  const scroll  = document.querySelector('.keyboard-scroll');
+  if (!section || !kbEl || !scroll || !_kbNaturalW) return;
+
+  const available = section.clientWidth;
+  const scale     = Math.min(1, available / _kbNaturalW);
+
+  if (scale < 1) {
+    kbEl.style.transform       = `scale(${scale})`;
+    kbEl.style.transformOrigin = 'top left';
+    scroll.style.width         = Math.round(_kbNaturalW * scale) + 'px';
+    scroll.style.height        = Math.round(_kbNaturalH * scale) + 'px';
+    scroll.style.overflow      = 'hidden';
+  } else {
+    kbEl.style.transform       = '';
+    kbEl.style.transformOrigin = '';
+    scroll.style.width         = '';
+    scroll.style.height        = '';
+    scroll.style.overflow      = '';
+  }
+}
+
+function measureAndScaleKeyboard() {
+  const kbEl   = document.getElementById('keyboard');
+  const scroll = document.querySelector('.keyboard-scroll');
+  if (!kbEl || !scroll) return;
+
+  kbEl.style.transform = '';
+  scroll.style.height  = '';
+
+  _kbNaturalW = kbEl.offsetWidth;
+  _kbNaturalH = kbEl.offsetHeight;
+
+  applyKbScale();
+}
+
+function initKeyboardScale() {
+  if (_kbScaleObserver) return;
+  const section = document.querySelector('.keyboard-section');
+  if (!section) return;
+  _kbScaleObserver = new ResizeObserver(applyKbScale);
+  _kbScaleObserver.observe(section);
+}
+
 function initTheme() {
   const saved = localStorage.getItem(THEME_KEY) || 'dark';
   applyTheme(saved);
@@ -837,6 +889,7 @@ function renderKeyboard() {
     renderZSAKeyboard(state.layout);
     reapplyFilter();
     if (heatmapActive) applyHeatmap();
+    measureAndScaleKeyboard();
     return;
   }
   kb.style.paddingBottom = '';
@@ -873,6 +926,7 @@ function renderKeyboard() {
   kb.appendChild(body);
   reapplyFilter();
   if (heatmapActive) applyHeatmap();
+  measureAndScaleKeyboard();
 }
 
 function refreshKey(keyId) {
@@ -1961,6 +2015,22 @@ function initLayoutControls() {
 
 /* ── Events ───────────────────────────────────────────────────── */
 function initEvents() {
+  const mobileMenuBtn = document.getElementById('btn-mobile-menu');
+  const headerActions = document.querySelector('.header-actions');
+
+  mobileMenuBtn.addEventListener('click', e => {
+    e.stopPropagation();
+    const isOpen = headerActions.classList.toggle('menu-open');
+    mobileMenuBtn.setAttribute('aria-expanded', String(isOpen));
+  });
+
+  document.addEventListener('click', e => {
+    if (headerActions.classList.contains('menu-open') && !e.target.closest('.app-header')) {
+      headerActions.classList.remove('menu-open');
+      mobileMenuBtn.setAttribute('aria-expanded', 'false');
+    }
+  });
+
   document.getElementById('popover-close').addEventListener('click', closePopover);
   document.getElementById('popover-overlay').addEventListener('click', closePopover);
 
@@ -2129,6 +2199,7 @@ function init() {
   loadFromStorage();
   loadFromHash();
   renderKeyboard();
+  initKeyboardScale();
   populateCategorySelect();
   renderLegend();
   renderSummary();

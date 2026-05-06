@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.3.0 — work in progress, active development.
+**Version:** 0.3.1 — work in progress, active development.
 
 ---
 
@@ -41,6 +41,7 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 
 ### UI & theming
 
+- **Mobile-friendly** — keyboard scales dynamically to fit any viewport via a `ResizeObserver`; header collapses to a hamburger menu on narrow screens; layout bar simplifies to Templates + form factor + key map selectors; categories and hotkey summary reflow for single-column display
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
 - **Inter font** — UI uses Inter (Google Fonts) for crisp, consistent rendering across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)

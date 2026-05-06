@@ -1467,6 +1467,129 @@ body {
   transition: opacity 0.2s;
 }
 
+/* ── Mobile menu button (hidden on desktop) ───────────────────── */
+.mobile-menu-btn {
+  display: none;
+  margin-left: auto;
+  width: 34px;
+  height: 34px;
+  color: var(--text-muted);
+}
+.mobile-menu-btn:hover { color: var(--text); }
+
+/* ── Mobile / narrow viewport ─────────────────────────────────── */
+@media (max-width: 768px) {
+  /* ── Keyboard ── */
+  .keyboard-scroll {
+    overflow-x: auto;
+  }
+
+  /* ── Header ── */
+  .app-header {
+    position: relative;
+    padding: 8px 14px;
+  }
+
+  .mobile-menu-btn { display: flex; }
+
+  .header-actions {
+    display: none;
+    position: absolute;
+    top: 100%;
+    left: 0;
+    right: 0;
+    flex-direction: column;
+    gap: 8px;
+    padding: 12px 16px 16px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,0.3);
+    z-index: 20;
+    margin-left: 0;
+  }
+  .header-actions.menu-open { display: flex; }
+  .header-actions .btn {
+    width: 100%;
+    justify-content: center;
+    padding: 9px 14px;
+    font-size: 0.85rem;
+  }
+  .header-actions .theme-picker { align-self: flex-start; }
+
+  /* ── Layout bar ── */
+  .layout-bar {
+    width: 100%;
+    align-self: stretch;
+    margin: 0;
+    border-radius: 0;
+    border-left: none;
+    border-right: none;
+    border-top: none;
+    justify-content: center;
+    box-shadow: 0 2px 8px rgba(0,0,0,0.12);
+  }
+
+  #btn-new,
+  .map-name-wrapper,
+  #btn-save,
+  .undo-redo-group,
+  #btn-clear-all,
+  #btn-heatmap,
+  .layout-bar-divider { display: none; }
+
+  .layout-label { display: none; }
+
+  .layout-select { max-width: 120px; }
+
+  /* ── Categories ── */
+  .legend {
+    gap: 10px 8px;
+    padding: 12px 14px;
+  }
+
+  .legend-title-row {
+    flex: 0 0 100%;
+    justify-content: space-between;
+  }
+
+  .legend-stat {
+    margin-left: 0;
+    order: 2;
+  }
+
+  .category-list {
+    flex: 0 0 100%;
+    order: 1;
+  }
+
+  #new-category-form {
+    flex: 0 0 100%;
+    order: 0;
+  }
+
+  /* ── Summary ── */
+  .summary-columns {
+    grid-template-columns: 1fr;
+  }
+
+  .summary-header-row {
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+
+  .summary-actions {
+    display: none;
+  }
+
+  .summary-search {
+    max-width: none;
+  }
+
+  .legend-title {
+    white-space: nowrap;
+  }
+}
+
 /* ── Print ────────────────────────────────────────────────────── */
 @media print {
   .app-header,

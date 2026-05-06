@@ -1,5 +1,17 @@
 # Changelog
 
+## [0.3.1] – 2026-05-06
+
+### Added
+
+- **Mobile-responsive keyboard** — a `ResizeObserver` watches the keyboard section and applies `transform: scale()` with a JS-managed wrapper height whenever the keyboard is wider than the available viewport. Scale is measured fresh after every `renderKeyboard()` call (including layout and key map switches) and re-applied on resize without a layout flash. Works across all form factors including ZSA split keyboards.
+- **Mobile header** — a hamburger button appears at ≤ 768px, hiding the Share / Print / Export / Import action buttons. Tapping it drops a full-width panel below the header containing the theme picker and all four action buttons at full width; tapping outside collapses it.
+- **Compact mobile layout bar** — on narrow viewports the layout bar stretches edge-to-edge as a toolbar and hides the less-critical controls (New, map name, Save, Undo/Redo, Clear All, Heat Map), leaving only Templates, Form Factor, and Key Map selectors.
+- **Mobile categories layout** — the CATEGORIES title row is promoted to its own full-width flex row so category chips have the full container width and wrap into a proper 2-per-row grid instead of stacking in a narrow column beside the label.
+- **Mobile hotkey summary** — Copy Text / Copy Markdown buttons are hidden on mobile (where they are rarely useful); the search box expands to full width; "HOTKEY SUMMARY" title no longer wraps; summary columns collapse from 3 to 1.
+
+---
+
 ## [0.3.0] – 2026-05-05
 
 ### Added
