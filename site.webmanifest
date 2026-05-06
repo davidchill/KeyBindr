@@ -1,6 +1,9 @@
 {
-  "name": "KeyBindr",
+  "name": "KeyBindr — Visual Keyboard Shortcut Mapper",
   "short_name": "KeyBindr",
+  "description": "Map and visualize your keyboard shortcuts. Assign hotkeys, color-code by category, and export or share your layout.",
+  "lang": "en",
+  "start_url": "/",
   "icons": [
     {
       "src": "/web-app-manifest-192x192.png",

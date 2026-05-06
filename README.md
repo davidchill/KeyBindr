@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.3 — work in progress, active development.
+  <strong>Version:</strong> 0.4.4 — work in progress, active development.
 </p>
 
 ---
@@ -132,6 +132,7 @@ site/
 ├── favicon.ico
 ├── apple-touch-icon.png
 ├── site.webmanifest
+├── og-image.png        # 1200×630 Open Graph image for social sharing
 └── CHANGELOG.md
 ```
 

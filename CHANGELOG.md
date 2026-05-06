@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.4] – 2026-05-06
+
+### Added
+
+- **SEO meta tags** — `<meta name="description">`, `<meta name="keywords">`, `<meta name="author">`, and `<meta name="robots" content="index, follow">` added to `<head>`; description is 155 characters and keyword-rich
+- **Canonical URL** — `<link rel="canonical" href="https://keybindr.app/">` added to prevent duplicate content signals
+- **Open Graph tags** — `og:type`, `og:url`, `og:title`, `og:description`, `og:image`, `og:image:alt`, and `og:site_name` added; controls how the site renders when shared on social platforms and in AI-generated previews
+- **Twitter / X Card tags** — `twitter:card`, `twitter:title`, `twitter:description`, and `twitter:image` added
+- **JSON-LD structured data** — `WebApplication` schema added via `<script type="application/ld+json">`; includes name, URL, description, applicationCategory, operatingSystem, free offer, and feature list; helps Google classify the tool correctly in search
+- **OG image** — `og-image.png` generated at the standard 1200×630px; the existing `logos/logo-wide.png` scaled to 85% and centered on the brand dark background (`#090b14`)
+
+### Changed
+
+- **Page title** — updated from bare `"KeyBindr"` to `"KeyBindr - Visual Keyboard Shortcut Mapper. Map your muscle memory."` (64 characters, within Google's display limit)
+- **`site.webmanifest`** — added `description`, `lang: "en"`, and `start_url: "/"` fields; full `name` updated to include the tagline
+
+---
+
 ## [0.4.3] – 2026-05-06
 
 ### Added
