@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.1] – 2026-05-05
+
+### Fixed
+
+- **Space key chip blank in summary** — Space key had `label: ''` in the layout data (the only named key without a label), causing `getKeyLabel` to return an empty string and render a blank chip in the hotkey summary; changed to `label: 'Space'` for consistency with all other named keys
+
+### Added
+
+- **Category hover highlight** — hovering a category chip in the legend dims all non-matching keyboard keys and fades non-matching summary groups; moving the mouse away restores the view; uses `cat-dim` / `cat-highlight` CSS classes driven by `setCategoryHighlight` / `clearCategoryHighlight`
+- **Persistent category filter highlight** — clicking a category chip now keeps the hover highlight active after the mouse moves away; hovering a different chip temporarily shows that category's highlight, then reverts to the selected one on mouse-out; unified `reapplyFilter` to call `setCategoryHighlight` so keyboard and summary use the same visual path
+- **Category filter checkmark indicator** — active category chip shows a `✓` after its label (via `::after` in the category color) so the selected filter is always clearly indicated without requiring hover
+- **Category-colored summary section headers** — each category group header in the hotkey summary renders its name in the category's own color via a `--cat-color` CSS variable set per group; replaces the previous uniform `--text-muted` treatment
+- **GitHub footer link** — GitHub mark icon + "GitHub" text link to `https://github.com/davidchill/KeyBindr` added to the footer, left of the version number; muted at rest, brightens to `--text` on hover
+
+### Changed
+
+- **Summary key chip sizing** — `font-size` increased from `0.7rem` to `0.75rem` (~1px); `min-width` increased from `28px` to `29px`
+- **Form Factor / Key Map dropdown styling** — selects now use `appearance: none` with an explicit border (`--border`), filled background (`--surface-2`), and a custom chevron SVG data URL (muted stroke in both dark and light themes); `padding-right: 28px` makes room for the arrow; replaces the previous invisible-at-rest style
+- **Non-keyboard section depth** — layout bar, categories legend, and hotkey summary card all switch from flat `--surface` to a `linear-gradient(180deg, --surface-2, --surface)` background; box-shadow upgraded to a two-layer spread plus an `inset 0 1px 0` top highlight for a more elevated, card-like appearance
+- **Hotkey summary background darkened** — summary card gradient changed from the surface range to `linear-gradient(180deg, --keyboard-bg, --bg)`, bringing its tone in line with the keyboard shell
+- **Summary item border contrast** — `border` on `.summary-item` bumped from `var(--border)` to `var(--border-2)` so row outlines are clearly legible against the darker card background
+
+---
+
 ## [0.4.0] – 2026-05-05
 
 ### Added

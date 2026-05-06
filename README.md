@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.4.0 — work in progress, active development.
+**Version:** 0.4.1 — work in progress, active development.
 
 ---
 
@@ -35,7 +35,7 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 ### Visualization & interaction
 
 - **Hover tooltips** — hovering any assigned key shows a floating tooltip with the action label, modifiers, description, and category
-- **Category filter** — click a category chip to dim all non-matching keys and highlight matching ones; click again to clear
+- **Category hover highlight** — hovering a category chip dims all non-matching keyboard keys and fades other summary groups; clicking locks the highlight in place with a ✓ indicator on the chip; click again to clear
 - **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to hot (dense clusters)
 - **Hover cross-highlight** — hovering an assigned key highlights its summary row, and vice versa
 

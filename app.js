@@ -134,7 +134,7 @@ const MAIN_ROWS = [
     { id:'ControlLeft',  label:'Ctrl', width:1.25 },
     { id:'MetaLeft',     label:'⊞',   width:1.25 },
     { id:'AltLeft',      label:'Alt',  width:1.25 },
-    { id:'Space',        label:'',     width:6.25 },
+    { id:'Space',        label:'Space', width:6.25 },
     { id:'AltRight',     label:'Alt',  width:1.25 },
     { id:'MetaRight',    label:'⊞',   width:1.25 },
     { id:'ContextMenu',  label:'☰',   width:1.25 },
@@ -950,6 +950,29 @@ function clearHoverHighlight() {
   hideKeyTooltip();
 }
 
+/* ── Category hover highlight ─────────────────────────────────── */
+function setCategoryHighlight(catId) {
+  clearCategoryHighlight();
+  const matchingKeyIds = new Set(
+    Object.entries(state.hotkeys)
+      .filter(([, hk]) => hk.category === catId)
+      .map(([keyId]) => keyId)
+  );
+  document.getElementById('keyboard').classList.add('cat-dim');
+  matchingKeyIds.forEach(keyId => {
+    document.querySelector(`.key[data-id="${keyId}"]`)?.classList.add('cat-highlight');
+  });
+  document.querySelectorAll('.summary-group').forEach(g => {
+    g.classList.add(g.dataset.catId === catId ? 'cat-highlight' : 'cat-dim');
+  });
+}
+
+function clearCategoryHighlight() {
+  document.getElementById('keyboard')?.classList.remove('cat-dim');
+  document.querySelectorAll('.cat-highlight, .summary-group.cat-dim')
+    .forEach(el => el.classList.remove('cat-highlight', 'cat-dim'));
+}
+
 /* ── Key tooltip ──────────────────────────────────────────────── */
 let _tooltipTarget = null;
 
@@ -1138,20 +1161,8 @@ function applyFilter(catId) {
 }
 
 function reapplyFilter() {
-  const kb = document.getElementById('keyboard');
-  if (!kb) return;
-
-  if (!filterCat) {
-    kb.classList.remove('cat-filtering');
-    kb.querySelectorAll('.key').forEach(el => el.classList.remove('cat-match'));
-    return;
-  }
-
-  kb.classList.add('cat-filtering');
-  kb.querySelectorAll('.key').forEach(el => {
-    const hk = state.hotkeys[el.dataset.id];
-    el.classList.toggle('cat-match', hk?.category === filterCat);
-  });
+  if (filterCat) setCategoryHighlight(filterCat);
+  else clearCategoryHighlight();
 }
 
 /* ── Hotkey summary ───────────────────────────────────────────── */
@@ -1277,6 +1288,7 @@ function makeSummaryGroup(cat, items) {
   group.className = 'summary-group';
   group.dataset.catId = cat.id;
   group.draggable = true;
+  group.style.setProperty('--cat-color', cat.color);
 
   group.addEventListener('dragstart', e => {
     _dragCatId = cat.id;
@@ -1437,6 +1449,11 @@ function renderLegend() {
       ${counts[cat.id] ? `<span class="cat-count">${counts[cat.id]}</span>` : ''}
     `;
     chip.addEventListener('click', () => applyFilter(cat.id));
+    chip.addEventListener('mouseenter', () => setCategoryHighlight(cat.id));
+    chip.addEventListener('mouseleave', () => {
+      if (filterCat) setCategoryHighlight(filterCat);
+      else clearCategoryHighlight();
+    });
     if (cat.id === filterCat) chip.classList.add('cat-active');
     list.appendChild(chip);
   });
@@ -2241,25 +2258,6 @@ function initCustomCategories() {
   });
 }
 
-/* ── Coming soon ──────────────────────────────────────────────── */
-const CS_KEY = 'keybindr-preview-unlocked';
-const CS_PARAM = 'open';
-const CS_SECRET = 'keybindr';
-
-function initComingSoon() {
-  const overlay = document.getElementById('coming-soon');
-  const params = new URLSearchParams(window.location.search);
-  if (params.get(CS_PARAM) === CS_SECRET) {
-    localStorage.setItem(CS_KEY, '1');
-    // Strip the param from the URL without reloading
-    const clean = window.location.pathname;
-    history.replaceState(null, '', clean);
-  }
-  if (localStorage.getItem(CS_KEY)) {
-    overlay.classList.add('hidden');
-  }
-}
-
 /* ── Init ─────────────────────────────────────────────────────── */
 function initFooter() {
   document.getElementById('footer-year').textContent    = new Date().getFullYear();
@@ -2267,7 +2265,6 @@ function initFooter() {
 }
 
 function init() {
-  initComingSoon();
   initTheme();
   loadFromStorage();
   loadFromHash();
