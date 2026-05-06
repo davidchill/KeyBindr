@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.3] – 2026-05-06
+
+### Added
+
+- **Color scheme system** — five full UI themes selectable from a dropdown in the header nav: **Default** (cyan/navy), **Synthwave** (hot pink + electric blue), **Phosphor** (terminal green), **Crimson** (blood red / obsidian), and **Forge** (amber / warm charcoal); preference persisted to `localStorage` under `keybindr-scheme`
+- **Per-scheme aurora background** — each scheme defines its own set of four radial-gradient color blobs fixed to the viewport corners/edges, giving each theme a distinctive atmospheric ambient glow; dark and light variants defined independently per scheme
+- **Key hover glow** — keys emit a neon bloom on hover using a `--key-glow` CSS variable set per scheme; default scheme glows cyan, Synthwave glows electric blue, Phosphor glows green, Crimson glows red, Forge glows amber
+- **`--key-glow` variable** — new CSS custom property in `:root` and each `[data-scheme]` override block; used in `.key:hover` box-shadow via `color-mix(in srgb, var(--key-glow) …%, transparent)` so it adapts automatically to the active scheme
+
+### Changed
+
+- **Font** — UI typeface switched from Inter to **Chakra Petch** (Google Fonts); angular, technical character that reinforces the tool's game-UI aesthetic
+- **Accent color** — default scheme accent shifted from indigo `#6366f1` to electric cyan `#00c8f5` / `#33d6ff`; brand gradient start updated to match
+- **Hardcoded accent tints replaced with `color-mix()`** — six places that previously used hardcoded `rgba(99,102,241,…)` now use `color-mix(in srgb, var(--accent) …%, transparent)`; they adapt automatically to any active scheme's accent color without additional overrides
+- **Hotkey summary card background** — gradient changed from `keyboard-bg → bg` (which bled into the page) to `surface-2 → surface`, matching the categories bar treatment for visual consistency
+- **Section spacing** — categories bar sits 12px below the layout bar (`padding-top` on `.app-main`); keyboard section sits 20px below categories bar; hotkey summary sits 20px below keyboard; each gap is independently controlled via `margin-top` and section padding rather than a uniform `gap`
+
+---
+
 ## [0.4.2] – 2026-05-06
 
 ### Added

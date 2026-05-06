@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.2 — work in progress, active development.
+  <strong>Version:</strong> 0.4.3 — work in progress, active development.
 </p>
 
 ---
@@ -51,8 +51,9 @@
 - **Collapsible categories bar** — toggle button in the categories header collapses the chip list with a smooth animation; when collapsed, any active (filtered) category chip remains visible; state persists across sessions
 - **Click-to-edit from summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled for that key; a pencil icon appears on hover as a visual affordance
 - **Mobile-friendly** — keyboard scales dynamically to fit any viewport via `ResizeObserver`; header collapses to a hamburger menu on narrow screens; categories and summary reflow for single-column display
+- **Color scheme picker** — dropdown in the header nav with five full UI themes: Default (cyan/navy), Synthwave (hot pink + electric blue), Phosphor (terminal green), Crimson (blood red/obsidian), and Forge (amber/charcoal); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preference persists under `keybindr-scheme`
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
-- **Inter font** — UI uses Inter (Google Fonts) for crisp, consistent rendering across all platforms
+- **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; long labels and descriptions wrap within their column
 - **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another; arrangement persists
@@ -96,7 +97,7 @@ App state:
 }
 ```
 
-Theme preference and categories-bar collapsed state are stored separately under `keybindr-theme` and `keybindr-legend-collapsed`.
+Theme preference, color scheme, and categories-bar collapsed state are stored separately under `keybindr-theme`, `keybindr-scheme`, and `keybindr-legend-collapsed`.
 
 ---
 

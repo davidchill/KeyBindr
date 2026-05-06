@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.2';
+const VERSION = '0.4.3';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -635,6 +635,27 @@ function initTheme() {
     localStorage.setItem(THEME_KEY, pref);
     track('theme_changed', { theme: pref });
     applyTheme(pref);
+  });
+}
+
+/* ── Scheme ──────────────────────────────────────────────────── */
+const SCHEME_KEY = 'keybindr-scheme';
+
+function applyScheme(scheme) {
+  document.documentElement.setAttribute('data-scheme', scheme);
+  const sel = document.getElementById('scheme-picker');
+  if (sel) sel.value = scheme;
+}
+
+function initScheme() {
+  const saved = localStorage.getItem(SCHEME_KEY) || 'default';
+  applyScheme(saved);
+
+  document.getElementById('scheme-picker').addEventListener('change', e => {
+    const scheme = e.target.value;
+    localStorage.setItem(SCHEME_KEY, scheme);
+    track('scheme_changed', { scheme });
+    applyScheme(scheme);
   });
 }
 
@@ -2356,6 +2377,7 @@ function initFooter() {
 
 function init() {
   initTheme();
+  initScheme();
   loadFromStorage();
   const loadedFromUrl = loadFromHash();
 
