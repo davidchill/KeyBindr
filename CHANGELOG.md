@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.0] – 2026-05-05
+
+### Added
+
+- **Share panel** — "Share" button now opens a dropdown panel anchored below the button with five sharing options: Copy Link (shareable URL with the map encoded in the hash), Post on X (Twitter intent), Share on Reddit (reddit.com/submit), Share via Email (mailto: with map name as subject), and Copy as Markdown (full hotkey summary in Markdown format); panel closes on click-outside; "Copied!" confirmation feedback on clipboard actions
+- **Brand tagline** — "Map your muscle memory" added to the navbar to the right of the KeyBindr wordmark, separated by a subtle vertical divider; styled in `--text-muted` at 0.78rem
+- **Favicons** — full favicon pack wired up: `favicon.svg` (SVG, all modern browsers), `favicon-96x96.png` (PNG fallback), `apple-touch-icon.png` (iOS home screen), `site.webmanifest` (PWA/Android); all files moved to `site/` root; webmanifest updated with name "KeyBindr", `theme_color: #6366f1`, `background_color: #090b14`
+- **Google Analytics** — GA4 tracking snippet added to `<head>` (measurement ID: G-Y1EQFTC8YR)
+
+---
+
 ## [0.3.2] – 2026-05-06
 
 ### Changed

@@ -1,4 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
+const VERSION = '0.4.0';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -2110,8 +2111,75 @@ function initEvents() {
     }
   });
 
+  /* ── Share panel ── */
+  const sharePanel = document.getElementById('share-panel');
+
+  function openSharePanel(btn) {
+    if (!sharePanel.classList.contains('hidden')) {
+      sharePanel.classList.add('hidden');
+      return;
+    }
+    const rect = btn.getBoundingClientRect();
+    sharePanel.style.top   = `${rect.bottom + 6}px`;
+    sharePanel.style.right = `${window.innerWidth - rect.right}px`;
+    sharePanel.classList.remove('hidden');
+  }
+
+  function closeSharePanel() { sharePanel.classList.add('hidden'); }
+
   document.getElementById('btn-share').addEventListener('click', e => {
-    copyToClipboard(buildShareUrl(), e.currentTarget);
+    e.stopPropagation();
+    openSharePanel(e.currentTarget);
+  });
+
+  document.addEventListener('click', e => {
+    if (!sharePanel.classList.contains('hidden') && !sharePanel.contains(e.target)) {
+      closeSharePanel();
+    }
+  });
+
+  document.getElementById('share-copy-link').addEventListener('click', async e => {
+    const nameEl = e.currentTarget.querySelector('.share-option-name');
+    try {
+      await navigator.clipboard.writeText(buildShareUrl());
+      const orig = nameEl.textContent;
+      nameEl.textContent = 'Copied!';
+      setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
+    } catch (_) {}
+  });
+
+  document.getElementById('share-twitter').addEventListener('click', () => {
+    const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
+    const url = buildShareUrl();
+    const text = encodeURIComponent(`Check out my KeyBindr keyboard map: ${mapName}`);
+    window.open(`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
+    closeSharePanel();
+  });
+
+  document.getElementById('share-reddit').addEventListener('click', () => {
+    const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
+    const url = buildShareUrl();
+    window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(mapName)}`, '_blank', 'noopener');
+    closeSharePanel();
+  });
+
+  document.getElementById('share-email').addEventListener('click', () => {
+    const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
+    const url = buildShareUrl();
+    const subject = encodeURIComponent(`KeyBindr map: ${mapName}`);
+    const body = encodeURIComponent(`Check out my keyboard shortcut map on KeyBindr:\n\n${url}`);
+    window.location.href = `mailto:?subject=${subject}&body=${body}`;
+    closeSharePanel();
+  });
+
+  document.getElementById('share-copy-md').addEventListener('click', async e => {
+    const nameEl = e.currentTarget.querySelector('.share-option-name');
+    try {
+      await navigator.clipboard.writeText(buildMarkdown());
+      const orig = nameEl.textContent;
+      nameEl.textContent = 'Copied!';
+      setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
+    } catch (_) {}
   });
 
   document.getElementById('btn-print').addEventListener('click', () => window.print());
@@ -2193,6 +2261,11 @@ function initComingSoon() {
 }
 
 /* ── Init ─────────────────────────────────────────────────────── */
+function initFooter() {
+  document.getElementById('footer-year').textContent    = new Date().getFullYear();
+  document.getElementById('footer-version').textContent = `v${VERSION}`;
+}
+
 function init() {
   initComingSoon();
   initTheme();
@@ -2207,6 +2280,7 @@ function init() {
   initLayoutControls();
   initTemplates();
   initCustomCategories();
+  initFooter();
 }
 
 document.addEventListener('DOMContentLoaded', init);

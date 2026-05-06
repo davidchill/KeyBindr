@@ -2,7 +2,7 @@
 
 A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
 
-**Version:** 0.3.2 — work in progress, active development.
+**Version:** 0.4.0 — work in progress, active development.
 
 ---
 
@@ -53,7 +53,7 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 - **Named maps** — editable map name in the layout bar (ghost style at rest, styled on hover/focus)
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
-- **Share via URL** — "Share" button encodes the full map as base64 JSON in the URL hash and copies the link to clipboard; recipients open the URL to auto-load the map
+- **Share panel** — "Share" button opens a dropdown with five options: Copy Link (shareable URL with map encoded in hash), Post on X, Share on Reddit, Share via Email, and Copy as Markdown
 - **Copy as Text** — copies the full hotkey summary to the clipboard as formatted plain text, grouped by category
 - **Copy as Markdown** — copies the summary as a Markdown document with category headings and shortcut tables, ready to paste into Notion, GitHub, or any Markdown editor
 - **Undo / redo** — Ctrl+Z / Ctrl+Shift+Z (or buttons in the layout bar) with a 50-entry history covering all assignment changes
@@ -110,6 +110,11 @@ site/
 ├── templates.js    # Built-in template maps (loaded before app.js, exposes TEMPLATES array)
 ├── package.json    # Metadata only — no dependencies, no build tools
 ├── logos/          # Brand assets (app icon, square logo, wide banner)
+├── favicon.svg     # Favicon (SVG, modern browsers)
+├── favicon-96x96.png
+├── favicon.ico
+├── apple-touch-icon.png
+├── site.webmanifest
 └── CHANGELOG.md    # Version history
 ```
 
