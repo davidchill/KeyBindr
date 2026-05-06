@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.4.2] – 2026-05-06
+
+### Added
+
+- **Collapsible categories bar** — chevron toggle button in the categories header collapses the chip list with a smooth CSS grid animation (`grid-template-rows: 1fr → 0fr`); collapsed state persists to `localStorage` under `keybindr-legend-collapsed`
+- **Active chip preserved when collapsed** — a `.legend-active-preview` div between the header and the collapsible body mirrors the currently selected filter chip at all times; visible only when collapsed and a filter is active; clicking the mirrored chip deselects the filter as normal
+- **Click-to-edit from hotkey summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled with that key's existing label, description, modifiers, and category; a pencil icon appears on hover as a visual affordance
+- **GA4 custom event tracking** — comprehensive set of `gtag` custom events wired throughout `app.js` via a central `track()` helper: `key_assigned`, `key_cleared`, `map_exported`, `map_imported`, `template_loaded`, `new_map_created`, `new_map_started`, `clear_all`, `layout_changed`, `keymap_changed`, `theme_changed`, `heatmap_toggled`, `map_shared` (with `method` param), `map_printed`, `summary_copied`, `category_added`, `undo_used`, `redo_used`, `returning_user`, `map_loaded_from_url`, `categories_toggled`
+- **GA4 session counters** — exports, imports, saves (template loads + new map), shares, and prints each carry a `session_count` parameter incremented per session so GA4 can report average action frequency per visit
+
+### Changed
+
+- **Hotkey summary expanded to 4 columns** — `summaryCols` is now a four-element array; categories distributed in quarters; existing saved three-column layouts are automatically re-initialised; `[0, 1, 2, 3]` render loop in `renderSummary`; CSS grid updated to `repeat(4, 1fr)`
+- **Summary description text wraps** — removed `white-space: nowrap` / `overflow: hidden` / `text-overflow: ellipsis` from `.summary-action` and `.summary-desc`; long labels and descriptions now wrap naturally within their column; `word-break: break-word` added to handle unbroken strings
+- **Hotkey summary horizontal inset** — `.summary-section` gains `padding-left: 15px` and `padding-right: 15px`, tightening its width relative to the keyboard and categories bar above it
+
+### Docs
+
+- **README rewritten** — logo-wide banner added at top via centered HTML `<img>`; all new features documented; state shape updated to reflect four-column `summaryCols` and `keybindr-legend-collapsed` storage key; ZSA form factors listed; Analytics section added
+
+---
+
 ## [0.4.1] – 2026-05-05
 
 ### Fixed

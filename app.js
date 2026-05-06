@@ -1,8 +1,15 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.0';
+const VERSION = '0.4.2';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
+
+/* ── Analytics ────────────────────────────────────────────────── */
+const _sessionCounts = { saves: 0, shares: 0, prints: 0, exports: 0, imports: 0 };
+
+function track(name, params) {
+  if (typeof gtag === 'function') gtag('event', name, params || {});
+}
 
 /* ── Keyboard scaling state ───────────────────────────────────── */
 let _kbNaturalW      = 0;
@@ -626,6 +633,7 @@ function initTheme() {
     if (!btn) return;
     const pref = btn.dataset.themeVal;
     localStorage.setItem(THEME_KEY, pref);
+    track('theme_changed', { theme: pref });
     applyTheme(pref);
   });
 }
@@ -1066,12 +1074,14 @@ function undoAction() {
   if (!undoStack.length) return;
   redoStack.push(snapshotState());
   applySnapshot(undoStack.pop());
+  track('undo_used');
 }
 
 function redoAction() {
   if (!redoStack.length) return;
   undoStack.push(snapshotState());
   applySnapshot(redoStack.pop());
+  track('redo_used');
 }
 
 function updateUndoRedoButtons() {
@@ -1139,6 +1149,7 @@ function clearHeatmap() {
 
 function toggleHeatmap() {
   heatmapActive = !heatmapActive;
+  track('heatmap_toggled', { active: heatmapActive });
   document.getElementById('btn-heatmap').classList.toggle('btn-on', heatmapActive);
   if (heatmapActive) {
     applyHeatmap();
@@ -1151,6 +1162,27 @@ function toggleHeatmap() {
 /* ── Category filter ──────────────────────────────────────────── */
 let filterCat = null;
 
+function renderLegendActivePreview() {
+  const preview = document.getElementById('legend-active-preview');
+  if (!preview) return;
+  preview.innerHTML = '';
+  if (!filterCat) return;
+  const cat = allCategories().find(c => c.id === filterCat);
+  if (!cat) return;
+  const count = Object.values(state.hotkeys).filter(hk => hk.category === filterCat).length;
+  const chip = document.createElement('div');
+  chip.className = 'cat-chip cat-active';
+  chip.dataset.catId = cat.id;
+  chip.style.setProperty('--cat-color', cat.color);
+  chip.innerHTML = `
+    <span class="cat-swatch" style="background:${cat.color}"></span>
+    <span>${cat.name}</span>
+    ${count ? `<span class="cat-count">${count}</span>` : ''}
+  `;
+  chip.addEventListener('click', () => applyFilter(cat.id));
+  preview.appendChild(chip);
+}
+
 function applyFilter(catId) {
   filterCat = filterCat === catId ? null : catId;
   reapplyFilter();
@@ -1158,6 +1190,7 @@ function applyFilter(catId) {
   document.querySelectorAll('.cat-chip').forEach(el => {
     el.classList.toggle('cat-active', el.dataset.catId === filterCat);
   });
+  renderLegendActivePreview();
 }
 
 function reapplyFilter() {
@@ -1169,13 +1202,14 @@ function reapplyFilter() {
 let _dragCatId = null;
 
 function initSummaryCols() {
-  if (!state.summaryCols || state.summaryCols.length !== 3) {
+  if (!state.summaryCols || state.summaryCols.length !== 4) {
     const cats = allCategories();
-    const third = Math.ceil(cats.length / 3);
+    const quarter = Math.ceil(cats.length / 4);
     state.summaryCols = [
-      cats.slice(0, third).map(c => c.id),
-      cats.slice(third, third * 2).map(c => c.id),
-      cats.slice(third * 2).map(c => c.id),
+      cats.slice(0, quarter).map(c => c.id),
+      cats.slice(quarter, quarter * 2).map(c => c.id),
+      cats.slice(quarter * 2, quarter * 3).map(c => c.id),
+      cats.slice(quarter * 3).map(c => c.id),
     ];
   }
   // Ensure any category not yet in a column is added to the shortest one
@@ -1252,6 +1286,10 @@ function makeSummaryItem({ hk, def, keyId }) {
   item.dataset.keyId = keyId;
   item.addEventListener('mouseenter', () => setHoverHighlight(keyId));
   item.addEventListener('mouseleave', clearHoverHighlight);
+  item.addEventListener('click', () => {
+    populateCategorySelect();
+    openPopover(keyId);
+  });
 
   const keyCell = document.createElement('div');
   keyCell.className = 'summary-key-cell';
@@ -1278,8 +1316,13 @@ function makeSummaryItem({ hk, def, keyId }) {
     info.appendChild(desc);
   }
 
+  const editIcon = document.createElement('span');
+  editIcon.className = 'summary-item-edit';
+  editIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
+
   item.appendChild(keyCell);
   item.appendChild(info);
+  item.appendChild(editIcon);
   return item;
 }
 
@@ -1380,7 +1423,7 @@ function renderSummary() {
   const colsEl = document.createElement('div');
   colsEl.className = 'summary-columns';
 
-  [0, 1, 2].forEach(colIdx => {
+  [0, 1, 2, 3].forEach(colIdx => {
     const colEl = document.createElement('div');
     colEl.className = 'summary-col';
     colEl.dataset.col = colIdx;
@@ -1462,6 +1505,7 @@ function renderLegend() {
   const total = document.querySelectorAll('#keyboard .key').length;
   document.getElementById('stat-assigned').textContent =
     total ? `${count} / ${total} keys assigned` : `${count} keys assigned`;
+  renderLegendActivePreview();
 }
 
 /* ── Summary search ───────────────────────────────────────────── */
@@ -1683,6 +1727,13 @@ function saveHotkey() {
     modifiers,
   };
 
+  track('key_assigned', {
+    key_id:          activeKeyId,
+    category:        state.hotkeys[activeKeyId].category || 'none',
+    has_modifiers:   modifiers.length > 0,
+    has_description: !!state.hotkeys[activeKeyId].description,
+  });
+
   refreshKey(activeKeyId);
   renderLegend();
   renderSummary();
@@ -1693,6 +1744,7 @@ function saveHotkey() {
 function clearHotkey() {
   if (!activeKeyId) return;
   pushUndo();
+  track('key_cleared', { key_id: activeKeyId });
   delete state.hotkeys[activeKeyId];
   refreshKey(activeKeyId);
   renderLegend();
@@ -1835,6 +1887,7 @@ async function copyToClipboard(text, btn) {
 /* ── Export / Import ──────────────────────────────────────────── */
 function exportMap() {
   const name = document.getElementById('map-name').value || 'hotkey-map';
+  track('map_exported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
   const data = { version: 1, name, hotkeys: state.hotkeys };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
@@ -1853,6 +1906,7 @@ function importMap(file) {
       if (!data.hotkeys) throw new Error();
       state.hotkeys = data.hotkeys;
       if (data.name) document.getElementById('map-name').value = data.name;
+      track('map_imported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.imports });
       renderKeyboard();
       renderLegend();
       renderSummary();
@@ -1886,6 +1940,7 @@ function loadTemplate(template) {
     Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
   );
   document.getElementById('map-name').value = template.name;
+  track('template_loaded', { template_name: template.name, template_category: template.appCategory, session_count: ++_sessionCounts.saves });
   renderKeyboard();
   renderLegend();
   renderSummary();
@@ -1959,6 +2014,7 @@ function initTemplates() {
         !confirm(`Start a new map named "${name}"? This will clear your current map.`)) return;
     state.hotkeys = {};
     document.getElementById('map-name').value = name;
+    track('new_map_created', { session_count: ++_sessionCounts.saves });
     renderKeyboard();
     renderLegend();
     renderSummary();
@@ -2020,12 +2076,14 @@ function initLayoutControls() {
 
   layoutSel.addEventListener('change', () => {
     state.layout = layoutSel.value;
+    track('layout_changed', { layout: state.layout });
     renderKeyboard();
     saveToStorage();
   });
 
   keymapSel.addEventListener('change', () => {
     state.keyMap = keymapSel.value;
+    track('keymap_changed', { key_map: state.keyMap });
     renderKeyboard();
     saveToStorage();
   });
@@ -2105,6 +2163,7 @@ function initEvents() {
     if (Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim()) {
       if (!confirm('Start a new map? This will clear the name and all assigned hotkeys.')) return;
     }
+    track('new_map_started', { session_count: ++_sessionCounts.saves });
     state.hotkeys = {};
     document.getElementById('map-name').value = '';
     renderKeyboard();
@@ -2118,6 +2177,7 @@ function initEvents() {
   document.getElementById('btn-clear-all').addEventListener('click', () => {
     if (!Object.keys(state.hotkeys).length) return;
     if (confirm('Clear all assigned hotkeys from this map?')) {
+      track('clear_all', { key_count: Object.keys(state.hotkeys).length });
       pushUndo();
       state.hotkeys = {};
       document.getElementById('map-name').value = 'New Template';
@@ -2159,6 +2219,7 @@ function initEvents() {
     const nameEl = e.currentTarget.querySelector('.share-option-name');
     try {
       await navigator.clipboard.writeText(buildShareUrl());
+      track('map_shared', { method: 'link', key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.shares });
       const orig = nameEl.textContent;
       nameEl.textContent = 'Copied!';
       setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
@@ -2169,6 +2230,7 @@ function initEvents() {
     const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
     const url = buildShareUrl();
     const text = encodeURIComponent(`Check out my KeyBindr keyboard map: ${mapName}`);
+    track('map_shared', { method: 'twitter', session_count: ++_sessionCounts.shares });
     window.open(`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
     closeSharePanel();
   });
@@ -2176,6 +2238,7 @@ function initEvents() {
   document.getElementById('share-reddit').addEventListener('click', () => {
     const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
     const url = buildShareUrl();
+    track('map_shared', { method: 'reddit', session_count: ++_sessionCounts.shares });
     window.open(`https://www.reddit.com/submit?url=${encodeURIComponent(url)}&title=${encodeURIComponent(mapName)}`, '_blank', 'noopener');
     closeSharePanel();
   });
@@ -2185,6 +2248,7 @@ function initEvents() {
     const url = buildShareUrl();
     const subject = encodeURIComponent(`KeyBindr map: ${mapName}`);
     const body = encodeURIComponent(`Check out my keyboard shortcut map on KeyBindr:\n\n${url}`);
+    track('map_shared', { method: 'email', session_count: ++_sessionCounts.shares });
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
     closeSharePanel();
   });
@@ -2193,21 +2257,27 @@ function initEvents() {
     const nameEl = e.currentTarget.querySelector('.share-option-name');
     try {
       await navigator.clipboard.writeText(buildMarkdown());
+      track('map_shared', { method: 'markdown', session_count: ++_sessionCounts.shares });
       const orig = nameEl.textContent;
       nameEl.textContent = 'Copied!';
       setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
     } catch (_) {}
   });
 
-  document.getElementById('btn-print').addEventListener('click', () => window.print());
+  document.getElementById('btn-print').addEventListener('click', () => {
+    track('map_printed', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.prints });
+    window.print();
+  });
 
   document.getElementById('summary-search').addEventListener('input', filterSummary);
 
   document.getElementById('btn-copy-text').addEventListener('click', e => {
+    track('summary_copied', { format: 'text' });
     copyToClipboard(buildPlainText(), e.currentTarget);
   });
 
   document.getElementById('btn-copy-md').addEventListener('click', e => {
+    track('summary_copied', { format: 'markdown' });
     copyToClipboard(buildMarkdown(), e.currentTarget);
   });
 
@@ -2244,6 +2314,7 @@ function initCustomCategories() {
     if (!name) { nameIn.focus(); return; }
     const id = 'custom_' + Date.now();
     state.customCategories.push({ id, name, color: colorIn.value });
+    track('category_added');
     nameIn.value = '';
     form.classList.add('hidden');
     populateCategorySelect();
@@ -2258,6 +2329,25 @@ function initCustomCategories() {
   });
 }
 
+/* ── Legend toggle ────────────────────────────────────────────── */
+function initLegendToggle() {
+  const legend    = document.getElementById('legend');
+  const toggleBtn = document.getElementById('btn-legend-toggle');
+  if (!legend || !toggleBtn) return;
+
+  if (localStorage.getItem('keybindr-legend-collapsed') === 'true') {
+    legend.classList.add('collapsed');
+    toggleBtn.setAttribute('aria-expanded', 'false');
+  }
+
+  toggleBtn.addEventListener('click', () => {
+    const isCollapsed = legend.classList.toggle('collapsed');
+    toggleBtn.setAttribute('aria-expanded', String(!isCollapsed));
+    localStorage.setItem('keybindr-legend-collapsed', String(isCollapsed));
+    track('categories_toggled', { collapsed: isCollapsed });
+  });
+}
+
 /* ── Init ─────────────────────────────────────────────────────── */
 function initFooter() {
   document.getElementById('footer-year').textContent    = new Date().getFullYear();
@@ -2267,7 +2357,14 @@ function initFooter() {
 function init() {
   initTheme();
   loadFromStorage();
-  loadFromHash();
+  const loadedFromUrl = loadFromHash();
+
+  if (loadedFromUrl) {
+    track('map_loaded_from_url', { key_count: Object.keys(state.hotkeys).length });
+  } else if (Object.keys(state.hotkeys).length > 0) {
+    track('returning_user', { key_count: Object.keys(state.hotkeys).length });
+  }
+
   renderKeyboard();
   initKeyboardScale();
   populateCategorySelect();
@@ -2277,6 +2374,7 @@ function init() {
   initLayoutControls();
   initTemplates();
   initCustomCategories();
+  initLegendToggle();
   initFooter();
 }
 

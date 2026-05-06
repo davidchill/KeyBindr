@@ -1,8 +1,15 @@
-# KeyBindr
+<p align="center">
+  <img src="logos/logo-wide.png" alt="KeyBindr — Visualize your shortcuts" width="600">
+</p>
 
-A browser-based interactive tool for visualizing and documenting keyboard shortcuts. Click any key on a fully rendered keyboard to assign a label, modifiers, description, and color category. Maps can be exported and reimported as JSON.
+<p align="center">
+  A browser-based interactive tool for visualizing and documenting keyboard shortcuts.<br>
+  Click any key on a fully rendered keyboard to assign labels, modifiers, descriptions, and color categories.
+</p>
 
-**Version:** 0.4.1 — work in progress, active development.
+<p align="center">
+  <strong>Version:</strong> 0.4.2 — work in progress, active development.
+</p>
 
 ---
 
@@ -10,8 +17,8 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 
 ### Keyboard
 
-- **Multiple form factors** — Full (104-key), Tenkeyless (TKL), 60%, and Split layouts rendered on the fly
-- **Key map support** — switch between QWERTY, Dvorak, Colemak, AZERTY, and QWERTZ; key labels update instantly while physical key IDs (and existing assignments) are preserved
+- **Multiple form factors** — Full (104-key), Tenkeyless (TKL), 60%, Split, ZSA Voyager, ZSA Moonlander, and ErgoDox EZ layouts rendered on the fly
+- **Key map support** — switch between QWERTY, Dvorak, Colemak, AZERTY, and QWERTZ; key labels update instantly while physical key IDs and existing assignments are preserved
 - **Full 104-key layout** includes main block, navigation cluster, and numpad rendered from structured JavaScript data — no images or SVG sprites
 
 ### Key assignment
@@ -22,12 +29,12 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
   - Optional description
   - Color category
 - **8 built-in categories** with distinct colors: Movement, Edit/Undo, Selection, File/Save, View/Zoom, Tool/Mode, Combat, Custom
-- **Custom categories** — create your own categories with a name and color picker; they appear in the legend, the key-assignment dropdown, and the summary, and are persisted to `localStorage`
+- **Custom categories** — create your own with a name and color picker; they appear in the legend, the assignment dropdown, and the summary, and persist to `localStorage`
 - **Modifier pills** and action labels displayed directly on assigned key faces, filled with the category color
 
 ### Templates & map management
 
-- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button in the layout bar
+- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button
 - **New Map** — "New Map" tile in the Templates modal; enter a name and create a blank map in one step
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template
@@ -35,52 +42,61 @@ A browser-based interactive tool for visualizing and documenting keyboard shortc
 ### Visualization & interaction
 
 - **Hover tooltips** — hovering any assigned key shows a floating tooltip with the action label, modifiers, description, and category
-- **Category hover highlight** — hovering a category chip dims all non-matching keyboard keys and fades other summary groups; clicking locks the highlight in place with a ✓ indicator on the chip; click again to clear
-- **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to hot (dense clusters)
+- **Category hover highlight** — hovering a category chip dims all non-matching keys and fades other summary groups; clicking locks the filter with a ✓ indicator; click again to clear
+- **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to warm (dense clusters)
 - **Hover cross-highlight** — hovering an assigned key highlights its summary row, and vice versa
 
 ### UI & theming
 
-- **Mobile-friendly** — keyboard scales dynamically to fit any viewport via a `ResizeObserver`; header collapses to a hamburger menu on narrow screens; layout bar simplifies to Templates + form factor + key map selectors; categories and hotkey summary reflow for single-column display
+- **Collapsible categories bar** — toggle button in the categories header collapses the chip list with a smooth animation; when collapsed, any active (filtered) category chip remains visible; state persists across sessions
+- **Click-to-edit from summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled for that key; a pencil icon appears on hover as a visual affordance
+- **Mobile-friendly** — keyboard scales dynamically to fit any viewport via `ResizeObserver`; header collapses to a hamburger menu on narrow screens; categories and summary reflow for single-column display
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
 - **Inter font** — UI uses Inter (Google Fonts) for crisp, consistent rendering across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
-- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 3 columns; searchable by label or description
-- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another column; arrangement persists
+- **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; long labels and descriptions wrap within their column
+- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another; arrangement persists
 
 ### Data & export
 
-- **Named maps** — editable map name in the layout bar (ghost style at rest, styled on hover/focus)
+- **Named maps** — editable map name in the layout bar
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
-- **Share panel** — "Share" button opens a dropdown with five options: Copy Link (shareable URL with map encoded in hash), Post on X, Share on Reddit, Share via Email, and Copy as Markdown
-- **Copy as Text** — copies the full hotkey summary to the clipboard as formatted plain text, grouped by category
-- **Copy as Markdown** — copies the summary as a Markdown document with category headings and shortcut tables, ready to paste into Notion, GitHub, or any Markdown editor
-- **Undo / redo** — Ctrl+Z / Ctrl+Shift+Z (or buttons in the layout bar) with a 50-entry history covering all assignment changes
-- **Key conflict detection** — amber warning in the edit popover when typing a label already used on another key
-- **Label autocomplete** — typeahead dropdown on the Action Label field showing matching labels from other keys with key badge and divider
-- **Print** — renders the keyboard and summary as a clean printable page; UI chrome is hidden via `@media print`
+- **Share panel** — "Share" button opens a dropdown with five options: Copy Link (shareable URL with map encoded in the hash), Post on X, Share on Reddit, Share via Email, and Copy as Markdown
+- **Copy as Text / Markdown** — copies the full hotkey summary as formatted plain text or a Markdown document with category headings and shortcut tables
+- **Undo / Redo** — Ctrl+Z / Ctrl+Shift+Z (or layout bar buttons) with a 50-entry history
+- **Key conflict detection** — warning in the edit popover when a label is already used on another key
+- **Label autocomplete** — typeahead dropdown on the Action Label field showing matching labels from existing assignments
+- **Print** — clean printable layout; UI chrome hidden via `@media print`
 - **Persistent** — all assignments, map name, layout, key map, summary arrangement, and custom categories saved to `localStorage`
+
+### Analytics
+
+- **Google Analytics 4** — comprehensive event tracking via GA4 custom events, including key assignments, exports, imports, template loads, shares, prints, layout/keymap/theme changes, undo/redo, heatmap toggles, and more
+- **Session counters** — exports, imports, saves, shares, and prints each carry a `session_count` parameter so GA4 can report how many times each action is taken per visit
+- **Returning user detection** — fires `returning_user` on page load when a saved map exists in `localStorage`; fires `map_loaded_from_url` when a shared URL is opened
 
 ---
 
 ## How It Works
 
-The keyboard is rendered entirely at runtime from three layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`) in `app.js`. The active form factor and key map are read from `state` at render time — switching either re-renders the keyboard without touching the stored hotkey data.
+The keyboard is rendered entirely at runtime from layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`, `ZSA_KEYBOARDS`) in `app.js`. Switching form factor or key map re-renders the keyboard without touching stored hotkey data.
 
-The numpad uses CSS Grid with explicit `grid-column` / `grid-row` placement to handle special-shaped keys (`+` and `Enter` span 2 rows, `0` spans 2 columns).
+The numpad uses CSS Grid with explicit `grid-column` / `grid-row` placement to handle special-shaped keys (`+` and `Enter` span 2 rows, `0` spans 2 columns). ZSA split keyboards use a column-stagger renderer with computed thumb cluster offsets.
 
 App state:
 
 ```js
 {
   hotkeys:          { [keyId]: { label, description, category, modifiers[] } },
-  layout:           'full' | 'tkl' | '60' | 'split',
+  layout:           'full' | 'tkl' | '60' | 'split' | 'voyager' | 'moonlander' | 'ergodox',
   keyMap:           'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
-  summaryCols:      [ [catId, ...], [catId, ...], [catId, ...] ],
+  summaryCols:      [ [catId, ...], [catId, ...], [catId, ...], [catId, ...] ],
   customCategories: [ { id, name, color } ]
 }
 ```
+
+Theme preference and categories-bar collapsed state are stored separately under `keybindr-theme` and `keybindr-legend-collapsed`.
 
 ---
 
@@ -104,18 +120,18 @@ Then open `http://localhost:3000` (or `:8080`).
 
 ```
 site/
-├── index.html      # App shell — header, layout bar, keyboard, legend, summary, popovers
-├── style.css       # Themed stylesheet using CSS custom properties (light + dark)
-├── app.js          # All layout data, key maps, and application logic
-├── templates.js    # Built-in template maps (loaded before app.js, exposes TEMPLATES array)
-├── package.json    # Metadata only — no dependencies, no build tools
-├── logos/          # Brand assets (app icon, square logo, wide banner)
-├── favicon.svg     # Favicon (SVG, modern browsers)
+├── index.html          # App shell — header, layout bar, keyboard, legend, summary, popovers
+├── style.css           # Themed stylesheet using CSS custom properties (light + dark)
+├── app.js              # All layout data, key maps, and application logic
+├── templates.js        # Built-in template maps (loaded before app.js)
+├── package.json        # Metadata only — no dependencies, no build tools
+├── logos/              # Brand assets (app icon, square logo, wide banner)
+├── favicon.svg
 ├── favicon-96x96.png
 ├── favicon.ico
 ├── apple-touch-icon.png
 ├── site.webmanifest
-└── CHANGELOG.md    # Version history
+└── CHANGELOG.md
 ```
 
 ---
@@ -131,7 +147,7 @@ site/
 
 - More built-in templates (community apps, additional games)
 - Modifier layer views (Base / Shift / Ctrl / Alt layers per key)
-- Export to machine or cloud storage (local file picker + cloud-synced folder)
+- Export to cloud storage (local file picker + cloud-synced folder)
 
 ---
 
@@ -139,4 +155,3 @@ site/
 
 MIT
 <!-- deploy -->
-

@@ -116,19 +116,29 @@
 
   <main class="app-main">
     <div class="legend-section">
-      <div class="legend">
-        <div class="legend-title-row">
-          <span class="legend-title">Categories</span>
-          <button id="btn-add-cat" class="icon-btn" title="Add category">+</button>
+      <div class="legend" id="legend">
+        <div class="legend-header">
+          <div class="legend-title-row">
+            <span class="legend-title">Categories</span>
+            <button id="btn-add-cat" class="icon-btn" title="Add category">+</button>
+          </div>
+          <span id="stat-assigned" class="legend-stat">0 keys assigned</span>
+          <button id="btn-legend-toggle" class="icon-btn legend-toggle" title="Toggle categories" aria-expanded="true">
+            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>
+          </button>
         </div>
-        <div id="new-category-form" class="new-cat-form hidden">
-          <input type="text" id="new-cat-name" class="new-cat-name-input" placeholder="Name…" maxlength="30" autocomplete="off">
-          <input type="color" id="new-cat-color" class="new-cat-color-input" value="#6366f1">
-          <button id="btn-new-cat-add" class="btn btn-primary">Add</button>
-          <button id="btn-new-cat-cancel" class="icon-btn">✕</button>
+        <div class="legend-active-preview" id="legend-active-preview"></div>
+        <div class="legend-body">
+          <div class="legend-body-inner">
+            <div id="new-category-form" class="new-cat-form hidden">
+              <input type="text" id="new-cat-name" class="new-cat-name-input" placeholder="Name…" maxlength="30" autocomplete="off">
+              <input type="color" id="new-cat-color" class="new-cat-color-input" value="#6366f1">
+              <button id="btn-new-cat-add" class="btn btn-primary">Add</button>
+              <button id="btn-new-cat-cancel" class="icon-btn">✕</button>
+            </div>
+            <div id="category-list" class="category-list"></div>
+          </div>
         </div>
-        <div id="category-list" class="category-list"></div>
-        <span id="stat-assigned" class="legend-stat">0 keys assigned</span>
       </div>
     </div>
 
