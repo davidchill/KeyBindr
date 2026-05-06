@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.2.6] – 2026-05-05
+
+### Changed
+
+- **Coming Soon overlay — secret URL access** — removed the "Preview the app →" button from the overlay; the app now unlocks only when visited with the secret query parameter `?open=keybindr`; on match, the unlock state is written to `localStorage` (returning visits go straight to the app) and the param is stripped from the URL via `history.replaceState` so it never appears in the address bar after the first visit
+
+---
+
 ## [0.2.5] – 2026-05-05
 
 ### Added

@@ -1674,17 +1674,21 @@ function initCustomCategories() {
 
 /* ── Coming soon ──────────────────────────────────────────────── */
 const CS_KEY = 'keybindr-preview-unlocked';
+const CS_PARAM = 'open';
+const CS_SECRET = 'keybindr';
 
 function initComingSoon() {
   const overlay = document.getElementById('coming-soon');
+  const params = new URLSearchParams(window.location.search);
+  if (params.get(CS_PARAM) === CS_SECRET) {
+    localStorage.setItem(CS_KEY, '1');
+    // Strip the param from the URL without reloading
+    const clean = window.location.pathname;
+    history.replaceState(null, '', clean);
+  }
   if (localStorage.getItem(CS_KEY)) {
     overlay.classList.add('hidden');
-    return;
   }
-  document.getElementById('cs-preview').addEventListener('click', () => {
-    localStorage.setItem(CS_KEY, '1');
-    overlay.classList.add('hidden');
-  });
 }
 
 /* ── Init ─────────────────────────────────────────────────────── */
