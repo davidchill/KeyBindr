@@ -1,5 +1,18 @@
 # Changelog
 
+## [0.4.5] – 2026-05-06
+
+### Changed
+
+- **Print: keyboard scaling** — `.keyboard-scroll` now uses `zoom: 0.62` in `@media print` so the full 104-key layout (including numpad) fits within a standard letter-page width without clipping
+- **Print: background colors** — added `print-color-adjust: exact` and `-webkit-print-color-adjust: exact` on all elements; category colors on key faces and summary chips now render in print instead of being stripped by the browser
+- **Print: two-column summary layout** — hotkey summary switches to `column-count: 2` in print; content flows newspaper-style across both columns on each page before carrying over, rather than stacking in a single column
+- **Print: search bar hidden** — `.summary-search` is now hidden in print; only the "Hotkey Summary" heading and content columns appear
+- **Print: empty column suppression** — `.summary-col:empty` is hidden in print so unused column slots don't create blank grid cells
+- **Print: summary chip colors** — removed the `background: #e8e8e8` override that was flattening all chip colors to grey in print; category-colored chips now render correctly
+
+---
+
 ## [0.4.4] – 2026-05-06
 
 ### Added

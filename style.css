@@ -2080,6 +2080,12 @@ body {
   .popover,
   .template-modal { display: none !important; }
 
+  /* Force background colors and images to print */
+  * {
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
+  }
+
   body {
     background: #fff;
     color: #111;
@@ -2087,11 +2093,29 @@ body {
 
   .app-main { padding: 12px; }
 
-  .keyboard-section { page-break-after: avoid; }
+  /* Scale keyboard to fit page width */
+  .keyboard-scroll {
+    zoom: 0.62;
+  }
 
   .keyboard {
     box-shadow: none;
     border-color: #ccc;
+  }
+
+  .summary-search { display: none !important; }
+
+  /* Two-column flow: fills both columns on each page before carrying over */
+  .summary-columns {
+    display: block;
+    column-count: 2;
+    column-gap: 20px;
+  }
+
+  .summary-col:empty { display: none; }
+
+  .summary-group {
+    margin-bottom: 12px;
   }
 
   .summary-card {
@@ -2107,7 +2131,6 @@ body {
   }
 
   .summary-chip {
-    background: #e8e8e8;
     border-color: #ccc;
     color: #111;
     box-shadow: none;
