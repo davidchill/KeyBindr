@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.11] – 2026-05-07
+
+### Fixed
+
+- **Mobile: horizontal overflow eliminated** — `.brand-tagline` ("Map your muscle memory") is now hidden on viewports ≤ 768px; the tagline was 162px wide and pushing the page scroll width to 507px, clipping the hamburger menu button off-screen
+- **Mobile: category chip text no longer wraps** — added `white-space: nowrap` to `.cat-chip` so labels like "Edit / Undo" and "View / Zoom" stay on a single line
+- **Mobile: categories bar layout restructured** — `.legend` switches to CSS grid (`1fr auto auto` / `auto auto`) on mobile; the title row, key-count stat, and collapse chevron occupy a single header row; category chips fill a full-width second row below
+- **Mobile: collapsed categories bar height** — when the bar is collapsed, `row-gap` is zeroed and padding tightened (`7px 14px`) so the single-line header row sits at a proportional height rather than inheriting the expanded bar's spacing
+
+---
+
 ## [0.4.10] – 2026-05-07
 
 ### Added

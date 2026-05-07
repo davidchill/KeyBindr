@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.10 — work in progress, active development.
+  <strong>Version:</strong> 0.4.11 — work in progress, active development.
 </p>
 
 ---

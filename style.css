@@ -1090,6 +1090,7 @@ body::before {
   font-weight: 500;
   color: var(--text);
   cursor: default;
+  white-space: nowrap;
   transition: border-color 0.15s, background 0.15s;
 }
 .cat-chip:hover {
@@ -2244,12 +2245,47 @@ body::before {
 
   .layout-label { display: none; }
 
+  .brand-tagline { display: none; }
+
   .layout-select-btn { max-width: 120px; }
   .layout-select-btn .select-label { overflow: hidden; text-overflow: ellipsis; }
 
   /* ── Categories ── */
   .legend {
+    display: grid;
+    grid-template-columns: 1fr auto auto;
+    grid-template-rows: auto auto;
+    column-gap: 8px;
+    row-gap: 8px;
     padding: 10px 14px;
+    align-items: center;
+  }
+
+  .legend-title-row {
+    grid-column: 1;
+    grid-row: 1;
+  }
+
+  .legend-stat {
+    grid-column: 2;
+    grid-row: 1;
+    margin-left: 0;
+    white-space: nowrap;
+  }
+
+  .legend-toggle {
+    grid-column: 3;
+    grid-row: 1;
+  }
+
+  .legend-mid {
+    grid-column: 1 / -1;
+    grid-row: 2;
+  }
+
+  .legend.collapsed {
+    row-gap: 0;
+    padding: 7px 14px;
   }
 
   /* ── Summary ── */
