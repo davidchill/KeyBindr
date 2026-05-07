@@ -2,7 +2,7 @@ const TEMPLATES = [
   {
     id: 'photoshop',
     name: 'Adobe Photoshop',
-    icon: '<img src="icons/photoshop-icon.svg" alt="Adobe Photoshop" class="template-logo">',
+    iconSrc: 'icons/photoshop-icon.svg',
     appCategory: 'Design',
     hotkeys: {
       // Tools
@@ -42,7 +42,7 @@ const TEMPLATES = [
   {
     id: 'premiere',
     name: 'Adobe Premiere Pro',
-    icon: '<img src="icons/premier-pro-icon.svg" alt="Adobe Premiere Pro" class="template-logo">',
+    iconSrc: 'icons/premier-pro-icon.svg',
     appCategory: 'Video',
     hotkeys: {
       // Markers / in-out (bare keys)
@@ -83,7 +83,7 @@ const TEMPLATES = [
   {
     id: 'wow',
     name: 'World of Warcraft',
-    icon: '<img src="icons/WoW_icon.svg" alt="World of Warcraft" class="template-logo">',
+    iconSrc: 'icons/WoW_icon.svg',
     appCategory: 'Gaming',
     hotkeys: {
       KeyW: { label: 'Move Fwd',      description: 'Move forward',              category: 'movement',  modifiers: [] },
@@ -122,7 +122,7 @@ const TEMPLATES = [
   {
     id: 'vscode',
     name: 'VS Code',
-    icon: '<img src="icons/vscode_icon.svg" alt="VS Code" class="template-logo">',
+    iconSrc: 'icons/vscode_icon.svg',
     appCategory: 'Development',
     hotkeys: {
       KeyS: { label: 'Save',          description: 'Save file',                 category: 'file',      modifiers: ['Ctrl'] },

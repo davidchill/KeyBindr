@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.6';
+const VERSION = '0.4.7';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -55,6 +55,10 @@ const KEY_MAPS = {
     KeyY:'Z', KeyZ:'Y',
   },
 };
+
+const VALID_LAYOUTS  = new Set(LAYOUTS.map(l => l.id));
+const VALID_KEY_MAPS = new Set(Object.keys(KEY_MAPS));
+const SUMMARY_COLS   = 4;
 
 // Key IDs after which a visual split gap is inserted in split layout
 const SPLIT_AFTER = new Set(['Digit5', 'KeyT', 'KeyG', 'KeyB', 'Space']);
@@ -560,6 +564,15 @@ function displayMod(mod) {
   return state.platform === 'mac' ? (MOD_MAP_MAC[mod] ?? mod) : mod;
 }
 
+// Returns a darkened version of a hex color by blending with black at the given ratio.
+// Replaces color-mix() in JS contexts where CSS fallbacks aren't possible.
+function darkenHex(hex, ratio = 0.4) {
+  const r = parseInt(hex.slice(1, 3), 16);
+  const g = parseInt(hex.slice(3, 5), 16);
+  const b = parseInt(hex.slice(5, 7), 16);
+  return `rgb(${Math.round(r * ratio)},${Math.round(g * ratio)},${Math.round(b * ratio)})`;
+}
+
 function allCategories() {
   return [...CATEGORIES, ...state.customCategories];
 }
@@ -728,7 +741,7 @@ function refreshKeyEl(el, key) {
     const cat = allCategories().find(c => c.id === hotkey.category);
     const color = cat ? cat.color : '#4a4f6a';
     el.style.background = color;
-    el.style.setProperty('box-shadow', `0 3px 0 color-mix(in srgb, ${color} 40%, black), 0 1px 2px rgba(0,0,0,0.5)`);
+    el.style.setProperty('box-shadow', `0 3px 0 ${darkenHex(color)}, 0 1px 2px rgba(0,0,0,0.5)`);
 
     const wrap = document.createElement('div');
     wrap.className = 'key-hotkey';
@@ -1037,9 +1050,14 @@ function showKeyTooltip(keyId) {
   const catEl = tip.querySelector('.kt-cat');
   const cat = allCategories().find(c => c.id === hotkey.category);
   if (cat) {
-    catEl.innerHTML = `<span class="kt-cat-swatch" style="background:${cat.color}"></span><span>${cat.name}</span>`;
+    const swatch = document.createElement('span');
+    swatch.className = 'kt-cat-swatch';
+    swatch.style.background = cat.color;
+    const label = document.createElement('span');
+    label.textContent = cat.name;
+    catEl.replaceChildren(swatch, label);
   } else {
-    catEl.innerHTML = '';
+    catEl.replaceChildren();
   }
 
   tip.hidden = false;
@@ -1203,11 +1221,18 @@ function renderLegendActivePreview() {
   chip.className = 'cat-chip cat-active';
   chip.dataset.catId = cat.id;
   chip.style.setProperty('--cat-color', cat.color);
-  chip.innerHTML = `
-    <span class="cat-swatch" style="background:${cat.color}"></span>
-    <span>${cat.name}</span>
-    ${count ? `<span class="cat-count">${count}</span>` : ''}
-  `;
+  const swatch1 = document.createElement('span');
+  swatch1.className = 'cat-swatch';
+  swatch1.style.background = cat.color;
+  const nameSpan1 = document.createElement('span');
+  nameSpan1.textContent = cat.name;
+  chip.append(swatch1, nameSpan1);
+  if (count) {
+    const countSpan = document.createElement('span');
+    countSpan.className = 'cat-count';
+    countSpan.textContent = count;
+    chip.appendChild(countSpan);
+  }
   chip.addEventListener('click', () => applyFilter(cat.id));
   preview.appendChild(chip);
 }
@@ -1231,15 +1256,12 @@ function reapplyFilter() {
 let _dragCatId = null;
 
 function initSummaryCols() {
-  if (!state.summaryCols || state.summaryCols.length !== 4) {
+  if (!state.summaryCols || state.summaryCols.length !== SUMMARY_COLS) {
     const cats = allCategories();
-    const quarter = Math.ceil(cats.length / 4);
-    state.summaryCols = [
-      cats.slice(0, quarter).map(c => c.id),
-      cats.slice(quarter, quarter * 2).map(c => c.id),
-      cats.slice(quarter * 2, quarter * 3).map(c => c.id),
-      cats.slice(quarter * 3).map(c => c.id),
-    ];
+    const chunk = Math.ceil(cats.length / SUMMARY_COLS);
+    state.summaryCols = Array.from({ length: SUMMARY_COLS }, (_, i) =>
+      cats.slice(i * chunk, (i + 1) * chunk).map(c => c.id)
+    );
   }
   // Ensure any category not yet in a column is added to the shortest one
   const present = new Set(state.summaryCols.flat());
@@ -1460,7 +1482,7 @@ function renderSummary() {
   const colsEl = document.createElement('div');
   colsEl.className = 'summary-columns';
 
-  [0, 1, 2, 3].forEach(colIdx => {
+  Array.from({ length: SUMMARY_COLS }, (_, i) => i).forEach(colIdx => {
     const colEl = document.createElement('div');
     colEl.className = 'summary-col';
     colEl.dataset.col = colIdx;
@@ -1523,11 +1545,18 @@ function renderLegend() {
     chip.className = 'cat-chip';
     chip.dataset.catId = cat.id;
     chip.style.setProperty('--cat-color', cat.color);
-    chip.innerHTML = `
-      <span class="cat-swatch" style="background:${cat.color}"></span>
-      <span>${cat.name}</span>
-      ${counts[cat.id] ? `<span class="cat-count">${counts[cat.id]}</span>` : ''}
-    `;
+    const swatch2 = document.createElement('span');
+    swatch2.className = 'cat-swatch';
+    swatch2.style.background = cat.color;
+    const nameSpan2 = document.createElement('span');
+    nameSpan2.textContent = cat.name;
+    chip.append(swatch2, nameSpan2);
+    if (counts[cat.id]) {
+      const countSpan2 = document.createElement('span');
+      countSpan2.className = 'cat-count';
+      countSpan2.textContent = counts[cat.id];
+      chip.appendChild(countSpan2);
+    }
     chip.addEventListener('click', () => applyFilter(cat.id));
     chip.addEventListener('mouseenter', () => setCategoryHighlight(cat.id));
     chip.addEventListener('mouseleave', () => {
@@ -1684,7 +1713,16 @@ function renderLabelSuggestions() {
     const item = document.createElement('div');
     item.className = 'label-suggestion';
     item.dataset.idx = i;
-    item.innerHTML = `<span class="label-suggestion-key">${m.keyName}</span><span class="label-suggestion-divider">|</span><span class="label-suggestion-text">${m.label}</span>`;
+    const keySpan = document.createElement('span');
+    keySpan.className = 'label-suggestion-key';
+    keySpan.textContent = m.keyName;
+    const divSpan = document.createElement('span');
+    divSpan.className = 'label-suggestion-divider';
+    divSpan.textContent = '|';
+    const textSpan = document.createElement('span');
+    textSpan.className = 'label-suggestion-text';
+    textSpan.textContent = m.label;
+    item.append(keySpan, divSpan, textSpan);
     item.addEventListener('mousedown', e => {
       e.preventDefault();
       selectSuggestion(m.label);
@@ -1812,8 +1850,8 @@ function loadFromStorage() {
     const data = JSON.parse(raw);
     if (data.hotkeys) state.hotkeys = data.hotkeys;
     if (data.mapName) document.getElementById('map-name').value = data.mapName;
-    if (data.layout)      state.layout      = data.layout;
-    if (data.keyMap)      state.keyMap      = data.keyMap;
+    if (data.layout && VALID_LAYOUTS.has(data.layout))   state.layout = data.layout;
+    if (data.keyMap && VALID_KEY_MAPS.has(data.keyMap)) state.keyMap = data.keyMap;
     if (data.summaryCols)      state.summaryCols      = data.summaryCols;
     if (data.customCategories) state.customCategories = data.customCategories;
     if (data.platform) {
@@ -1845,8 +1883,8 @@ function loadFromHash() {
     const data = JSON.parse(decodeURIComponent(atob(hash.slice(5))));
     if (data.hotkeys)          state.hotkeys          = data.hotkeys;
     if (data.mapName)          document.getElementById('map-name').value = data.mapName;
-    if (data.layout)           state.layout           = data.layout;
-    if (data.keyMap)           state.keyMap           = data.keyMap;
+    if (data.layout && VALID_LAYOUTS.has(data.layout))   state.layout = data.layout;
+    if (data.keyMap && VALID_KEY_MAPS.has(data.keyMap)) state.keyMap = data.keyMap;
     if (data.customCategories) state.customCategories = data.customCategories;
     history.replaceState(null, '', location.pathname);
     return true;
@@ -1948,6 +1986,7 @@ function importMap(file) {
     try {
       const data = JSON.parse(e.target.result);
       if (!data.hotkeys) throw new Error();
+      pushUndo();
       state.hotkeys = data.hotkeys;
       if (data.name) document.getElementById('map-name').value = data.name;
       track('map_imported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.imports });
@@ -2082,13 +2121,32 @@ function initTemplates() {
     const tile = document.createElement('button');
     tile.className = 'template-tile';
     tile.dataset.category = template.appCategory;
-    tile.innerHTML = `
-      <span class="template-icon">${template.icon}</span>
-      <span class="template-name">${template.name}</span>
-      <span class="template-meta">
-        <span class="template-badge">${template.appCategory}</span>
-        <span class="template-count">${count} keys</span>
-      </span>`;
+
+    const iconSpan = document.createElement('span');
+    iconSpan.className = 'template-icon';
+    const img = document.createElement('img');
+    img.src = template.iconSrc;
+    img.alt = template.name;
+    img.className = 'template-logo';
+    iconSpan.appendChild(img);
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'template-name';
+    nameSpan.textContent = template.name;
+
+    const badgeSpan = document.createElement('span');
+    badgeSpan.className = 'template-badge';
+    badgeSpan.textContent = template.appCategory;
+
+    const countSpan = document.createElement('span');
+    countSpan.className = 'template-count';
+    countSpan.textContent = `${count} keys`;
+
+    const metaSpan = document.createElement('span');
+    metaSpan.className = 'template-meta';
+    metaSpan.append(badgeSpan, countSpan);
+
+    tile.append(iconSpan, nameSpan, metaSpan);
     tile.addEventListener('click', () => loadTemplate(template));
     grid.appendChild(tile);
   });
@@ -2201,13 +2259,12 @@ function initEvents() {
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
 
-  document.getElementById('btn-save').addEventListener('click', openTemplatesModal);
-
   document.getElementById('btn-new').addEventListener('click', () => {
     if (Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim()) {
       if (!confirm('Start a new map? This will clear the name and all assigned hotkeys.')) return;
     }
     track('new_map_started', { session_count: ++_sessionCounts.saves });
+    pushUndo();
     state.hotkeys = {};
     document.getElementById('map-name').value = '';
     renderKeyboard();

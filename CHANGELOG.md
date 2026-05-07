@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.7] – 2026-05-07
+
+### Fixed
+
+- **Save button wired to wrong action** — the "Save" button in the layout bar was calling `openTemplatesModal()` instead of saving; removed the button entirely since auto-save to `localStorage` already fires on every change
+- **XSS via `innerHTML` in category rendering** — `cat.name` and `cat.color` were injected into `innerHTML` via template literals in four places (key tooltip, legend chips, active preview chip, label suggestions); all replaced with `createElement` + `textContent` / `style.background` to prevent script injection via a crafted JSON import or shared URL
+- **No validation on `layout` / `keyMap` values from external sources** — `loadFromStorage` and `loadFromHash` now check values against `VALID_LAYOUTS` and `VALID_KEY_MAPS` Sets before assigning; unknown values are silently ignored, leaving defaults intact instead of producing a broken keyboard
+- **`importMap()` skipped undo snapshot** — `pushUndo()` now called before replacing `state.hotkeys` on import, making it reversible with Ctrl+Z like every other destructive operation
+- **"New" button skipped undo snapshot** — `pushUndo()` added before clearing `state.hotkeys`, consistent with the "Clear All" button which already did this correctly
+
+### Changed
+
+- **`color-mix()` removed from JS inline style** — `box-shadow` on assigned keys was set via `setProperty` using `color-mix()`, which has no CSS fallback when assigned in JavaScript; replaced with a new `darkenHex(hex, ratio)` helper that computes the same darkened shade directly, working correctly in all browsers including Safari ≤16.1
+- **`SUMMARY_COLS` constant** — the magic number `4` (summary column count) was repeated in three places (`initSummaryCols`, the init array construction, and the render loop); extracted to a single `SUMMARY_COLS = 4` constant
+- **`templates.js` icon field** — `icon` property (raw HTML `<img>` string) renamed to `iconSrc` (URL string); `<img>` element is now constructed safely in `initTemplates` via `createElement`, eliminating an XSS vector for any future dynamic template loading
+
+---
+
 ## [0.4.6] – 2026-05-06
 
 ### Added
