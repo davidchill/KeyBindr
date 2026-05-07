@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.7 — work in progress, active development.
+  <strong>Version:</strong> 0.4.8 — work in progress, active development.
 </p>
 
 ---
@@ -28,8 +28,7 @@
   - Action label (e.g. "Undo", "Save", "Jump")
   - Optional description
   - Color category
-- **8 built-in categories** with distinct colors: Movement, Edit/Undo, Selection, File/Save, View/Zoom, Tool/Mode, Combat, Custom
-- **Custom categories** — create your own with a name and color picker; they appear in the legend, the assignment dropdown, and the summary, and persist to `localStorage`
+- **Fully custom categories** — blank maps start with no categories; create any category with a name and color picker; edit or delete categories inline; templates auto-populate only the categories they use; categories persist to `localStorage`
 - **Modifier pills** and action labels displayed directly on assigned key faces, filled with the category color
 
 ### Templates & map management
@@ -94,7 +93,7 @@ App state:
   layout:           'full' | 'tkl' | '60' | 'split' | 'voyager' | 'moonlander' | 'ergodox',
   keyMap:           'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
   summaryCols:      [ [catId, ...], [catId, ...], [catId, ...], [catId, ...] ],
-  customCategories: [ { id, name, color } ],
+  categories:       [ { id, name, color } ],
   platform:         'windows' | 'mac'
 }
 ```

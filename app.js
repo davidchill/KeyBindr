@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.7';
+const VERSION = '0.4.8';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -64,7 +64,7 @@ const SUMMARY_COLS   = 4;
 const SPLIT_AFTER = new Set(['Digit5', 'KeyT', 'KeyG', 'KeyB', 'Space']);
 const SPLIT_GAP   = 28; // px
 
-const CATEGORIES = [
+const DEFAULT_CATEGORIES = [
   { id: 'movement',  name: 'Movement',     color: '#3b82f6' },
   { id: 'edit',      name: 'Edit / Undo',  color: '#f97316' },
   { id: 'selection', name: 'Selection',    color: '#a855f7' },
@@ -557,7 +557,7 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', customCategories: [], platform: 'windows' };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows' };
 
 const MOD_MAP_MAC = { Ctrl: 'Cmd', Alt: 'Opt', Shift: 'Shift', Win: 'Cmd' };
 function displayMod(mod) {
@@ -574,7 +574,7 @@ function darkenHex(hex, ratio = 0.4) {
 }
 
 function allCategories() {
-  return [...CATEGORIES, ...state.customCategories];
+  return state.categories;
 }
 let activeKeyId = null;
 
@@ -605,13 +605,11 @@ function applyKbScale() {
     kbEl.style.transformOrigin = 'top left';
     scroll.style.width         = Math.round(_kbNaturalW * scale) + 'px';
     scroll.style.height        = Math.round(_kbNaturalH * scale) + 'px';
-    scroll.style.overflow      = 'hidden';
   } else {
     kbEl.style.transform       = '';
     kbEl.style.transformOrigin = '';
     scroll.style.width         = '';
     scroll.style.height        = '';
-    scroll.style.overflow      = '';
   }
 }
 
@@ -851,6 +849,7 @@ function renderZSAKeyboard(kbId) {
   const kbEl    = document.getElementById('keyboard');
   kbEl.style.paddingBottom = '';
   kbEl.classList.add('zsa-split-mode');
+  document.querySelector('.keyboard-scroll').classList.add('zsa-split-mode');
 
   const wrap = document.createElement('div');
   wrap.className = 'zsa-halves';
@@ -935,6 +934,7 @@ function renderKeyboard() {
   const kb = document.getElementById('keyboard');
   kb.innerHTML = '';
   kb.classList.remove('zsa-split-mode');
+  document.querySelector('.keyboard-scroll').classList.remove('zsa-split-mode');
 
   if (ZSA_IDS.has(state.layout)) {
     renderZSAKeyboard(state.layout);
@@ -1540,31 +1540,8 @@ function renderLegend() {
     if (hk.category) counts[hk.category] = (counts[hk.category] || 0) + 1;
   });
 
-  allCategories().forEach(cat => {
-    const chip = document.createElement('div');
-    chip.className = 'cat-chip';
-    chip.dataset.catId = cat.id;
-    chip.style.setProperty('--cat-color', cat.color);
-    const swatch2 = document.createElement('span');
-    swatch2.className = 'cat-swatch';
-    swatch2.style.background = cat.color;
-    const nameSpan2 = document.createElement('span');
-    nameSpan2.textContent = cat.name;
-    chip.append(swatch2, nameSpan2);
-    if (counts[cat.id]) {
-      const countSpan2 = document.createElement('span');
-      countSpan2.className = 'cat-count';
-      countSpan2.textContent = counts[cat.id];
-      chip.appendChild(countSpan2);
-    }
-    chip.addEventListener('click', () => applyFilter(cat.id));
-    chip.addEventListener('mouseenter', () => setCategoryHighlight(cat.id));
-    chip.addEventListener('mouseleave', () => {
-      if (filterCat) setCategoryHighlight(filterCat);
-      else clearCategoryHighlight();
-    });
-    if (cat.id === filterCat) chip.classList.add('cat-active');
-    list.appendChild(chip);
+  state.categories.forEach(cat => {
+    list.appendChild(buildCatChip(cat, counts[cat.id] || 0));
   });
 
   const count = Object.keys(state.hotkeys).length;
@@ -1572,6 +1549,120 @@ function renderLegend() {
   document.getElementById('stat-assigned').textContent =
     total ? `${count} / ${total} keys assigned` : `${count} keys assigned`;
   renderLegendActivePreview();
+}
+
+function buildCatChip(cat, count) {
+  const chip = document.createElement('div');
+  chip.className = 'cat-chip';
+  chip.dataset.catId = cat.id;
+  chip.style.setProperty('--cat-color', cat.color);
+
+  const swatch = document.createElement('span');
+  swatch.className = 'cat-swatch';
+  swatch.style.background = cat.color;
+
+  const nameSpan = document.createElement('span');
+  nameSpan.textContent = cat.name;
+
+  chip.append(swatch, nameSpan);
+
+  if (count) {
+    const countSpan = document.createElement('span');
+    countSpan.className = 'cat-count';
+    countSpan.textContent = count;
+    chip.appendChild(countSpan);
+  }
+
+  const editBtn = document.createElement('button');
+  editBtn.className = 'cat-edit-btn';
+  editBtn.title = 'Edit category';
+  editBtn.innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>`;
+  editBtn.addEventListener('click', e => { e.stopPropagation(); startEditCategory(chip, cat); });
+  chip.appendChild(editBtn);
+
+  chip.addEventListener('click', () => {
+    if (chip.classList.contains('cat-chip-editing')) return;
+    applyFilter(cat.id);
+  });
+  chip.addEventListener('mouseenter', () => {
+    if (!chip.classList.contains('cat-chip-editing')) setCategoryHighlight(cat.id);
+  });
+  chip.addEventListener('mouseleave', () => {
+    if (filterCat) setCategoryHighlight(filterCat);
+    else clearCategoryHighlight();
+  });
+  if (cat.id === filterCat) chip.classList.add('cat-active');
+
+  return chip;
+}
+
+function startEditCategory(chip, cat) {
+  chip.classList.add('cat-chip-editing');
+  chip.innerHTML = '';
+
+  const colorIn = document.createElement('input');
+  colorIn.type = 'color';
+  colorIn.className = 'cat-edit-color';
+  colorIn.value = cat.color;
+
+  const nameIn = document.createElement('input');
+  nameIn.type = 'text';
+  nameIn.className = 'cat-edit-name';
+  nameIn.value = cat.name;
+  nameIn.maxLength = 30;
+  nameIn.autocomplete = 'off';
+
+  const saveBtn = document.createElement('button');
+  saveBtn.className = 'btn btn-primary cat-save-btn';
+  saveBtn.textContent = 'Save';
+
+  const cancelBtn = document.createElement('button');
+  cancelBtn.className = 'icon-btn';
+  cancelBtn.textContent = '✕';
+  cancelBtn.title = 'Cancel';
+
+  const deleteBtn = document.createElement('button');
+  deleteBtn.className = 'cat-delete-btn';
+  deleteBtn.textContent = 'Delete';
+  deleteBtn.title = 'Delete category';
+
+  const doSave = () => {
+    const newName = nameIn.value.trim();
+    if (!newName) { nameIn.focus(); return; }
+    const c = state.categories.find(c => c.id === cat.id);
+    if (c) { c.name = newName; c.color = colorIn.value; }
+    populateCategorySelect();
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+  };
+
+  saveBtn.addEventListener('click',   e => { e.stopPropagation(); doSave(); });
+  cancelBtn.addEventListener('click', e => { e.stopPropagation(); renderLegend(); });
+  deleteBtn.addEventListener('click', e => { e.stopPropagation(); deleteCategory(cat.id); });
+  nameIn.addEventListener('keydown', e => {
+    if (e.key === 'Enter')  doSave();
+    if (e.key === 'Escape') renderLegend();
+  });
+
+  chip.append(colorIn, nameIn, saveBtn, cancelBtn, deleteBtn);
+  setTimeout(() => { nameIn.select(); nameIn.focus(); }, 30);
+}
+
+function deleteCategory(id) {
+  const cat = state.categories.find(c => c.id === id);
+  if (!cat) return;
+  const usedCount = Object.values(state.hotkeys).filter(hk => hk.category === id).length;
+  if (usedCount > 0 && !confirm(`Delete "${cat.name}"? ${usedCount} hotkey${usedCount > 1 ? 's' : ''} will become uncategorized.`)) return;
+  Object.values(state.hotkeys).forEach(hk => { if (hk.category === id) hk.category = ''; });
+  state.categories = state.categories.filter(c => c.id !== id);
+  if (filterCat === id) { filterCat = null; clearCategoryHighlight(); }
+  populateCategorySelect();
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
+  saveToStorage();
 }
 
 /* ── Summary search ───────────────────────────────────────────── */
@@ -1832,13 +1923,13 @@ function clearHotkey() {
 function saveToStorage() {
   try {
     localStorage.setItem('keybindr', JSON.stringify({
-      hotkeys:          state.hotkeys,
-      mapName:          document.getElementById('map-name').value,
-      layout:           state.layout,
-      keyMap:           state.keyMap,
-      summaryCols:      state.summaryCols,
-      customCategories: state.customCategories,
-      platform:         state.platform,
+      hotkeys:     state.hotkeys,
+      mapName:     document.getElementById('map-name').value,
+      layout:      state.layout,
+      keyMap:      state.keyMap,
+      summaryCols: state.summaryCols,
+      categories:  state.categories,
+      platform:    state.platform,
     }));
   } catch (_) {}
 }
@@ -1852,8 +1943,15 @@ function loadFromStorage() {
     if (data.mapName) document.getElementById('map-name').value = data.mapName;
     if (data.layout && VALID_LAYOUTS.has(data.layout))   state.layout = data.layout;
     if (data.keyMap && VALID_KEY_MAPS.has(data.keyMap)) state.keyMap = data.keyMap;
-    if (data.summaryCols)      state.summaryCols      = data.summaryCols;
-    if (data.customCategories) state.customCategories = data.customCategories;
+    if (data.summaryCols) state.summaryCols = data.summaryCols;
+    // Migrate old customCategories format, or load new categories array
+    state.categories = data.categories || data.customCategories || [];
+    // Restore any DEFAULT_CATEGORIES referenced by hotkeys but not yet in state.categories
+    const usedCatIds    = new Set(Object.values(state.hotkeys).map(hk => hk.category).filter(Boolean));
+    const existingIds   = new Set(state.categories.map(c => c.id));
+    DEFAULT_CATEGORIES.forEach(cat => {
+      if (usedCatIds.has(cat.id) && !existingIds.has(cat.id)) state.categories.push({ ...cat });
+    });
     if (data.platform) {
       state.platform = data.platform;
       document.querySelectorAll('.platform-btn').forEach(btn => {
@@ -1866,11 +1964,11 @@ function loadFromStorage() {
 /* ── Share via URL ────────────────────────────────────────────── */
 function buildShareUrl() {
   const data = {
-    hotkeys:          state.hotkeys,
-    mapName:          document.getElementById('map-name').value,
-    layout:           state.layout,
-    keyMap:           state.keyMap,
-    customCategories: state.customCategories,
+    hotkeys:    state.hotkeys,
+    mapName:    document.getElementById('map-name').value,
+    layout:     state.layout,
+    keyMap:     state.keyMap,
+    categories: state.categories,
   };
   const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
   return `${location.origin}${location.pathname}#map=${encoded}`;
@@ -1881,11 +1979,11 @@ function loadFromHash() {
     const hash = window.location.hash;
     if (!hash.startsWith('#map=')) return false;
     const data = JSON.parse(decodeURIComponent(atob(hash.slice(5))));
-    if (data.hotkeys)          state.hotkeys          = data.hotkeys;
-    if (data.mapName)          document.getElementById('map-name').value = data.mapName;
+    if (data.hotkeys) state.hotkeys = data.hotkeys;
+    if (data.mapName) document.getElementById('map-name').value = data.mapName;
     if (data.layout && VALID_LAYOUTS.has(data.layout))   state.layout = data.layout;
     if (data.keyMap && VALID_KEY_MAPS.has(data.keyMap)) state.keyMap = data.keyMap;
-    if (data.customCategories) state.customCategories = data.customCategories;
+    state.categories = data.categories || data.customCategories || [];
     history.replaceState(null, '', location.pathname);
     return true;
   } catch (_) { return false; }
@@ -1970,7 +2068,7 @@ async function copyToClipboard(text, btn) {
 function exportMap() {
   const name = document.getElementById('map-name').value || 'hotkey-map';
   track('map_exported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
-  const data = { version: 1, name, hotkeys: state.hotkeys };
+  const data = { version: 1, name, hotkeys: state.hotkeys, categories: state.categories };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -1987,9 +2085,11 @@ function importMap(file) {
       const data = JSON.parse(e.target.result);
       if (!data.hotkeys) throw new Error();
       pushUndo();
-      state.hotkeys = data.hotkeys;
+      state.hotkeys   = data.hotkeys;
+      state.categories = data.categories || [];
       if (data.name) document.getElementById('map-name').value = data.name;
       track('map_imported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.imports });
+      populateCategorySelect();
       renderKeyboard();
       renderLegend();
       renderSummary();
@@ -2022,8 +2122,16 @@ function loadTemplate(template) {
   state.hotkeys = Object.fromEntries(
     Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
   );
+  // Populate categories from the template's explicit list, or derive from hotkey assignments
+  if (template.categories) {
+    state.categories = template.categories.map(c => ({ ...c }));
+  } else {
+    const usedIds = new Set(Object.values(state.hotkeys).map(hk => hk.category).filter(Boolean));
+    state.categories = DEFAULT_CATEGORIES.filter(c => usedIds.has(c.id)).map(c => ({ ...c }));
+  }
   document.getElementById('map-name').value = template.name;
   track('template_loaded', { template_name: template.name, template_category: template.appCategory, session_count: ++_sessionCounts.saves });
+  populateCategorySelect();
   renderKeyboard();
   renderLegend();
   renderSummary();
@@ -2095,9 +2203,11 @@ function initTemplates() {
     const name = nameInput.value.trim() || 'Untitled Map';
     if (Object.keys(state.hotkeys).length > 0 &&
         !confirm(`Start a new map named "${name}"? This will clear your current map.`)) return;
-    state.hotkeys = {};
+    state.hotkeys    = {};
+    state.categories = [];
     document.getElementById('map-name').value = name;
     track('new_map_created', { session_count: ++_sessionCounts.saves });
+    populateCategorySelect();
     renderKeyboard();
     renderLegend();
     renderSummary();
@@ -2414,7 +2524,7 @@ function initCustomCategories() {
     const name = nameIn.value.trim();
     if (!name) { nameIn.focus(); return; }
     const id = 'custom_' + Date.now();
-    state.customCategories.push({ id, name, color: colorIn.value });
+    state.categories.push({ id, name, color: colorIn.value });
     track('category_added');
     nameIn.value = '';
     form.classList.add('hidden');

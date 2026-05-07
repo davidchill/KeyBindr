@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.8] – 2026-05-07
+
+### Added
+
+- **Inline category editing** — hovering a category chip reveals a pencil icon; clicking it replaces the chip in-place with an edit form (color picker + name input + Save + Delete); Delete prompts for confirmation if any hotkeys reference that category
+- **Category delete** — categories can be removed from the legend; if hotkeys reference the deleted category, a confirmation dialog warns and clears the references on confirm
+
+### Changed
+
+- **Category system overhaul** — categories no longer pre-populate on blank / new maps; `state.categories` starts empty and is only populated when a template is loaded or when a legacy save references built-in category IDs; the 8 built-in definitions moved to a `DEFAULT_CATEGORIES` constant (used only for migration and template derivation, not shown by default); renamed from `customCategories` → `categories` in `localStorage`, share URLs, and import/export JSON with automatic backward-compatibility migration
+- **Category bar layout** — restructured from a stacked header + collapsible body into a single flat flex row: **[Categories +]** | **[chips]** | **[Keys Assigned ∨]**; chips populate the middle `flex: 1` region and wrap naturally; the new-category form expands inline within that region; no more separate legend-header / legend-body DOM sections
+- **Category chip sizing** — the hidden edit button was previously `opacity: 0` and still consumed 16 px + 7 px gap in layout; changed to `display: none` (revealed on hover as `display: inline-flex`) so chips shrink to fit only their swatch, name, and count
+- **Keyboard corner rounding** — replaced the JS `borderRadius = 16 / scale` compensation hack with an architectural fix: all visual shell properties (`background`, `border-radius`, `box-shadow`, and the border via `box-shadow: inset 0 0 0 1px var(--border)`) moved from `#keyboard` to `.keyboard-scroll`; since `.keyboard-scroll` is never subject to `transform: scale()`, the 16 px corner radius stays constant in screen pixels at every viewport size; `overflow: hidden` clips the scaled keyboard content at those corners; ZSA split-keyboard mode now also adds / removes `zsa-split-mode` on `.keyboard-scroll` (transparent + `overflow: visible`) in sync with `#keyboard`
+
+---
+
 ## [0.4.7] – 2026-05-07
 
 ### Fixed
