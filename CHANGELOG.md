@@ -1,5 +1,19 @@
 # Changelog
 
+## [0.4.12] – 2026-05-07
+
+### Fixed
+
+- **Keyboard scaling: cut-off eliminated** — scaling is now applied to `.keyboard-scroll` (the outer shell) via a new `.keyboard-scale-wrap` layout wrapper, rather than the inner `#keyboard` element; `scroll.style.width` is explicitly pinned to the natural width before the transform runs so `overflow: hidden` cannot pre-clip the keyboard; `wrap.style.flexShrink = '0'` prevents the flex container from squeezing the wrap below its target visual size
+- **Keyboard scaling: rounded corners preserved at all scales** — `border-radius` is set inversely (`Math.round(16 / scale)`) on `.keyboard-scroll` before the transform so the visual corner radius holds at a consistent 16 px regardless of zoom level; eliminates the GPU compositing boundary issue where a child transform bypassed the parent's `border-radius + overflow: hidden` clip
+- **Removed conflicting mobile overflow** — `overflow-x: auto` on `.keyboard-scroll` inside `@media (max-width: 768px)` was causing the keyboard to scroll instead of scale on mobile; removed in favour of pure JS `transform: scale()` ownership
+
+### Added
+
+- **Tablet breakpoint (`max-width: 1024px`)** — new CSS media query hides the editing controls group (New, map name input, undo/redo, Clear All, Heat Map, layout bar dividers) and the brand tagline on viewports 769 px – 1024 px wide; the layout bar retains only Templates, Form Factor, and Key Map — all that's needed to browse layouts without the editing toolbar crowding the available space
+
+---
+
 ## [0.4.11] – 2026-05-07
 
 ### Fixed

@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.11 — work in progress, active development.
+  <strong>Version:</strong> 0.4.12 — work in progress, active development.
 </p>
 
 ---
@@ -49,7 +49,7 @@
 
 - **Collapsible categories bar** — toggle button in the categories header collapses the chip list with a smooth animation; when collapsed, any active (filtered) category chip remains visible; state persists across sessions
 - **Click-to-edit from summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled for that key; a pencil icon appears on hover as a visual affordance
-- **Mobile-friendly** — keyboard scales dynamically to fit any viewport via `ResizeObserver`; header collapses to a hamburger menu on narrow screens; categories and summary reflow for single-column display
+- **Responsive scaling** — keyboard scales dynamically to fit any viewport via `ResizeObserver` and `transform: scale()`; visual corner radius compensated inversely so rounded corners look consistent at any zoom level; header collapses to a hamburger menu on narrow screens (≤768 px); a tablet breakpoint (≤1024 px) trims the layout bar to Templates + Form Factor + Key Map to avoid crowding; categories and summary reflow for single-column display
 - **Style dropdown** — "Style" button in the header nav opens a panel with two sections: Color Scheme (five full UI themes: Default, Synthwave, Phosphor, Crimson, Forge) and Mode (Light / System / Dark); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preferences persist under `keybindr-scheme` and `keybindr-theme`
 - **Windows / Mac platform toggle** — Win / Mac segmented control in the header nav left side; switches modifier labels throughout the UI (`Ctrl → Cmd`, `Alt → Opt`) in summary chips, key tooltips, and copy output; persists across sessions
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms

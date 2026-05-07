@@ -1,8 +1,10 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.11';
-const UNIT = 44;
-const GAP  = 4;
-const FN_H = 30;
+const VERSION = '0.4.12';
+const UNIT        = 44;
+const GAP         = 4;
+const FN_H        = 30;
+const MIN_KB_SCALE = 0.45; // below this, cap and let the section scroll
+const KB_PADDING   = 24;   // breathing room subtracted from available width
 
 /* ── Analytics ────────────────────────────────────────────────── */
 const _sessionCounts = { saves: 0, shares: 0, prints: 0, exports: 0, imports: 0 };
@@ -593,36 +595,51 @@ function applyTheme(pref) {
 /* ── Keyboard scale (ResizeObserver) ──────────────────────────── */
 function applyKbScale() {
   const section = document.querySelector('.keyboard-section');
-  const kbEl    = document.getElementById('keyboard');
+  const wrap    = document.querySelector('.keyboard-scale-wrap');
   const scroll  = document.querySelector('.keyboard-scroll');
-  if (!section || !kbEl || !scroll || !_kbNaturalW) return;
+  if (!section || !wrap || !scroll || !_kbNaturalW) return;
 
-  const available = section.clientWidth;
-  const scale     = Math.min(1, available / _kbNaturalW);
+  const scale = Math.min(1, section.clientWidth / _kbNaturalW);
 
   if (scale < 1) {
-    kbEl.style.transform       = `scale(${scale})`;
-    kbEl.style.transformOrigin = 'top left';
-    scroll.style.width         = Math.round(_kbNaturalW * scale) + 'px';
-    scroll.style.height        = Math.round(_kbNaturalH * scale) + 'px';
+    // Pin scroll to its natural width so overflow:hidden doesn't pre-clip it
+    scroll.style.width           = _kbNaturalW + 'px';
+    scroll.style.transform       = `scale(${scale})`;
+    scroll.style.transformOrigin = 'top left';
+    // Scale border-radius inversely so it looks the same size at any zoom level
+    scroll.style.borderRadius    = Math.round(16 / scale) + 'px';
+    // Collapse the layout footprint to the visual size
+    wrap.style.width             = Math.floor(_kbNaturalW * scale) + 'px';
+    wrap.style.height            = Math.round(_kbNaturalH * scale) + 'px';
+    wrap.style.overflow          = 'hidden';
+    wrap.style.flexShrink        = '0';
   } else {
-    kbEl.style.transform       = '';
-    kbEl.style.transformOrigin = '';
-    scroll.style.width         = '';
-    scroll.style.height        = '';
+    scroll.style.width           = '';
+    scroll.style.transform       = '';
+    scroll.style.transformOrigin = '';
+    scroll.style.borderRadius    = '';
+    wrap.style.width             = '';
+    wrap.style.height            = '';
+    wrap.style.overflow          = '';
+    wrap.style.flexShrink        = '';
   }
 }
 
 function measureAndScaleKeyboard() {
-  const kbEl   = document.getElementById('keyboard');
+  const wrap   = document.querySelector('.keyboard-scale-wrap');
   const scroll = document.querySelector('.keyboard-scroll');
-  if (!kbEl || !scroll) return;
+  if (!wrap || !scroll) return;
 
-  kbEl.style.transform = '';
-  scroll.style.height  = '';
+  scroll.style.width        = '';
+  scroll.style.transform    = '';
+  scroll.style.borderRadius = '';
+  wrap.style.width          = '';
+  wrap.style.height         = '';
+  wrap.style.overflow       = '';
+  wrap.style.flexShrink     = '';
 
-  _kbNaturalW = kbEl.offsetWidth;
-  _kbNaturalH = kbEl.offsetHeight;
+  _kbNaturalW = scroll.offsetWidth;
+  _kbNaturalH = scroll.offsetHeight;
 
   applyKbScale();
 }

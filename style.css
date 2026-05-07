@@ -2173,12 +2173,25 @@ body::before {
 }
 .mobile-menu-btn:hover { color: var(--text); }
 
+/* ── Tablet / medium viewport ────────────────────────────────── */
+@media (max-width: 1024px) {
+  /* Hide editing controls; keep Templates + form-factor + key-map selectors */
+  #btn-new,
+  .map-name-wrapper,
+  .undo-redo-group,
+  #btn-clear-all,
+  #btn-heatmap,
+  .layout-bar-divider { display: none; }
+
+  .brand-tagline { display: none; }
+
+  .app-header { padding: 6px 16px; }
+}
+
 /* ── Mobile / narrow viewport ─────────────────────────────────── */
 @media (max-width: 768px) {
   /* ── Keyboard ── */
-  .keyboard-scroll {
-    overflow-x: auto;
-  }
+  /* overflow-x handled by JS scaling; .keyboard-section gets auto when at min scale */
 
   /* ── Header ── */
   .app-header {
