@@ -1201,6 +1201,7 @@ body::before {
   margin-left: auto;
   margin-right: 2px;
 }
+.stat-suffix { display: inline; }
 
 /* ── Popover ──────────────────────────────────────────────────── */
 .popover-overlay {
@@ -2265,35 +2266,29 @@ body::before {
 
   /* ── Categories ── */
   .legend {
-    display: grid;
-    grid-template-columns: 1fr auto auto;
-    grid-template-rows: auto auto;
-    column-gap: 8px;
-    row-gap: 8px;
-    padding: 10px 14px;
+    display: flex;
+    flex-wrap: wrap;
     align-items: center;
-  }
-
-  .legend-title-row {
-    grid-column: 1;
-    grid-row: 1;
+    column-gap: 8px;
+    row-gap: 0;
+    padding: 10px 14px;
   }
 
   .legend-stat {
-    grid-column: 2;
-    grid-row: 1;
-    margin-left: 0;
+    margin-left: auto;
+    margin-right: 0;
     white-space: nowrap;
   }
 
-  .legend-toggle {
-    grid-column: 3;
-    grid-row: 1;
-  }
+  .stat-suffix { display: none; }
 
   .legend-mid {
-    grid-column: 1 / -1;
-    grid-row: 2;
+    flex: 0 0 100%;
+    order: 10;
+  }
+
+  .legend:has(.cat-chip) {
+    row-gap: 8px;
   }
 
   .legend.collapsed {

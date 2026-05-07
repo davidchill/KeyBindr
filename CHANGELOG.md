@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.13] – 2026-05-07
+
+### Fixed
+
+- **Dropdown toggle** — re-clicking the button that opened a dropdown now closes it; `showActionDropdown` checks if the clicked anchor is already the active anchor and calls `closeActionDropdown()` and returns instead of re-opening; applies to all dropdowns (Form Factor, Key Map, Color Scheme)
+- **Mobile categories bar height** — bar was 58 px on mobile due to an 8 px phantom row gap from an always-present empty `legend-mid` flex row; switched from `row-gap: 8px` on the legend to `row-gap: 0` by default with `:has(.cat-chip)` adding the gap only when chips are actually rendered; bar now matches the ~50 px desktop height in the empty state and grows naturally when categories are assigned
+- **Mobile categories bar layout** — replaced the CSS grid (`1fr auto auto`) with a flex+wrap approach matching the desktop pattern; `legend-mid` is pushed to a second row via `order: 10` and `flex: 0 0 100%`; `margin-left: auto` on `.legend-stat` pushes the stat to the far right, giving `CATEGORIES +` and the count proper visual separation instead of a cramped 14 px gap
+- **Mobile stat text balance** — `" keys assigned"` is wrapped in a `.stat-suffix` span hidden on viewports ≤ 768 px; stat displays as `0 / 104` rather than `0 / 104 keys assigned`, reducing stat width from ~123 px to ~39 px and creating ~104 px of breathing room between the title and count on a 375 px screen
+
+---
+
 ## [0.4.12] – 2026-05-07
 
 ### Fixed

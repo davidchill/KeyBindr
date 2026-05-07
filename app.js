@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.12';
+const VERSION = '0.4.13';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -1580,8 +1580,9 @@ function renderLegend() {
 
   const count = Object.keys(state.hotkeys).length;
   const total = document.querySelectorAll('#keyboard .key').length;
-  document.getElementById('stat-assigned').textContent =
-    total ? `${count} / ${total} keys assigned` : `${count} keys assigned`;
+  document.getElementById('stat-assigned').innerHTML =
+    total ? `${count} / ${total}<span class="stat-suffix"> keys assigned</span>`
+          : `${count}<span class="stat-suffix"> keys assigned</span>`;
   renderLegendActivePreview();
 }
 
@@ -2367,6 +2368,7 @@ function closeActionDropdown() {
 }
 
 function showActionDropdown(anchor, items) {
+  if (_dropdownAnchor === anchor) { closeActionDropdown(); return; }
   closeActionDropdown();
   _dropdownEl.innerHTML = '';
   const hasHeaders = items.some(it => it.header);
