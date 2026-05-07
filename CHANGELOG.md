@@ -1,5 +1,29 @@
 # Changelog
 
+## [0.4.10] – 2026-05-07
+
+### Added
+
+- **Custom dropdown for Form Factor** — replaced the native `<select id="select-layout">` with a `<button class="layout-select-btn">` that opens the shared `showActionDropdown`; options are grouped under "Standard" and "Split Ergonomic" section headers; selected option shows a `✓` checkmark
+- **Custom dropdown for Key Map** — replaced the native `<select id="select-keymap">` with a matching `<button class="layout-select-btn">`; same custom dropdown pattern with selected-item indicator
+- **Custom dropdown for Color Scheme** — replaced the native `<select id="scheme-picker">` in the Style panel with a `<button class="scheme-select-btn">`; opens `showActionDropdown` with the five scheme options and a selected checkmark
+- **`showActionDropdown` group headers** — extended the dropdown renderer to support `{ header: true }` items that render as non-interactive `.action-dropdown-header` labels with a separator line above each new section
+- **Selected-item checkmark** — items with `{ selected: true }` render a `.dropdown-check` `✓` span on the right side and receive an `.action-dropdown-item.selected` color highlight; `.open` class applied to the anchor button while its dropdown is visible
+- **`LAYOUT_OPTIONS` / `KEYMAP_OPTIONS` / `SCHEME_OPTIONS` constants** — extracted to module scope; drive the custom dropdown builds for their respective controls
+
+### Changed
+
+- **Categories bar width** — `.layout-bar` now receives `width: calc(100% - 48px); max-width: 1140px` so it aligns flush with the toolbar above it at all viewport sizes
+- **Aurora background rendering** — `background-attachment: fixed` removed from `body`; gradients moved to a `body::before { position: fixed; inset: 0; z-index: -1 }` pseudo-element to eliminate GPU repaint artifacts triggered by fixed-position dropdowns and modals
+- **Persistent `_dropdownEl`** — `.action-dropdown` element and its close/show helpers moved from inside `initEvents()` to module scope; `document.body.appendChild` called directly at parse time so the GPU texture is pre-allocated; eliminates any first-open render cost
+- **Responsive layout selector** — CSS breakpoint updated from `.layout-select { max-width: 120px }` to `.layout-select-btn { max-width: 120px }` with `text-overflow: ellipsis` on `.select-label` so long option names truncate gracefully on narrow viewports
+
+### Removed
+
+- **5 per-scheme SVG caret overrides** for `.layout-select` — defunct now that all three selects are custom buttons
+
+---
+
 ## [0.4.9] – 2026-05-07
 
 ### Added

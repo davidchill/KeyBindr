@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.8';
+const VERSION = '0.4.10';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -657,21 +657,38 @@ function initTheme() {
 /* ── Scheme ──────────────────────────────────────────────────── */
 const SCHEME_KEY = 'keybindr-scheme';
 
+const SCHEME_OPTIONS = [
+  { label: 'Default',   value: 'default' },
+  { label: 'Synthwave', value: 'synthwave' },
+  { label: 'Phosphor',  value: 'phosphor' },
+  { label: 'Crimson',   value: 'crimson' },
+  { label: 'Forge',     value: 'forge' },
+];
+
 function applyScheme(scheme) {
   document.documentElement.setAttribute('data-scheme', scheme);
-  const sel = document.getElementById('scheme-picker');
-  if (sel) sel.value = scheme;
+  const btn = document.getElementById('scheme-picker');
+  if (btn) {
+    const opt = SCHEME_OPTIONS.find(o => o.value === scheme);
+    btn.querySelector('.select-label').textContent = opt ? opt.label : scheme;
+  }
 }
 
 function initScheme() {
   const saved = localStorage.getItem(SCHEME_KEY) || 'default';
   applyScheme(saved);
 
-  document.getElementById('scheme-picker').addEventListener('change', e => {
-    const scheme = e.target.value;
-    localStorage.setItem(SCHEME_KEY, scheme);
-    track('scheme_changed', { scheme });
-    applyScheme(scheme);
+  document.getElementById('scheme-picker').addEventListener('click', e => {
+    const current = localStorage.getItem(SCHEME_KEY) || 'default';
+    showActionDropdown(e.currentTarget, SCHEME_OPTIONS.map(opt => ({
+      ...opt,
+      selected: opt.value === current,
+      action: () => {
+        localStorage.setItem(SCHEME_KEY, opt.value);
+        track('scheme_changed', { scheme: opt.value });
+        applyScheme(opt.value);
+      }
+    })));
   });
 }
 
@@ -2312,26 +2329,140 @@ function initTemplates() {
   document.getElementById('template-overlay').addEventListener('click', closeTemplatesModal);
 }
 
+/* ── Action dropdown (module-scoped so all init fns can use it) ── */
+// Persistent element stays in the DOM so its GPU layer is always allocated,
+// eliminating the black-texture flash on first show.
+const _dropdownEl = document.createElement('div');
+_dropdownEl.className = 'action-dropdown';
+_dropdownEl.style.display = 'none';
+document.body.appendChild(_dropdownEl);
+
+let _dropdownOutsideClick = null;
+let _dropdownAnchor = null;
+
+function closeActionDropdown() {
+  _dropdownEl.style.display = 'none';
+  if (_dropdownAnchor) { _dropdownAnchor.classList.remove('open'); _dropdownAnchor = null; }
+  if (_dropdownOutsideClick) {
+    document.removeEventListener('click', _dropdownOutsideClick, true);
+    _dropdownOutsideClick = null;
+  }
+}
+
+function showActionDropdown(anchor, items) {
+  closeActionDropdown();
+  _dropdownEl.innerHTML = '';
+  const hasHeaders = items.some(it => it.header);
+  items.forEach((item, i) => {
+    if (item.header) {
+      if (i > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'action-dropdown-sep';
+        _dropdownEl.appendChild(sep);
+      }
+      const hdr = document.createElement('div');
+      hdr.className = 'action-dropdown-header';
+      hdr.textContent = item.label;
+      _dropdownEl.appendChild(hdr);
+      return;
+    }
+    if (!hasHeaders && i > 0) {
+      const sep = document.createElement('div');
+      sep.className = 'action-dropdown-sep';
+      _dropdownEl.appendChild(sep);
+    }
+    const btn = document.createElement('button');
+    btn.className = 'action-dropdown-item' + (item.selected ? ' selected' : '');
+    btn.textContent = item.label;
+    if (item.selected) {
+      const check = document.createElement('span');
+      check.className = 'dropdown-check';
+      check.textContent = '✓';
+      btn.appendChild(check);
+    }
+    btn.addEventListener('click', () => { closeActionDropdown(); item.action(); });
+    _dropdownEl.appendChild(btn);
+  });
+  const rect = anchor.getBoundingClientRect();
+  _dropdownEl.style.top  = (rect.bottom + 4) + 'px';
+  _dropdownEl.style.left = rect.left + 'px';
+  _dropdownEl.style.display = '';
+  _dropdownAnchor = anchor;
+  anchor.classList.add('open');
+  setTimeout(() => {
+    _dropdownOutsideClick = e => {
+      if (!_dropdownEl.contains(e.target) && e.target !== anchor) closeActionDropdown();
+    };
+    document.addEventListener('click', _dropdownOutsideClick, true);
+  }, 0);
+}
+
 /* ── Layout controls ──────────────────────────────────────────── */
+const LAYOUT_OPTIONS = [
+  { label: 'Standard', header: true },
+  { label: 'Full (104-key)', value: 'full' },
+  { label: 'Tenkeyless (TKL)', value: 'tkl' },
+  { label: '60%', value: '60' },
+  { label: 'Split', value: 'split' },
+  { label: 'Split Ergonomic', header: true },
+  { label: 'ZSA Voyager', value: 'voyager' },
+  { label: 'ZSA Moonlander', value: 'moonlander' },
+  { label: 'ErgoDox EZ', value: 'ergodox' },
+];
+
+const KEYMAP_OPTIONS = [
+  { label: 'QWERTY', value: 'qwerty' },
+  { label: 'Dvorak', value: 'dvorak' },
+  { label: 'Colemak', value: 'colemak' },
+  { label: 'AZERTY', value: 'azerty' },
+  { label: 'QWERTZ', value: 'qwertz' },
+];
+
 function initLayoutControls() {
-  const layoutSel  = document.getElementById('select-layout');
-  const keymapSel  = document.getElementById('select-keymap');
+  const layoutBtn = document.getElementById('select-layout');
+  const keymapBtn = document.getElementById('select-keymap');
 
-  layoutSel.value  = state.layout;
-  keymapSel.value  = state.keyMap;
+  function setLayoutLabel(value) {
+    const opt = LAYOUT_OPTIONS.find(o => !o.header && o.value === value);
+    layoutBtn.querySelector('.select-label').textContent = opt ? opt.label : value;
+  }
 
-  layoutSel.addEventListener('change', () => {
-    state.layout = layoutSel.value;
-    track('layout_changed', { layout: state.layout });
-    renderKeyboard();
-    saveToStorage();
+  function setKeymapLabel(value) {
+    const opt = KEYMAP_OPTIONS.find(o => o.value === value);
+    keymapBtn.querySelector('.select-label').textContent = opt ? opt.label : value;
+  }
+
+  setLayoutLabel(state.layout);
+  setKeymapLabel(state.keyMap);
+
+  layoutBtn.addEventListener('click', e => {
+    showActionDropdown(e.currentTarget, LAYOUT_OPTIONS.map(opt =>
+      opt.header ? opt : {
+        ...opt,
+        selected: opt.value === state.layout,
+        action: () => {
+          state.layout = opt.value;
+          setLayoutLabel(opt.value);
+          track('layout_changed', { layout: state.layout });
+          renderKeyboard();
+          saveToStorage();
+        }
+      }
+    ));
   });
 
-  keymapSel.addEventListener('change', () => {
-    state.keyMap = keymapSel.value;
-    track('keymap_changed', { key_map: state.keyMap });
-    renderKeyboard();
-    saveToStorage();
+  keymapBtn.addEventListener('click', e => {
+    showActionDropdown(e.currentTarget, KEYMAP_OPTIONS.map(opt => ({
+      ...opt,
+      selected: opt.value === state.keyMap,
+      action: () => {
+        state.keyMap = opt.value;
+        setKeymapLabel(opt.value);
+        track('keymap_changed', { key_map: state.keyMap });
+        renderKeyboard();
+        saveToStorage();
+      }
+    })));
   });
 }
 
@@ -2411,42 +2542,6 @@ function initEvents() {
   });
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
-
-  let _activeDropdown = null;
-
-  function closeActionDropdown() {
-    if (_activeDropdown) { _activeDropdown.remove(); _activeDropdown = null; }
-  }
-
-  function showActionDropdown(anchor, items) {
-    closeActionDropdown();
-    const menu = document.createElement('div');
-    menu.className = 'action-dropdown';
-    items.forEach((item, i) => {
-      if (i > 0) {
-        const sep = document.createElement('div');
-        sep.className = 'action-dropdown-sep';
-        menu.appendChild(sep);
-      }
-      const btn = document.createElement('button');
-      btn.className = 'action-dropdown-item';
-      btn.textContent = item.label;
-      btn.addEventListener('click', () => { closeActionDropdown(); item.action(); });
-      menu.appendChild(btn);
-    });
-    document.body.appendChild(menu);
-    _activeDropdown = menu;
-    const rect = anchor.getBoundingClientRect();
-    menu.style.top  = (rect.bottom + 4) + 'px';
-    menu.style.left = rect.left + 'px';
-    setTimeout(() => document.addEventListener('click', outsideClick, true), 0);
-    function outsideClick(e) {
-      if (!menu.contains(e.target) && e.target !== anchor) {
-        closeActionDropdown();
-        document.removeEventListener('click', outsideClick, true);
-      }
-    }
-  }
 
   document.getElementById('btn-new').addEventListener('click', e => {
     showActionDropdown(e.currentTarget, [

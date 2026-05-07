@@ -118,30 +118,12 @@
     <button id="btn-templates" class="btn btn-secondary">Templates</button>
     <div class="layout-bar-divider"></div>
     <div class="layout-group">
-      <label class="layout-label" for="select-layout">Form factor</label>
-      <select class="layout-select" id="select-layout">
-        <optgroup label="Standard">
-          <option value="full">Full (104-key)</option>
-          <option value="tkl">Tenkeyless (TKL)</option>
-          <option value="60">60%</option>
-          <option value="split">Split</option>
-        </optgroup>
-        <optgroup label="Split Ergonomic">
-          <option value="voyager">ZSA Voyager</option>
-          <option value="moonlander">ZSA Moonlander</option>
-          <option value="ergodox">ErgoDox EZ</option>
-        </optgroup>
-      </select>
+      <label class="layout-label">Form factor</label>
+      <button id="select-layout" class="layout-select-btn"><span class="select-label">Full (104-key)</span><span class="btn-caret">▾</span></button>
     </div>
     <div class="layout-group">
-      <label class="layout-label" for="select-keymap">Key map</label>
-      <select class="layout-select" id="select-keymap">
-        <option value="qwerty">QWERTY</option>
-        <option value="dvorak">Dvorak</option>
-        <option value="colemak">Colemak</option>
-        <option value="azerty">AZERTY</option>
-        <option value="qwertz">QWERTZ</option>
-      </select>
+      <label class="layout-label">Key map</label>
+      <button id="select-keymap" class="layout-select-btn"><span class="select-label">QWERTY</span><span class="btn-caret">▾</span></button>
     </div>
   </div>
 
@@ -290,13 +272,7 @@
   <div id="style-panel" class="style-panel hidden" role="dialog" aria-label="Style options">
     <div class="style-section">
       <div class="style-section-label">Color Scheme</div>
-      <select id="scheme-picker" class="scheme-select style-scheme-select" aria-label="Color scheme">
-        <option value="default">Default</option>
-        <option value="synthwave">Synthwave</option>
-        <option value="phosphor">Phosphor</option>
-        <option value="crimson">Crimson</option>
-        <option value="forge">Forge</option>
-      </select>
+      <button id="scheme-picker" class="scheme-select-btn" aria-label="Color scheme"><span class="select-label">Default</span><span class="btn-caret">▾</span></button>
     </div>
     <div class="share-divider"></div>
     <div class="style-section">
