@@ -1,0 +1,17 @@
+# OS
+.DS_Store
+Thumbs.db
+desktop.ini
+
+# Editor
+.vscode/
+.idea/
+*.swp
+*.swo
+
+# Logs
+*.log
+
+# Unused logo assets (superseded by main_nobackground.png)
+logos/icon-app.png
+logos/logo-square.png
