@@ -1,5 +1,23 @@
 # Changelog
 
+## [0.4.6] – 2026-05-06
+
+### Added
+
+- **Windows / Mac platform toggle** — Win / Mac segmented control in the top nav (left of the theme picker); switches all modifier labels throughout the UI: `Ctrl → Cmd`, `Alt → Opt`; applies to summary panel chips, key tooltip modifier pills, and Copy Text / Copy Markdown output; preference persisted to `localStorage` under `keybindr` state
+- **Template product logos** — each template tile in the Templates modal now shows the app's official icon (`<img>` from `site/icons/`); icons for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, and VS Code added to the `icons/` folder
+- **Updated Photoshop template** — 26 shortcuts sourced from official Adobe Photoshop documentation; covers tools (bare keys: Move, Lasso, Brush, Eraser, Eyedropper, etc.), edit (Ctrl+Z Undo), selection (Ctrl+A/D), view/zoom (Ctrl+=/−/0/1/2), and layers (Ctrl+Alt+Shift+N new layer, Ctrl+[/] bring/send, Ctrl+,//)
+- **Updated Premiere Pro template** — 29 shortcuts sourced from official Adobe Premiere Pro desktop documentation; bare keys for markers/in-out/sequence editing (I/O/M/X/F/E/,/./;/'/Enter/=/−), Ctrl combos for edit/file/group operations, Shift+2/3/4 for panel focus
+
+### Changed
+
+- **Template modal mobile layout** — switched from 3-column to 2-column grid at ≤768px; added `max-height: 90vh` with `overflow-y: auto` so the modal no longer clips on small screens
+- **Template tile alignment** — tiles now use `align-items: center; text-align: center` so logo, name, and category are centered; "New Map" tile matches the same centered treatment
+- **Modifier chip styling** — modifier chips in the hotkey summary and key tooltip now use an accent-tinted background and border (`color-mix(in srgb, var(--accent) 12%, var(--surface))`) with accent-hue text, visually distinguishing them from the plain key chip
+- **Summary modifier layout** — modifier chips moved into a dedicated 2-column grid cell (`summary-mods-cell`) separate from the key chip cell; modifiers wrap in a 2×N grid, the key chip and action label align vertically to the center of the modifier rows; `modsCell` hidden entirely when no modifiers are set
+
+---
+
 ## [0.4.5] – 2026-05-06
 
 ### Changed

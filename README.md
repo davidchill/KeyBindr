@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.5 — work in progress, active development.
+  <strong>Version:</strong> 0.4.6 — work in progress, active development.
 </p>
 
 ---
@@ -34,7 +34,7 @@
 
 ### Templates & map management
 
-- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button
+- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button; each tile shows the app's official product icon
 - **New Map** — "New Map" tile in the Templates modal; enter a name and create a blank map in one step
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template
@@ -52,6 +52,7 @@
 - **Click-to-edit from summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled for that key; a pencil icon appears on hover as a visual affordance
 - **Mobile-friendly** — keyboard scales dynamically to fit any viewport via `ResizeObserver`; header collapses to a hamburger menu on narrow screens; categories and summary reflow for single-column display
 - **Color scheme picker** — dropdown in the header nav with five full UI themes: Default (cyan/navy), Synthwave (hot pink + electric blue), Phosphor (terminal green), Crimson (blood red/obsidian), and Forge (amber/charcoal); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preference persists under `keybindr-scheme`
+- **Windows / Mac platform toggle** — Win / Mac segmented control in the header nav (left of the theme picker); switches modifier labels throughout the UI (`Ctrl → Cmd`, `Alt → Opt`) in summary chips, key tooltips, and copy output; persists across sessions
 - **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
@@ -93,7 +94,8 @@ App state:
   layout:           'full' | 'tkl' | '60' | 'split' | 'voyager' | 'moonlander' | 'ergodox',
   keyMap:           'qwerty' | 'dvorak' | 'colemak' | 'azerty' | 'qwertz',
   summaryCols:      [ [catId, ...], [catId, ...], [catId, ...], [catId, ...] ],
-  customCategories: [ { id, name, color } ]
+  customCategories: [ { id, name, color } ],
+  platform:         'windows' | 'mac'
 }
 ```
 

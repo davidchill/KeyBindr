@@ -850,17 +850,33 @@ body {
 }
 
 .key-mod-pill {
-  font-size: 6.5px;
+  font-size: 6px;
   font-weight: 700;
-  padding: 1px 3px;
+  padding: 1px 3px 2px;
   border-radius: 2px;
-  background: rgba(0,0,0,0.3);
-  color: rgba(255,255,255,0.85);
+  background: rgba(255,255,255,0.18);
+  color: rgba(255,255,255,0.9);
   letter-spacing: 0.04em;
   text-transform: uppercase;
   line-height: 1.3;
   white-space: nowrap;
+  border: 1px solid rgba(255,255,255,0.25);
+  border-bottom: 2px solid rgba(0,0,0,0.4);
+  box-shadow: 0 1px 0 rgba(0,0,0,0.35);
 }
+
+.key-mod-corner {
+  position: absolute;
+  width: 4px;
+  height: 4px;
+  border-radius: 1px;
+  background: rgba(255,255,255,0.75);
+  pointer-events: none;
+}
+.key-mod-corner.mod-tl { top: 3px;    left: 3px;  }
+.key-mod-corner.mod-tr { top: 3px;    right: 3px; }
+.key-mod-corner.mod-bl { bottom: 3px; left: 3px;  }
+.key-mod-corner.mod-br { bottom: 3px; right: 3px; }
 
 .key-action {
   font-size: 9.5px;
@@ -1339,6 +1355,42 @@ body {
 .layout-select:focus { border-color: var(--accent); outline: none; }
 .layout-select option { background: var(--popover-bg); }
 
+/* ── Platform toggle ──────────────────────────────────────────── */
+.platform-toggle {
+  display: flex;
+  align-items: center;
+  border: 1px solid var(--border);
+  border-radius: var(--r);
+  overflow: hidden;
+}
+
+.platform-btn {
+  background: transparent;
+  border: none;
+  color: var(--text-muted);
+  font-size: 0.78rem;
+  font-weight: 600;
+  font-family: var(--font);
+  padding: 4px 10px;
+  cursor: pointer;
+  transition: background 0.15s, color 0.15s;
+  white-space: nowrap;
+}
+
+.platform-btn:not(:last-child) {
+  border-right: 1px solid var(--border);
+}
+
+.platform-btn:hover:not(.active) {
+  background: var(--surface-2);
+  color: var(--text);
+}
+
+.platform-btn.active {
+  background: var(--accent);
+  color: #fff;
+}
+
 /* ── Split gap ────────────────────────────────────────────────── */
 .split-gap {
   flex-shrink: 0;
@@ -1538,10 +1590,17 @@ body {
   transition: opacity 0.15s;
 }
 
+.summary-mods-cell {
+  display: grid;
+  grid-template-columns: repeat(2, auto);
+  gap: 3px;
+  flex-shrink: 0;
+  align-self: center;
+}
+
 .summary-key-cell {
   display: flex;
   align-items: center;
-  gap: 3px;
   flex-shrink: 0;
 }
 
@@ -1562,6 +1621,13 @@ body {
   line-height: 1.4;
   white-space: nowrap;
   box-shadow: 0 1px 0 var(--key-ridge);
+}
+
+.summary-chip-mod {
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border-color: color-mix(in srgb, var(--accent) 35%, var(--border-2));
+  color: var(--accent-h);
+  font-size: 0.7rem;
 }
 
 .summary-info {
@@ -1671,7 +1737,8 @@ body {
 .template-tile {
   display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  align-items: center;
+  text-align: center;
   gap: 6px;
   padding: 14px;
   background: var(--surface-2);
@@ -1687,7 +1754,8 @@ body {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
-.template-icon { font-size: 1.5rem; line-height: 1; }
+.template-icon { font-size: 1.5rem; line-height: 1; align-self: center; }
+.template-logo { width: 32px; height: 32px; object-fit: contain; display: block; }
 
 .template-name {
   font-size: 0.82rem;
@@ -1701,6 +1769,7 @@ body {
   align-items: center;
   gap: 6px;
   margin-top: 2px;
+  align-self: center;
 }
 
 .template-badge {
@@ -1729,6 +1798,8 @@ body {
 .template-new-prompt {
   display: flex;
   flex-direction: column;
+  align-items: center;
+  text-align: center;
   gap: 6px;
   width: 100%;
   cursor: pointer;
@@ -1833,10 +1904,10 @@ body {
   font-size: 0.68rem;
   font-weight: 600;
   padding: 1px 6px;
-  background: var(--surface-2);
-  border: 1px solid var(--border-2);
+  background: color-mix(in srgb, var(--accent) 12%, var(--surface));
+  border: 1px solid color-mix(in srgb, var(--accent) 35%, var(--border-2));
   border-radius: 4px;
-  color: var(--text-muted);
+  color: var(--accent-h);
   letter-spacing: 0.02em;
 }
 .kt-desc {
@@ -1987,6 +2058,16 @@ body {
 
   .legend-title {
     white-space: nowrap;
+  }
+
+  /* ── Template modal ── */
+  .template-modal {
+    max-height: 90vh;
+    overflow-y: auto;
+  }
+
+  .template-grid {
+    grid-template-columns: repeat(2, 1fr);
   }
 }
 

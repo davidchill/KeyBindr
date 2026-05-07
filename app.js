@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.5';
+const VERSION = '0.4.6';
 const UNIT = 44;
 const GAP  = 4;
 const FN_H = 30;
@@ -553,7 +553,12 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', customCategories: [] };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', customCategories: [], platform: 'windows' };
+
+const MOD_MAP_MAC = { Ctrl: 'Cmd', Alt: 'Opt', Shift: 'Shift', Win: 'Cmd' };
+function displayMod(mod) {
+  return state.platform === 'mac' ? (MOD_MAP_MAC[mod] ?? mod) : mod;
+}
 
 function allCategories() {
   return [...CATEGORIES, ...state.customCategories];
@@ -729,15 +734,18 @@ function refreshKeyEl(el, key) {
     wrap.className = 'key-hotkey';
 
     if (hotkey.modifiers?.length) {
-      const mods = document.createElement('div');
-      mods.className = 'key-mods';
-      hotkey.modifiers.forEach(m => {
-        const pill = document.createElement('span');
-        pill.className = 'key-mod-pill';
-        pill.textContent = m;
-        mods.appendChild(pill);
+      const active = new Set(hotkey.modifiers);
+      [
+        ['Ctrl',  'mod-tl'],
+        ['Shift', 'mod-tr'],
+        ['Alt',   'mod-bl'],
+        ['Win',   'mod-br'],
+      ].forEach(([mod, cls]) => {
+        if (!active.has(mod)) return;
+        const dot = document.createElement('span');
+        dot.className = `key-mod-corner ${cls}`;
+        el.appendChild(dot);
       });
-      wrap.appendChild(mods);
     }
 
     const lbl = document.createElement('span');
@@ -1020,7 +1028,7 @@ function showKeyTooltip(keyId) {
   (hotkey.modifiers || []).forEach(m => {
     const pill = document.createElement('span');
     pill.className = 'kt-mod-pill';
-    pill.textContent = m;
+    pill.textContent = displayMod(m);
     modsEl.appendChild(pill);
   });
 
@@ -1312,15 +1320,22 @@ function makeSummaryItem({ hk, def, keyId }) {
     openPopover(keyId);
   });
 
+  const modsCell = document.createElement('div');
+  modsCell.className = 'summary-mods-cell';
+  if (!mods.length) modsCell.hidden = true;
+  mods.forEach(mod => {
+    const chip = document.createElement('kbd');
+    chip.className = 'summary-chip summary-chip-mod';
+    chip.textContent = displayMod(mod);
+    modsCell.appendChild(chip);
+  });
+
   const keyCell = document.createElement('div');
   keyCell.className = 'summary-key-cell';
-
-  [...mods, keyLabel].forEach(part => {
-    const chip = document.createElement('kbd');
-    chip.className = 'summary-chip';
-    chip.textContent = part;
-    keyCell.appendChild(chip);
-  });
+  const keyChip = document.createElement('kbd');
+  keyChip.className = 'summary-chip';
+  keyChip.textContent = keyLabel;
+  keyCell.appendChild(keyChip);
 
   const info = document.createElement('div');
   info.className = 'summary-info';
@@ -1341,6 +1356,7 @@ function makeSummaryItem({ hk, def, keyId }) {
   editIcon.className = 'summary-item-edit';
   editIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
 
+  item.appendChild(modsCell);
   item.appendChild(keyCell);
   item.appendChild(info);
   item.appendChild(editIcon);
@@ -1784,6 +1800,7 @@ function saveToStorage() {
       keyMap:           state.keyMap,
       summaryCols:      state.summaryCols,
       customCategories: state.customCategories,
+      platform:         state.platform,
     }));
   } catch (_) {}
 }
@@ -1799,6 +1816,12 @@ function loadFromStorage() {
     if (data.keyMap)      state.keyMap      = data.keyMap;
     if (data.summaryCols)      state.summaryCols      = data.summaryCols;
     if (data.customCategories) state.customCategories = data.customCategories;
+    if (data.platform) {
+      state.platform = data.platform;
+      document.querySelectorAll('.platform-btn').forEach(btn => {
+        btn.classList.toggle('active', btn.dataset.platform === state.platform);
+      });
+    }
   } catch (_) {}
 }
 
@@ -1833,7 +1856,7 @@ function loadFromHash() {
 /* ── Copy / Print ─────────────────────────────────────────────── */
 function formatShortcut(hk, def) {
   const keyLabel = def ? getKeyLabel(def) : '';
-  return [...(hk.modifiers || []), keyLabel].filter(Boolean).join('+');
+  return [...(hk.modifiers || []).map(displayMod), keyLabel].filter(Boolean).join('+');
 }
 
 function buildSummaryBuckets() {
@@ -2350,6 +2373,21 @@ function initCustomCategories() {
   });
 }
 
+/* ── Platform toggle ──────────────────────────────────────────── */
+function initPlatformToggle() {
+  document.getElementById('platform-toggle').addEventListener('click', e => {
+    const btn = e.target.closest('.platform-btn');
+    if (!btn) return;
+    state.platform = btn.dataset.platform;
+    document.querySelectorAll('.platform-btn').forEach(b => {
+      b.classList.toggle('active', b === btn);
+    });
+    renderSummary();
+    if (_tooltipTarget) showKeyTooltip(_tooltipTarget);
+    saveToStorage();
+  });
+}
+
 /* ── Legend toggle ────────────────────────────────────────────── */
 function initLegendToggle() {
   const legend    = document.getElementById('legend');
@@ -2396,6 +2434,7 @@ function init() {
   initLayoutControls();
   initTemplates();
   initCustomCategories();
+  initPlatformToggle();
   initLegendToggle();
   initFooter();
 }
