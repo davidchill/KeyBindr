@@ -1654,15 +1654,21 @@ function deleteCategory(id) {
   const cat = state.categories.find(c => c.id === id);
   if (!cat) return;
   const usedCount = Object.values(state.hotkeys).filter(hk => hk.category === id).length;
-  if (usedCount > 0 && !confirm(`Delete "${cat.name}"? ${usedCount} hotkey${usedCount > 1 ? 's' : ''} will become uncategorized.`)) return;
-  Object.values(state.hotkeys).forEach(hk => { if (hk.category === id) hk.category = ''; });
-  state.categories = state.categories.filter(c => c.id !== id);
-  if (filterCat === id) { filterCat = null; clearCategoryHighlight(); }
-  populateCategorySelect();
-  renderKeyboard();
-  renderLegend();
-  renderSummary();
-  saveToStorage();
+  const doDelete = () => {
+    Object.values(state.hotkeys).forEach(hk => { if (hk.category === id) hk.category = ''; });
+    state.categories = state.categories.filter(c => c.id !== id);
+    if (filterCat === id) { filterCat = null; clearCategoryHighlight(); }
+    populateCategorySelect();
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+  };
+  if (usedCount > 0) {
+    showConfirm(`Delete "${cat.name}"? ${usedCount} hotkey${usedCount > 1 ? 's' : ''} will become uncategorized.`, doDelete);
+  } else {
+    doDelete();
+  }
 }
 
 /* ── Summary search ───────────────────────────────────────────── */
@@ -2101,6 +2107,25 @@ function importMap(file) {
   reader.readAsText(file);
 }
 
+/* ── Confirm dialog ───────────────────────────────────────────── */
+let _confirmCallback = null;
+
+function showConfirm(message, onConfirm) {
+  _confirmCallback = onConfirm;
+  document.getElementById('confirm-message').textContent = message;
+  document.getElementById('confirm-overlay').classList.remove('hidden');
+  document.getElementById('confirm-modal').classList.remove('hidden');
+  document.getElementById('confirm-ok').focus();
+}
+
+function closeConfirm(confirmed) {
+  document.getElementById('confirm-overlay').classList.add('hidden');
+  document.getElementById('confirm-modal').classList.add('hidden');
+  const cb = _confirmCallback;
+  _confirmCallback = null;
+  if (confirmed && cb) cb();
+}
+
 /* ── Templates ────────────────────────────────────────────────── */
 let _collapseNewTile = null;
 
@@ -2116,27 +2141,31 @@ function closeTemplatesModal() {
 }
 
 function loadTemplate(template) {
-  if (Object.keys(state.hotkeys).length > 0 &&
-      !confirm(`Load "${template.name}"? This will replace your current map.`)) return;
-
-  state.hotkeys = Object.fromEntries(
-    Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
-  );
-  // Populate categories from the template's explicit list, or derive from hotkey assignments
-  if (template.categories) {
-    state.categories = template.categories.map(c => ({ ...c }));
+  const doLoad = () => {
+    state.hotkeys = Object.fromEntries(
+      Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
+    );
+    // Populate categories from the template's explicit list, or derive from hotkey assignments
+    if (template.categories) {
+      state.categories = template.categories.map(c => ({ ...c }));
+    } else {
+      const usedIds = new Set(Object.values(state.hotkeys).map(hk => hk.category).filter(Boolean));
+      state.categories = DEFAULT_CATEGORIES.filter(c => usedIds.has(c.id)).map(c => ({ ...c }));
+    }
+    document.getElementById('map-name').value = template.name;
+    track('template_loaded', { template_name: template.name, template_category: template.appCategory, session_count: ++_sessionCounts.saves });
+    populateCategorySelect();
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+    closeTemplatesModal();
+  };
+  if (Object.keys(state.hotkeys).length > 0) {
+    showConfirm(`Load "${template.name}"? This will replace your current map.`, doLoad);
   } else {
-    const usedIds = new Set(Object.values(state.hotkeys).map(hk => hk.category).filter(Boolean));
-    state.categories = DEFAULT_CATEGORIES.filter(c => usedIds.has(c.id)).map(c => ({ ...c }));
+    doLoad();
   }
-  document.getElementById('map-name').value = template.name;
-  track('template_loaded', { template_name: template.name, template_category: template.appCategory, session_count: ++_sessionCounts.saves });
-  populateCategorySelect();
-  renderKeyboard();
-  renderLegend();
-  renderSummary();
-  saveToStorage();
-  closeTemplatesModal();
 }
 
 function initTemplates() {
@@ -2201,18 +2230,23 @@ function initTemplates() {
 
   const doCreate = () => {
     const name = nameInput.value.trim() || 'Untitled Map';
-    if (Object.keys(state.hotkeys).length > 0 &&
-        !confirm(`Start a new map named "${name}"? This will clear your current map.`)) return;
-    state.hotkeys    = {};
-    state.categories = [];
-    document.getElementById('map-name').value = name;
-    track('new_map_created', { session_count: ++_sessionCounts.saves });
-    populateCategorySelect();
-    renderKeyboard();
-    renderLegend();
-    renderSummary();
-    saveToStorage();
-    closeTemplatesModal();
+    const apply = () => {
+      state.hotkeys    = {};
+      state.categories = [];
+      document.getElementById('map-name').value = name;
+      track('new_map_created', { session_count: ++_sessionCounts.saves });
+      populateCategorySelect();
+      renderKeyboard();
+      renderLegend();
+      renderSummary();
+      saveToStorage();
+      closeTemplatesModal();
+    };
+    if (Object.keys(state.hotkeys).length > 0) {
+      showConfirm(`Start a new map named "${name}"? This will clear your current map.`, apply);
+    } else {
+      apply();
+    }
   };
 
   prompt.addEventListener('click', expand);
@@ -2361,7 +2395,16 @@ function initEvents() {
     }
   });
 
+  document.getElementById('confirm-ok').addEventListener('click',     () => closeConfirm(true));
+  document.getElementById('confirm-cancel').addEventListener('click',  () => closeConfirm(false));
+  document.getElementById('confirm-overlay').addEventListener('click', () => closeConfirm(false));
+
   document.addEventListener('keydown', e => {
+    if (!document.getElementById('confirm-modal').classList.contains('hidden')) {
+      if (e.key === 'Escape') { e.stopPropagation(); closeConfirm(false); }
+      if (e.key === 'Enter')  { e.stopPropagation(); closeConfirm(true);  }
+      return;
+    }
     if (e.key !== 'Escape') return;
     if (activeKeyId) closePopover();
     else if (!document.getElementById('template-modal').classList.contains('hidden')) closeTemplatesModal();
@@ -2369,44 +2412,134 @@ function initEvents() {
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
 
-  document.getElementById('btn-new').addEventListener('click', () => {
-    if (Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim()) {
-      if (!confirm('Start a new map? This will clear the name and all assigned hotkeys.')) return;
+  let _activeDropdown = null;
+
+  function closeActionDropdown() {
+    if (_activeDropdown) { _activeDropdown.remove(); _activeDropdown = null; }
+  }
+
+  function showActionDropdown(anchor, items) {
+    closeActionDropdown();
+    const menu = document.createElement('div');
+    menu.className = 'action-dropdown';
+    items.forEach((item, i) => {
+      if (i > 0) {
+        const sep = document.createElement('div');
+        sep.className = 'action-dropdown-sep';
+        menu.appendChild(sep);
+      }
+      const btn = document.createElement('button');
+      btn.className = 'action-dropdown-item';
+      btn.textContent = item.label;
+      btn.addEventListener('click', () => { closeActionDropdown(); item.action(); });
+      menu.appendChild(btn);
+    });
+    document.body.appendChild(menu);
+    _activeDropdown = menu;
+    const rect = anchor.getBoundingClientRect();
+    menu.style.top  = (rect.bottom + 4) + 'px';
+    menu.style.left = rect.left + 'px';
+    setTimeout(() => document.addEventListener('click', outsideClick, true), 0);
+    function outsideClick(e) {
+      if (!menu.contains(e.target) && e.target !== anchor) {
+        closeActionDropdown();
+        document.removeEventListener('click', outsideClick, true);
+      }
     }
-    track('new_map_started', { session_count: ++_sessionCounts.saves });
-    pushUndo();
-    state.hotkeys = {};
-    document.getElementById('map-name').value = '';
-    renderKeyboard();
-    renderLegend();
-    renderSummary();
-    saveToStorage();
+  }
+
+  document.getElementById('btn-new').addEventListener('click', e => {
+    showActionDropdown(e.currentTarget, [
+      {
+        label: 'New Hotkeys',
+        action: () => {
+          const hasContent = Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim();
+          const apply = () => {
+            track('new_map_started', { session_count: ++_sessionCounts.saves });
+            pushUndo();
+            state.hotkeys = {};
+            document.getElementById('map-name').value = '';
+            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
+          };
+          if (hasContent) showConfirm('Start a new map? This will clear the name and all assigned hotkeys.', apply);
+          else apply();
+        }
+      },
+      {
+        label: 'New Hotkeys & Categories',
+        action: () => {
+          const hasContent = Object.keys(state.hotkeys).length > 0 || state.categories.length > 0 || !!document.getElementById('map-name').value.trim();
+          const apply = () => {
+            track('new_map_started', { session_count: ++_sessionCounts.saves });
+            pushUndo();
+            state.hotkeys = {}; state.categories = [];
+            document.getElementById('map-name').value = '';
+            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
+          };
+          if (hasContent) showConfirm('Start a new map? This will clear the name, all assigned hotkeys, and all categories.', apply);
+          else apply();
+        }
+      }
+    ]);
   });
 
   document.getElementById('btn-heatmap').addEventListener('click', toggleHeatmap);
 
-  document.getElementById('btn-clear-all').addEventListener('click', () => {
-    if (!Object.keys(state.hotkeys).length) return;
-    if (confirm('Clear all assigned hotkeys from this map?')) {
-      track('clear_all', { key_count: Object.keys(state.hotkeys).length });
-      pushUndo();
-      state.hotkeys = {};
-      document.getElementById('map-name').value = 'New Template';
-      renderKeyboard();
-      renderLegend();
-      renderSummary();
-      saveToStorage();
-    }
+  document.getElementById('btn-clear-all').addEventListener('click', e => {
+    showActionDropdown(e.currentTarget, [
+      {
+        label: 'Clear Hotkeys',
+        action: () => {
+          if (!Object.keys(state.hotkeys).length) return;
+          showConfirm('Clear all assigned hotkeys from this map?', () => {
+            track('clear_all', { key_count: Object.keys(state.hotkeys).length });
+            pushUndo();
+            state.hotkeys = {};
+            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
+          });
+        }
+      },
+      {
+        label: 'Clear Hotkeys & Categories',
+        action: () => {
+          if (!Object.keys(state.hotkeys).length && !state.categories.length) return;
+          showConfirm('Clear all hotkeys and categories from this map?', () => {
+            track('clear_all', { key_count: Object.keys(state.hotkeys).length });
+            pushUndo();
+            state.hotkeys = {}; state.categories = [];
+            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
+          });
+        }
+      }
+    ]);
+  });
+
+  /* ── Style panel ── */
+  const stylePanel = document.getElementById('style-panel');
+
+  function openStylePanel(btn) {
+    closeSharePanel();
+    if (!stylePanel.classList.contains('hidden')) { stylePanel.classList.add('hidden'); return; }
+    const rect = btn.getBoundingClientRect();
+    stylePanel.style.top   = `${rect.bottom + 6}px`;
+    stylePanel.style.left  = `${rect.left}px`;
+    stylePanel.style.right = '';
+    stylePanel.classList.remove('hidden');
+  }
+
+  function closeStylePanel() { stylePanel.classList.add('hidden'); }
+
+  document.getElementById('btn-style').addEventListener('click', e => {
+    e.stopPropagation();
+    openStylePanel(e.currentTarget);
   });
 
   /* ── Share panel ── */
   const sharePanel = document.getElementById('share-panel');
 
   function openSharePanel(btn) {
-    if (!sharePanel.classList.contains('hidden')) {
-      sharePanel.classList.add('hidden');
-      return;
-    }
+    closeStylePanel();
+    if (!sharePanel.classList.contains('hidden')) { sharePanel.classList.add('hidden'); return; }
     const rect = btn.getBoundingClientRect();
     sharePanel.style.top   = `${rect.bottom + 6}px`;
     sharePanel.style.right = `${window.innerWidth - rect.right}px`;
@@ -2421,9 +2554,8 @@ function initEvents() {
   });
 
   document.addEventListener('click', e => {
-    if (!sharePanel.classList.contains('hidden') && !sharePanel.contains(e.target)) {
-      closeSharePanel();
-    }
+    if (!stylePanel.classList.contains('hidden') && !stylePanel.contains(e.target)) closeStylePanel();
+    if (!sharePanel.classList.contains('hidden') && !sharePanel.contains(e.target)) closeSharePanel();
   });
 
   document.getElementById('share-copy-link').addEventListener('click', async e => {
@@ -2475,8 +2607,15 @@ function initEvents() {
     } catch (_) {}
   });
 
-  document.getElementById('btn-print').addEventListener('click', () => {
+  document.getElementById('share-export').addEventListener('click', () => {
+    track('map_exported', { key_count: Object.keys(state.hotkeys).length });
+    exportMap();
+    closeSharePanel();
+  });
+
+  document.getElementById('share-print').addEventListener('click', () => {
     track('map_printed', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.prints });
+    closeSharePanel();
     window.print();
   });
 
@@ -2491,8 +2630,6 @@ function initEvents() {
     track('summary_copied', { format: 'markdown' });
     copyToClipboard(buildMarkdown(), e.currentTarget);
   });
-
-  document.getElementById('btn-export').addEventListener('click', exportMap);
 
   document.getElementById('btn-import').addEventListener('click', () => {
     document.getElementById('file-input').click();

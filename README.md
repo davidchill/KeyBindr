@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.8 — work in progress, active development.
+  <strong>Version:</strong> 0.4.9 — work in progress, active development.
 </p>
 
 ---
@@ -50,9 +50,8 @@
 - **Collapsible categories bar** — toggle button in the categories header collapses the chip list with a smooth animation; when collapsed, any active (filtered) category chip remains visible; state persists across sessions
 - **Click-to-edit from summary** — clicking any row in the Hotkey Summary opens the edit popover pre-filled for that key; a pencil icon appears on hover as a visual affordance
 - **Mobile-friendly** — keyboard scales dynamically to fit any viewport via `ResizeObserver`; header collapses to a hamburger menu on narrow screens; categories and summary reflow for single-column display
-- **Color scheme picker** — dropdown in the header nav with five full UI themes: Default (cyan/navy), Synthwave (hot pink + electric blue), Phosphor (terminal green), Crimson (blood red/obsidian), and Forge (amber/charcoal); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preference persists under `keybindr-scheme`
-- **Windows / Mac platform toggle** — Win / Mac segmented control in the header nav (left of the theme picker); switches modifier labels throughout the UI (`Ctrl → Cmd`, `Alt → Opt`) in summary chips, key tooltips, and copy output; persists across sessions
-- **Light / Dark / System theme** — 3-button picker in the header; preference persists across sessions
+- **Style dropdown** — "Style" button in the header nav opens a panel with two sections: Color Scheme (five full UI themes: Default, Synthwave, Phosphor, Crimson, Forge) and Mode (Light / System / Dark); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preferences persist under `keybindr-scheme` and `keybindr-theme`
+- **Windows / Mac platform toggle** — Win / Mac segmented control in the header nav left side; switches modifier labels throughout the UI (`Ctrl → Cmd`, `Alt → Opt`) in summary chips, key tooltips, and copy output; persists across sessions
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; long labels and descriptions wrap within their column
@@ -63,7 +62,7 @@
 - **Named maps** — editable map name in the layout bar
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
-- **Share panel** — "Share" button opens a dropdown with five options: Copy Link (shareable URL with map encoded in the hash), Post on X, Share on Reddit, Share via Email, and Copy as Markdown
+- **Share panel** — "Share" button opens a dropdown with seven options: Copy Link (shareable URL with map encoded in the hash), Post on X, Share on Reddit, Share via Email, Copy as Markdown, Export JSON, and Print
 - **Copy as Text / Markdown** — copies the full hotkey summary as formatted plain text or a Markdown document with category headings and shortcut tables
 - **Undo / Redo** — Ctrl+Z / Ctrl+Shift+Z (or layout bar buttons) with a 50-entry history
 - **Key conflict detection** — warning in the edit popover when a label is already used on another key

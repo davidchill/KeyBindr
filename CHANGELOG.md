@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.4.9] – 2026-05-07
+
+### Added
+
+- **New / Clear All sub-options** — both buttons now open a dropdown with two choices: "Hotkeys" (clears only assignments) and "Hotkeys & Categories" (also resets `state.categories` to `[]`); a small `▾` caret on each button signals the dropdown; outside-click closes it
+- **Custom confirm dialogs** — all 7 native `confirm()` calls replaced with a themed in-page modal (`#confirm-modal`); supports Escape to cancel, Enter to confirm, and overlay-click to dismiss; modal inherits the active color scheme and light/dark mode automatically
+- **Style dropdown** — new "Style" button in the header nav opens a panel (matching the Share panel design) with two sections: Color Scheme (the scheme `<select>`) and Mode (Light / System / Dark buttons with text labels); replaces the two standalone controls that previously lived directly in the header bar
+- **Print and Export JSON in Share panel** — the two standalone header buttons removed; both actions added as entries at the bottom of the Share dropdown with download/printer icons and hint text ("Save your map as a file" / "Print or save as PDF")
+
+### Changed
+
+- **Nav layout restructured** — header switched from `display: flex` to `display: grid; grid-template-columns: 1fr auto 1fr`; Win/Mac toggle and Style button moved into a new `.header-left` div on the left; logo + name + tagline centered in the auto column; Share and Import JSON right-aligned in `.header-actions`; mobile breakpoint reverts to flex with Win/Mac + Style visible and a hamburger menu for Share/Import
+- **Style panel anchors left** — panel positioned using `left: rect.left` (aligned to the left edge of the Style button) rather than `right`-anchored like the Share panel, keeping it fully on-screen
+
+---
+
 ## [0.4.8] – 2026-05-07
 
 ### Added
