@@ -1,5 +1,31 @@
 # Changelog
 
+## [0.4.19] – 2026-05-08
+
+### Added
+
+- **Help modal** — `?` icon button added to the left of the gear icon in the Hotkey Summary card; opens a centered overlay modal with eight how-to-use sections covering assigning hotkeys, the key editor, form factor/key map, tabs, the summary panel, templates, export/import, and color scheme/theme; dismisses via `✕`, backdrop click, or Escape; suppressed in `@media print`
+- **Tab rename** — double-click any tab name to open a rename dialog pre-filled with the current name and selected; dialog title reads "Rename Tab" and the confirm button reads "Rename"
+- **Tab delete via rename dialog** — "Delete Tab" danger button added to the left side of the rename dialog's action row; only shown when two or more tabs exist; triggers the shared `showConfirm` prompt with hotkey count before deletion
+- **Tab drag-to-reorder** — tabs are now HTML5 `draggable`; dragging left or right reorders `state.tabs`; left/right half detection on the drop target determines insert-before vs insert-after; inset accent-color `box-shadow` indicates the drop position; `dragend` cleans up all visual classes; order persists to `localStorage`
+- **Copy Text in share menu** — new "Copy Text" option (clipboard icon, "Plain text summary" hint) added to the Share panel between Copy Link and Copy as Markdown; uses `buildPlainText()`
+
+### Changed
+
+- **Share menu order** — restructured to: Copy Link → Copy Text → Copy as Markdown → (divider) → Post on X / Share on Reddit / Share via Email → (divider) → Export JSON → Print
+- **Copy Text / Copy Markdown removed from summary header** — both buttons moved exclusively into the Share panel; the `.summary-actions` row is removed, giving the summary header more breathing room
+- **Tab delete UX** — removed the `×` button from tab faces; delete is now accessed through the rename dialog, reducing accidental deletions and decluttering the tab bar
+- **Tab padding** — restored to symmetric `5px 14px` after the close button was removed (was temporarily asymmetric `5px 8px 5px 14px`)
+
+### Fixed / Removed (dead code)
+
+- **`_dragCatId` removed** — variable was set in four places but never read; `_catDragState.catId` was already carrying all drag state
+- **`.layout-select` / `.scheme-select` CSS removed** — 22 lines of orphaned `<select>` styles left over from the custom-button migration in v0.3.x
+- **`.keyboard.cat-filtering` / `.key.cat-match` CSS removed** — 9 lines of an unreachable filter system; the active system uses `cat-dim` / `cat-highlight`
+- **Duplicate `@media print` `.keyboard-scroll` block merged** — two sequential blocks (one with `zoom`, one with `box-shadow`) collapsed into a single rule
+
+---
+
 ## [0.4.18] – 2026-05-08
 
 ### Fixed

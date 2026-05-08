@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.18';
+const VERSION = '0.4.19';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -1288,7 +1288,6 @@ function reapplyFilter() {
 }
 
 /* ── Hotkey summary ───────────────────────────────────────────── */
-let _dragCatId     = null;
 let _catDragState  = null; // pointer-event cat drag: { catId, groupEl, ghostEl, offsetX, offsetY, targetGroupEl, targetBefore, targetColEl }
 let _dragItemId    = null;
 let _dragItemCatId = null;
@@ -1349,7 +1348,6 @@ function startCatDrag(catId, groupEl, e, clickEl) {
   _catDragState = { catId, groupEl, ghostEl,
     offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top,
     targetGroupEl: null, targetBefore: false, targetColEl: null };
-  _dragCatId = catId;
   document.querySelectorAll(`.summary-group[data-cat-id="${catId}"]`).forEach(el => el.classList.add('dragging'));
 
   document.addEventListener('pointermove', onCatDragMove);
@@ -1462,7 +1460,6 @@ function onCatDragEnd() {
   ghostEl.remove();
   document.querySelectorAll(`.summary-group[data-cat-id="${_catDragState.catId}"]`).forEach(el => el.classList.remove('dragging'));
   clearDragIndicators();
-  _dragCatId    = null;
   _catDragState = null;
 
   document.removeEventListener('pointermove',   onCatDragMove);
@@ -1477,7 +1474,6 @@ function onCatDragKeydown(e) {
   ghostEl.remove();
   document.querySelectorAll(`.summary-group[data-cat-id="${catId}"]`).forEach(el => el.classList.remove('dragging'));
   clearDragIndicators();
-  _dragCatId    = null;
   _catDragState = null;
   document.removeEventListener('pointermove',   onCatDragMove);
   document.removeEventListener('pointerup',     onCatDragEnd);
@@ -2421,17 +2417,24 @@ function switchTab(id) {
   saveToStorage();
 }
 
-function showTabNameDialog(onConfirm) {
-  const modal  = document.getElementById('tab-name-modal');
-  const input  = document.getElementById('tab-name-input');
-  const ok     = document.getElementById('tab-name-ok');
-  const cancel = document.getElementById('tab-name-cancel');
-  const overlay = document.getElementById('confirm-overlay');
+function showTabNameDialog(onConfirm, opts = {}) {
+  const { title = 'New Tab Name', buttonLabel = 'Create Tab', initialValue = '', onDelete = null } = opts;
+  const modal     = document.getElementById('tab-name-modal');
+  const input     = document.getElementById('tab-name-input');
+  const ok        = document.getElementById('tab-name-ok');
+  const cancel    = document.getElementById('tab-name-cancel');
+  const deleteBtn = document.getElementById('tab-name-delete');
+  const overlay   = document.getElementById('confirm-overlay');
+  const titleEl   = document.getElementById('tab-name-title');
 
-  input.value = '';
+  titleEl.textContent = title;
+  ok.textContent      = buttonLabel;
+  input.value         = initialValue;
+  deleteBtn.classList.toggle('hidden', !onDelete);
   modal.classList.remove('hidden');
   overlay.classList.remove('hidden');
   input.focus();
+  input.select();
 
   function commit() {
     const name = input.value.trim();
@@ -2440,11 +2443,17 @@ function showTabNameDialog(onConfirm) {
     onConfirm(name);
   }
 
+  function handleDelete() {
+    cleanup();
+    onDelete();
+  }
+
   function cleanup() {
     modal.classList.add('hidden');
     overlay.classList.add('hidden');
     ok.removeEventListener('click', commit);
     cancel.removeEventListener('click', cleanup);
+    deleteBtn.removeEventListener('click', handleDelete);
     input.removeEventListener('keydown', onKey);
   }
 
@@ -2455,7 +2464,48 @@ function showTabNameDialog(onConfirm) {
 
   ok.addEventListener('click', commit);
   cancel.addEventListener('click', cleanup);
+  if (onDelete) deleteBtn.addEventListener('click', handleDelete);
   input.addEventListener('keydown', onKey);
+}
+
+let _dragTabId = null;
+
+function renameTab(tabId, currentName) {
+  const canDelete = state.tabs.length > 1;
+  showTabNameDialog(name => {
+    const tab = state.tabs.find(t => t.id === tabId);
+    if (!tab) return;
+    tab.name = name;
+    renderTabBar();
+    saveToStorage();
+  }, {
+    title: 'Rename Tab',
+    buttonLabel: 'Rename',
+    initialValue: currentName,
+    onDelete: canDelete ? () => {
+      const hotkeyCount = Object.keys(state.tabs.find(t => t.id === tabId)?.hotkeys || {}).length;
+      const detail = hotkeyCount > 0
+        ? ` ${hotkeyCount} hotkey${hotkeyCount > 1 ? 's' : ''} will be permanently deleted.`
+        : '';
+      showConfirm(`Delete "${currentName}"?${detail}`, () => deleteTab(tabId));
+    } : null,
+  });
+}
+
+function deleteTab(tabId) {
+  const idx = state.tabs.findIndex(t => t.id === tabId);
+  if (idx === -1 || state.tabs.length <= 1) return;
+  state.tabs.splice(idx, 1);
+  if (state.activeTabId === tabId) {
+    const next = state.tabs[Math.min(idx, state.tabs.length - 1)];
+    state.activeTabId = next.id;
+    state.hotkeys = { ...next.hotkeys };
+  }
+  renderTabBar();
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
+  saveToStorage();
 }
 
 function addTab() {
@@ -2481,8 +2531,57 @@ function renderTabBar() {
   state.tabs.forEach(tab => {
     const btn = document.createElement('button');
     btn.className = 'context-tab' + (tab.id === state.activeTabId ? ' active' : '');
-    btn.textContent = tab.name;
+    btn.draggable = true;
+    btn.dataset.tabId = tab.id;
+
+    const nameSpan = document.createElement('span');
+    nameSpan.className = 'context-tab-name';
+    nameSpan.textContent = tab.name;
+    nameSpan.title = 'Double-click to rename';
+    nameSpan.addEventListener('dblclick', e => {
+      e.stopPropagation();
+      renameTab(tab.id, tab.name);
+    });
+    btn.appendChild(nameSpan);
+
     btn.addEventListener('click', () => { if (tab.id !== state.activeTabId) switchTab(tab.id); });
+
+    btn.addEventListener('dragstart', e => {
+      _dragTabId = tab.id;
+      e.dataTransfer.effectAllowed = 'move';
+      setTimeout(() => btn.classList.add('dragging'), 0);
+    });
+    btn.addEventListener('dragend', () => {
+      _dragTabId = null;
+      btn.classList.remove('dragging');
+      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
+    });
+    btn.addEventListener('dragover', e => {
+      if (!_dragTabId || _dragTabId === tab.id) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      const rect = btn.getBoundingClientRect();
+      const before = e.clientX < rect.left + rect.width / 2;
+      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
+      btn.classList.add(before ? 'drag-before' : 'drag-after');
+    });
+    btn.addEventListener('dragleave', () => {
+      btn.classList.remove('drag-before', 'drag-after');
+    });
+    btn.addEventListener('drop', e => {
+      e.preventDefault();
+      if (!_dragTabId || _dragTabId === tab.id) return;
+      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
+      const rect = btn.getBoundingClientRect();
+      const before = e.clientX < rect.left + rect.width / 2;
+      const fromIdx = state.tabs.findIndex(t => t.id === _dragTabId);
+      const [moved] = state.tabs.splice(fromIdx, 1);
+      const toIdx = state.tabs.findIndex(t => t.id === tab.id);
+      state.tabs.splice(before ? toIdx : toIdx + 1, 0, moved);
+      renderTabBar();
+      saveToStorage();
+    });
+
     el.appendChild(btn);
   });
 
@@ -3266,6 +3365,17 @@ function initEvents() {
     closeSharePanel();
   });
 
+  document.getElementById('share-copy-text').addEventListener('click', async e => {
+    const nameEl = e.currentTarget.querySelector('.share-option-name');
+    try {
+      await navigator.clipboard.writeText(buildPlainText());
+      track('map_shared', { method: 'text', session_count: ++_sessionCounts.shares });
+      const orig = nameEl.textContent;
+      nameEl.textContent = 'Copied!';
+      setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
+    } catch (_) {}
+  });
+
   document.getElementById('share-copy-md').addEventListener('click', async e => {
     const nameEl = e.currentTarget.querySelector('.share-option-name');
     try {
@@ -3291,15 +3401,6 @@ function initEvents() {
 
   document.getElementById('summary-search').addEventListener('input', filterSummary);
 
-  document.getElementById('btn-copy-text').addEventListener('click', e => {
-    track('summary_copied', { format: 'text' });
-    copyToClipboard(buildPlainText(), e.currentTarget);
-  });
-
-  document.getElementById('btn-copy-md').addEventListener('click', e => {
-    track('summary_copied', { format: 'markdown' });
-    copyToClipboard(buildMarkdown(), e.currentTarget);
-  });
 
   document.getElementById('btn-import').addEventListener('click', () => {
     document.getElementById('file-input').click();
@@ -3440,6 +3541,38 @@ function initSummarySettings() {
   syncUI();
 }
 
+/* ── Help modal ───────────────────────────────────────────────── */
+function initHelpModal() {
+  const modal   = document.getElementById('help-modal');
+  const overlay = document.getElementById('help-overlay');
+  const btn     = document.getElementById('btn-help');
+  const closeBtn = document.getElementById('help-close');
+
+  function open() {
+    modal.classList.remove('hidden');
+    overlay.classList.remove('hidden');
+    btn.classList.add('active');
+  }
+
+  function close() {
+    modal.classList.add('hidden');
+    overlay.classList.add('hidden');
+    btn.classList.remove('active');
+  }
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    modal.classList.contains('hidden') ? open() : close();
+  });
+
+  closeBtn.addEventListener('click', close);
+  overlay.addEventListener('click', close);
+
+  document.addEventListener('keydown', e => {
+    if (e.key === 'Escape' && !modal.classList.contains('hidden')) close();
+  });
+}
+
 /* ── Init ─────────────────────────────────────────────────────── */
 function initFooter() {
   document.getElementById('footer-year').textContent    = new Date().getFullYear();
@@ -3471,6 +3604,7 @@ function init() {
   initPlatformToggle();
   initLegendToggle();
   initSummarySettings();
+  initHelpModal();
   initFooter();
 }
 

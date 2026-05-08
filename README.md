@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.18 — work in progress, active development.
+  <strong>Version:</strong> 0.4.19 — work in progress, active development.
 </p>
 
 ---
@@ -63,13 +63,16 @@
 - **Per-map tabs** — create multiple named tabs within a single map for situational hotkey sets (e.g. On Foot, Driving, Flying, Menu); each tab holds its own independent hotkey assignments; always starts with a Default tab
 - **Tab switching** — clicking a tab saves the current tab's hotkeys and loads the selected tab's, re-rendering the keyboard and summary instantly
 - **Add tabs** — "+" button opens an in-app naming dialog; tab names up to 30 characters
+- **Rename tabs** — double-click any tab name to rename it via an in-app dialog pre-filled with the current name
+- **Delete tabs** — open the rename dialog and click "Delete Tab"; a confirmation prompt warns before removing the tab and all its hotkeys; the last remaining tab cannot be deleted
+- **Reorder tabs** — drag any tab left or right; an accent-color drop indicator shows the insertion point; order persists to `localStorage`
 
 ### Data & export
 
 - **Named maps** — editable map name in the layout bar
 - **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
 - **Export / Import** — save any map as a `.json` file and reload it later
-- **Share panel** — "Share" button opens a dropdown with seven options: Copy Link (shareable URL with map encoded in the hash), Post on X, Share on Reddit, Share via Email, Copy as Markdown, Export JSON, and Print
+- **Share panel** — "Share" button opens a dropdown with eight options: Copy Link (shareable URL with map encoded in the hash), Copy Text (plain-text summary), Copy as Markdown (GitHub/Notion/Obsidian-compatible), Post on X, Share on Reddit, Share via Email, Export JSON, and Print
 - **Copy as Text / Markdown** — copies the full hotkey summary as formatted plain text or a Markdown document with category headings and shortcut tables
 - **Undo / Redo** — Ctrl+Z / Ctrl+Shift+Z (or layout bar buttons) with a 50-entry history
 - **Key conflict detection** — warning in the edit popover when a label is already used on another key
