@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.14';
+const VERSION = '0.4.15';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -60,7 +60,8 @@ const KEY_MAPS = {
 
 const VALID_LAYOUTS  = new Set(LAYOUTS.map(l => l.id));
 const VALID_KEY_MAPS = new Set(Object.keys(KEY_MAPS));
-const SUMMARY_COLS   = 4;
+const SUMMARY_COLS     = 4;
+const SUMMARY_CAT_WRAP = 8; // items before a category spills into the next column
 
 // Key IDs after which a visual split gap is inserted in split layout
 const SPLIT_AFTER = new Set(['Digit5', 'KeyT', 'KeyG', 'KeyB', 'Space']);
@@ -559,7 +560,7 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows' };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows', collapsedCats: new Set(), summarySettings: { overflow: false, overflowAt: 8 } };
 
 const MOD_MAP_MAC = { Ctrl: 'Cmd', Alt: 'Opt', Shift: 'Shift', Win: 'Cmd' };
 function displayMod(mod) {
@@ -1291,11 +1292,20 @@ let _dragCatId = null;
 
 function initSummaryCols() {
   if (!state.summaryCols || state.summaryCols.length !== SUMMARY_COLS) {
-    const cats = allCategories();
-    const chunk = Math.ceil(cats.length / SUMMARY_COLS);
-    state.summaryCols = Array.from({ length: SUMMARY_COLS }, (_, i) =>
-      cats.slice(i * chunk, (i + 1) * chunk).map(c => c.id)
-    );
+    // Count assigned hotkeys per category for LPT bin-packing
+    const itemCounts = {};
+    Object.values(state.hotkeys).forEach(hk => {
+      if (hk.category) itemCounts[hk.category] = (itemCounts[hk.category] || 0) + 1;
+    });
+    // Sort categories heaviest-first so large groups spread across columns
+    const sorted = [...allCategories()].sort((a, b) => (itemCounts[b.id] || 0) - (itemCounts[a.id] || 0));
+    const colTotals = Array(SUMMARY_COLS).fill(0);
+    state.summaryCols = Array.from({ length: SUMMARY_COLS }, () => []);
+    sorted.forEach(cat => {
+      const minCol = colTotals.indexOf(Math.min(...colTotals));
+      state.summaryCols[minCol].push(cat.id);
+      colTotals[minCol] += (itemCounts[cat.id] || 0);
+    });
   }
   // Ensure any category not yet in a column is added to the shortest one
   const present = new Set(state.summaryCols.flat());
@@ -1419,9 +1429,11 @@ function makeSummaryItem({ hk, def, keyId }) {
   return item;
 }
 
-function makeSummaryGroup(cat, items) {
+function makeSummaryGroup(cat, items, totalCount) {
+  const isCollapsed = state.collapsedCats.has(cat.id);
+  if (totalCount === undefined) totalCount = items.length;
   const group = document.createElement('div');
-  group.className = 'summary-group';
+  group.className = 'summary-group' + (isCollapsed ? ' collapsed' : '');
   group.dataset.catId = cat.id;
   group.draggable = true;
   group.style.setProperty('--cat-color', cat.color);
@@ -1478,6 +1490,30 @@ function makeSummaryGroup(cat, items) {
   name.textContent = cat.name;
   hdr.appendChild(name);
 
+  const count = document.createElement('span');
+  count.className = 'summary-group-count';
+  count.textContent = totalCount;
+  hdr.appendChild(count);
+
+  const chevron = document.createElement('button');
+  chevron.className = 'summary-collapse-btn';
+  chevron.setAttribute('aria-label', isCollapsed ? 'Expand category' : 'Collapse category');
+  chevron.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="11" height="11" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round"><polyline points="6 9 12 15 18 9"/></svg>';
+  chevron.addEventListener('click', e => {
+    e.stopPropagation();
+    if (state.collapsedCats.has(cat.id)) {
+      state.collapsedCats.delete(cat.id);
+      group.classList.remove('collapsed');
+      chevron.setAttribute('aria-label', 'Collapse category');
+    } else {
+      state.collapsedCats.add(cat.id);
+      group.classList.add('collapsed');
+      chevron.setAttribute('aria-label', 'Expand category');
+    }
+    saveToStorage();
+  });
+  hdr.appendChild(chevron);
+
   group.appendChild(hdr);
 
   const itemsEl = document.createElement('div');
@@ -1486,6 +1522,78 @@ function makeSummaryGroup(cat, items) {
   group.appendChild(itemsEl);
 
   return group;
+}
+
+function makeSummaryGroupContinuation(cat, items) {
+  const group = document.createElement('div');
+  group.className = 'summary-group summary-group-cont';
+  group.dataset.catId = cat.id;
+  group.style.setProperty('--cat-color', cat.color);
+
+  const hdr = document.createElement('div');
+  hdr.className = 'summary-group-header summary-group-header-cont';
+
+  const swatch = document.createElement('span');
+  swatch.className = 'summary-group-swatch';
+  swatch.style.background = cat.color;
+  hdr.appendChild(swatch);
+
+  const name = document.createElement('span');
+  name.className = 'summary-group-name summary-group-name-cont';
+  name.textContent = cat.name;
+  hdr.appendChild(name);
+
+  group.appendChild(hdr);
+
+  const itemsEl = document.createElement('div');
+  itemsEl.className = 'summary-items';
+  items.forEach(entry => itemsEl.appendChild(makeSummaryItem(entry)));
+  group.appendChild(itemsEl);
+
+  return group;
+}
+
+function computeColumnLayout(buckets, overflowAt) {
+  const cats = allCategories()
+    .map(cat => ({ cat, items: buckets[cat.id] || [] }))
+    .filter(x => x.items.length > 0)
+    .sort((a, b) => b.items.length - a.items.length);
+
+  const columns    = Array.from({ length: SUMMARY_COLS }, () => []);
+  const colHeights = Array(SUMMARY_COLS).fill(0);
+
+  // Large categories (multi-chunk) get placed first into consecutive columns
+  const small = [];
+  cats.forEach(({ cat, items }) => {
+    const chunks = [];
+    let rem = [...items];
+    while (rem.length > 0) chunks.push(rem.splice(0, overflowAt));
+
+    if (chunks.length <= 1) { small.push({ cat, items }); return; }
+
+    // Find the best run of `chunks.length` consecutive columns (lowest max height)
+    const needed = Math.min(chunks.length, SUMMARY_COLS);
+    let bestStart = 0, bestScore = Infinity;
+    for (let i = 0; i <= SUMMARY_COLS - needed; i++) {
+      const score = Math.max(...colHeights.slice(i, i + needed));
+      if (score < bestScore) { bestScore = score; bestStart = i; }
+    }
+
+    chunks.forEach((chunk, j) => {
+      const col = bestStart + j;
+      columns[col].push({ cat, items: chunk, isCont: j > 0, totalCount: items.length });
+      colHeights[col] += chunk.length;
+    });
+  });
+
+  // Small categories distributed via LPT into whatever columns remain
+  small.forEach(({ cat, items }) => {
+    const minCol = colHeights.indexOf(Math.min(...colHeights));
+    columns[minCol].push({ cat, items, isCont: false, totalCount: items.length });
+    colHeights[minCol] += items.length;
+  });
+
+  return columns;
 }
 
 function renderSummary() {
@@ -1516,33 +1624,43 @@ function renderSummary() {
   const colsEl = document.createElement('div');
   colsEl.className = 'summary-columns';
 
-  Array.from({ length: SUMMARY_COLS }, (_, i) => i).forEach(colIdx => {
-    const colEl = document.createElement('div');
-    colEl.className = 'summary-col';
-    colEl.dataset.col = colIdx;
-
-    state.summaryCols[colIdx].forEach(catId => {
-      const items = buckets[catId];
-      if (!items?.length) return;
-      const cat = allCategories().find(c => c.id === catId);
-      if (cat) colEl.appendChild(makeSummaryGroup(cat, items));
-    });
-
-    colEl.addEventListener('dragover', e => {
-      e.preventDefault();
-      colEl.classList.add('drag-over');
-    });
-    colEl.addEventListener('dragleave', e => {
-      if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over');
-    });
+  const addColDragEvents = (colEl, colIdx) => {
+    colEl.addEventListener('dragover', e => { e.preventDefault(); colEl.classList.add('drag-over'); });
+    colEl.addEventListener('dragleave', e => { if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over'); });
     colEl.addEventListener('drop', e => {
       e.preventDefault();
       colEl.classList.remove('drag-over');
       if (_dragCatId) moveCategoryToColumn(_dragCatId, colIdx);
     });
+  };
 
-    colsEl.appendChild(colEl);
-  });
+  if (state.summarySettings.overflow) {
+    const columns = computeColumnLayout(buckets, state.summarySettings.overflowAt);
+    columns.forEach((colGroups, colIdx) => {
+      const colEl = document.createElement('div');
+      colEl.className = 'summary-col';
+      colEl.dataset.col = colIdx;
+      colGroups.forEach(({ cat, items, isCont, totalCount }) => {
+        colEl.appendChild(isCont ? makeSummaryGroupContinuation(cat, items) : makeSummaryGroup(cat, items, totalCount));
+      });
+      addColDragEvents(colEl, colIdx);
+      colsEl.appendChild(colEl);
+    });
+  } else {
+    Array.from({ length: SUMMARY_COLS }, (_, i) => i).forEach(colIdx => {
+      const colEl = document.createElement('div');
+      colEl.className = 'summary-col';
+      colEl.dataset.col = colIdx;
+      state.summaryCols[colIdx].forEach(catId => {
+        const items = buckets[catId];
+        if (!items?.length) return;
+        const cat = allCategories().find(c => c.id === catId);
+        if (cat) colEl.appendChild(makeSummaryGroup(cat, items, items.length));
+      });
+      addColDragEvents(colEl, colIdx);
+      colsEl.appendChild(colEl);
+    });
+  }
 
   container.appendChild(colsEl);
 
@@ -1964,13 +2082,15 @@ function clearHotkey() {
 function saveToStorage() {
   try {
     localStorage.setItem('keybindr', JSON.stringify({
-      hotkeys:     state.hotkeys,
-      mapName:     document.getElementById('map-name').value,
-      layout:      state.layout,
-      keyMap:      state.keyMap,
-      summaryCols: state.summaryCols,
-      categories:  state.categories,
-      platform:    state.platform,
+      hotkeys:         state.hotkeys,
+      mapName:         document.getElementById('map-name').value,
+      layout:          state.layout,
+      keyMap:          state.keyMap,
+      summaryCols:     state.summaryCols,
+      categories:      state.categories,
+      platform:        state.platform,
+      collapsedCats:   [...state.collapsedCats],
+      summarySettings: state.summarySettings,
     }));
   } catch (_) {}
 }
@@ -1993,6 +2113,8 @@ function loadFromStorage() {
     DEFAULT_CATEGORIES.forEach(cat => {
       if (usedCatIds.has(cat.id) && !existingIds.has(cat.id)) state.categories.push({ ...cat });
     });
+    if (data.collapsedCats) state.collapsedCats = new Set(data.collapsedCats);
+    if (data.summarySettings) state.summarySettings = { ...state.summarySettings, ...data.summarySettings };
     if (data.platform) {
       state.platform = data.platform;
       document.querySelectorAll('.platform-btn').forEach(btn => {
@@ -2825,6 +2947,65 @@ function initLegendToggle() {
   });
 }
 
+/* ── Summary settings panel ───────────────────────────────────── */
+function initSummarySettings() {
+  const panel        = document.getElementById('summary-settings-panel');
+  const btn          = document.getElementById('btn-summary-settings');
+  const closeBtn     = document.getElementById('summary-settings-close');
+  const overflowChk  = document.getElementById('setting-overflow');
+  const overflowAt   = document.getElementById('setting-overflow-at');
+  const overflowRow  = document.getElementById('overflow-at-row');
+
+  function syncUI() {
+    overflowChk.checked  = state.summarySettings.overflow;
+    overflowAt.value     = state.summarySettings.overflowAt;
+    overflowRow.classList.toggle('settings-subrow-disabled', !state.summarySettings.overflow);
+  }
+
+  function openPanel() {
+    syncUI();
+    const rect = btn.getBoundingClientRect();
+    panel.style.top   = `${rect.bottom + 6}px`;
+    panel.style.right = `${window.innerWidth - rect.right}px`;
+    panel.classList.remove('hidden');
+    btn.classList.add('active');
+  }
+
+  function closePanel() {
+    panel.classList.add('hidden');
+    btn.classList.remove('active');
+  }
+
+  btn.addEventListener('click', e => {
+    e.stopPropagation();
+    panel.classList.contains('hidden') ? openPanel() : closePanel();
+  });
+
+  closeBtn.addEventListener('click', closePanel);
+
+  document.addEventListener('click', e => {
+    if (!panel.classList.contains('hidden') && !panel.contains(e.target) && e.target !== btn) {
+      closePanel();
+    }
+  });
+
+  overflowChk.addEventListener('change', () => {
+    state.summarySettings.overflow = overflowChk.checked;
+    overflowRow.classList.toggle('settings-subrow-disabled', !state.summarySettings.overflow);
+    renderSummary();
+    saveToStorage();
+  });
+
+  overflowAt.addEventListener('change', () => {
+    const val = Math.min(50, Math.max(4, parseInt(overflowAt.value) || 8));
+    overflowAt.value = val;
+    state.summarySettings.overflowAt = val;
+    if (state.summarySettings.overflow) { renderSummary(); saveToStorage(); }
+  });
+
+  syncUI();
+}
+
 /* ── Init ─────────────────────────────────────────────────────── */
 function initFooter() {
   document.getElementById('footer-year').textContent    = new Date().getFullYear();
@@ -2854,6 +3035,7 @@ function init() {
   initCustomCategories();
   initPlatformToggle();
   initLegendToggle();
+  initSummarySettings();
   initFooter();
 }
 

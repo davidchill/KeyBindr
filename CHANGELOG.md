@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.15] – 2026-05-07
+
+### Added
+
+- **Collapsible category groups** — each category header in the Hotkey Summary now has a chevron toggle button; clicking it collapses or expands the item list; collapsed state persists to `localStorage` and survives page reloads; items count badge always remains visible so the group isn't mistaken for empty
+- **Item count badge** — every category group header displays the total number of assigned hotkeys as a small badge to the right of the category name
+- **Summary Settings panel** — gear icon button in the top-right corner of the Hotkey Summary card opens a positioned settings popup with two controls: a column overflow toggle and an overflow threshold input; settings persist to `localStorage` under `summarySettings`
+- **Column overflow layout mode** — opt-in setting (default off); when enabled, categories with more items than the configured threshold split into consecutive adjacent columns; remaining categories reflow into available space using LPT bin-packing; threshold is configurable from 4–50 items (default 8)
+- **`computeColumnLayout` algorithm** — new rendering function used when overflow mode is active; sorts categories heaviest-first, places multi-chunk categories into consecutive column slots, then distributes remaining small categories via greedy LPT balancing
+
+### Changed
+
+- **`initSummaryCols` auto-balance** — replaced naive equal-chunk split with LPT (Longest Processing Time) bin-packing; categories are sorted by item count descending and assigned to the column with the smallest running total, producing more even column heights on first init
+- **Summary settings button placement** — positioned absolute in the top-right corner of `.summary-card`; bumped up 5 px on mobile (`@media max-width: 768px`) to avoid overlapping the wrapped search row
+
+---
+
 ## [0.4.14] – 2026-05-07
 
 ### Added

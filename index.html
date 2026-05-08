@@ -161,6 +161,9 @@
 
     <div class="summary-section">
       <div class="summary-card">
+        <button id="btn-summary-settings" class="icon-btn summary-settings-btn" title="Summary settings" aria-label="Summary settings">
+          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
+        </button>
         <div class="summary-header-row">
           <span class="legend-title">Hotkey Summary</span>
           <input id="summary-search" class="summary-search" type="text" placeholder="Search…" autocomplete="off" spellcheck="false">
@@ -174,6 +177,36 @@
       </div>
     </div>
   </main>
+
+  <!-- Summary settings panel -->
+  <div id="summary-settings-panel" class="summary-settings-panel hidden" role="dialog" aria-label="Summary Settings">
+    <div class="summary-settings-header">
+      <span class="summary-settings-title">Summary Settings</span>
+      <button id="summary-settings-close" class="icon-btn" aria-label="Close">✕</button>
+    </div>
+    <div class="summary-settings-body">
+      <div class="settings-row">
+        <div class="settings-row-info">
+          <span class="settings-label">Column overflow</span>
+          <span class="settings-hint">Large categories spill into adjacent columns</span>
+        </div>
+        <label class="toggle-switch">
+          <input type="checkbox" id="setting-overflow">
+          <span class="toggle-track"></span>
+        </label>
+      </div>
+      <div class="settings-row settings-subrow" id="overflow-at-row">
+        <div class="settings-row-info">
+          <span class="settings-label">Overflow after</span>
+          <span class="settings-hint">Hotkeys per column before spilling right</span>
+        </div>
+        <div class="settings-number-input">
+          <input type="number" id="setting-overflow-at" min="4" max="50" step="1" value="8">
+          <span class="settings-number-unit">items</span>
+        </div>
+      </div>
+    </div>
+  </div>
 
   <!-- Template overlay + modal -->
   <div id="template-overlay" class="popover-overlay hidden"></div>
