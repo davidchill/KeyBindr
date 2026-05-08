@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.17 — work in progress, active development.
+  <strong>Version:</strong> 0.4.18 — work in progress, active development.
 </p>
 
 ---
@@ -55,7 +55,7 @@
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; each category group shows an item count badge and a collapse/expand chevron; collapsed state persists across sessions
-- **Drag-to-reorder** — drag category groups in the summary to reorder within or across columns; arrangement persists; in overflow mode, drag updates the category sequence without disabling overflow; dragging an overflowing category highlights the nearest valid drop target even when the cursor stays within the category's own columns
+- **Drag-to-reorder** — drag category groups in the summary to reorder within or across columns; arrangement persists; drop indicators appear only when hovering over a category header (top half = insert before, bottom half = insert after), preventing false positives over item lists; a 40 px drop zone below each column's last group allows appending without needing to target a header; in overflow mode, drag updates the category sequence without disabling overflow; dragging an overflowing category highlights the nearest valid drop target even when the cursor stays within the category's own columns
 - **Summary Settings** — gear icon in the top-right corner of the summary card opens a settings popup; includes a column overflow toggle (off by default) that splits large categories across consecutive adjacent columns at a configurable threshold (default 8 items), with remaining categories auto-balancing into available space
 
 ### Context tabs

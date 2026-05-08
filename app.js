@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.17';
+const VERSION = '0.4.18';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -1373,14 +1373,17 @@ function onCatDragMove(e) {
   _catDragState.targetGroupEl = null;
   _catDragState.targetColEl   = null;
 
-  const targetGroup = below?.closest('.summary-group[data-cat-id]');
-  const isCont = targetGroup?.classList.contains('summary-group-cont');
-  // In overflow mode allow continuation segments as targets; in manual mode skip them
-  const allowTarget = targetGroup
+  // Only show a group indicator when hovering over a header — avoids false
+  // positives from hovering over the items area of tall categories
+  const targetHeader = below?.closest('.summary-group-header, .summary-group-header-cont');
+  const targetGroup  = targetHeader?.closest('.summary-group[data-cat-id]');
+  const isCont       = targetGroup?.classList.contains('summary-group-cont');
+  const allowTarget  = targetGroup
     && targetGroup.dataset.catId !== _catDragState.catId
     && (!isCont || state.summarySettings.overflow);
+
   if (allowTarget) {
-    const r = targetGroup.getBoundingClientRect();
+    const r = targetHeader.getBoundingClientRect();
     const before = e.clientY < r.top + r.height / 2;
     targetGroup.classList.add(before ? 'drop-before' : 'drop-after');
     _catDragState.targetGroupEl = targetGroup;
@@ -1388,12 +1391,23 @@ function onCatDragMove(e) {
   } else {
     const targetCol = below?.closest('.summary-col');
     if (targetCol) {
-      targetCol.classList.add('drag-over');
-      _catDragState.targetColEl = targetCol;
+      // When hovering below all groups (in the padding zone), show drop-after
+      // on the last group so "append to column" has a clear visual target
+      const colGroups = [...targetCol.querySelectorAll('.summary-group[data-cat-id]:not(.summary-group-cont)')]
+        .filter(g => g.dataset.catId !== _catDragState.catId);
+      const lastGroup = colGroups[colGroups.length - 1];
+      if (lastGroup && e.clientY > lastGroup.getBoundingClientRect().bottom) {
+        lastGroup.classList.add('drop-after');
+        _catDragState.targetGroupEl = lastGroup;
+        _catDragState.targetBefore  = false;
+      } else {
+        targetCol.classList.add('drag-over');
+        _catDragState.targetColEl = targetCol;
+      }
     }
     // In overflow mode, highlight the nearest valid group even when cursor is
     // over the dragged category's own columns — gives clear drop feedback
-    if (state.summarySettings.overflow) {
+    if (state.summarySettings.overflow && !_catDragState.targetGroupEl) {
       let nearest = null, minDist = Infinity;
       document.querySelectorAll('.summary-group[data-cat-id]').forEach(g => {
         if (g.dataset.catId === _catDragState.catId) return;
@@ -1429,8 +1443,12 @@ function onCatDragEnd() {
 
   if (targetGroupEl || targetColEl) {
     if (state.summarySettings.overflow) {
-      if (targetGroupEl) moveCategoryInOverflowOrder(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
-      // Dropping on an empty column in overflow mode has no effect — layout is auto-computed
+      if (targetGroupEl) {
+        moveCategoryInOverflowOrder(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
+      } else if (targetColEl) {
+        const lastGroup = [...targetColEl.querySelectorAll('.summary-group[data-cat-id]:not(.summary-group-cont)')].pop();
+        if (lastGroup) moveCategoryInOverflowOrder(_catDragState.catId, lastGroup.dataset.catId, false);
+      }
     } else {
       if (targetGroupEl) {
         moveCategoryInLayout(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);

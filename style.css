@@ -1692,7 +1692,7 @@ body::before {
   min-height: 32px;
   border-radius: var(--r);
   border: 2px solid transparent;
-  padding: 2px;
+  padding: 2px 2px 40px;
   transition: background 0.12s, border-color 0.12s;
 }
 

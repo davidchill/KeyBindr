@@ -1,5 +1,16 @@
 # Changelog
 
+## [0.4.18] – 2026-05-08
+
+### Fixed
+
+- **Category drag drop indicators now only appear on headers** — previously, hovering anywhere within a category group (including its items list) showed a `drop-before` or `drop-after` indicator; this was misleading for tall groups like Weapons because the shadow appeared far from the cursor; detection now requires the cursor to be over a `.summary-group-header` or `.summary-group-header-cont` element, eliminating false positives
+- **`drop-after` now reachable on large categories** — the prior threshold-based approach (28 px from the group's bottom edge) required scrolling to the very bottom of a tall group to trigger `drop-after`; replaced with header-based detection where the bottom half of any header means "insert after", making all categories equally accessible regardless of item count
+- **Drop zone below last category in a column** — `.summary-col` lacked droppable space below its last group; added `padding-bottom: 40px` so the column's hit area extends beneath the last card; hovering in this zone shows a `drop-after` indicator on the last group and executes the move correctly on release
+- **Overflow mode: column-empty drop was a no-op** — dropping a category onto the empty padding area of a column in overflow mode previously had no effect (intentionally disabled with a comment); now finds the last primary group in that column and calls `moveCategoryInOverflowOrder` with `before=false`, placing the dragged category after it
+
+---
+
 ## [0.4.17] – 2026-05-08
 
 ### Added
