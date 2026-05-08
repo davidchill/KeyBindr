@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.16';
+const VERSION = '0.4.17';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -560,7 +560,7 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows', collapsedCats: new Set(), summarySettings: { overflow: false, overflowAt: 8 }, catItemOrder: {} };
+const state = { hotkeys: {}, tabs: [{ id: 'tab-default', name: 'Default', hotkeys: {} }], activeTabId: 'tab-default', layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows', collapsedCats: new Set(), summarySettings: { overflow: false, overflowAt: 8, catOrder: [] }, catItemOrder: {} };
 
 const MOD_MAP_MAC = { Ctrl: 'Cmd', Alt: 'Opt', Shift: 'Shift', Win: 'Cmd' };
 function displayMod(mod) {
@@ -1335,7 +1335,7 @@ function clearItemDragIndicators() {
 }
 
 /* ── Category drag (pointer events) ──────────────────────────── */
-function startCatDrag(catId, groupEl, e) {
+function startCatDrag(catId, groupEl, e, clickEl) {
   const hdr = groupEl.querySelector('.summary-group-header');
   const ghostEl = hdr.cloneNode(true);
   ghostEl.className = 'cat-drag-ghost';
@@ -1344,12 +1344,13 @@ function startCatDrag(catId, groupEl, e) {
   if (catColor) ghostEl.style.setProperty('--cat-color', catColor);
   document.body.appendChild(ghostEl);
 
-  const rect = groupEl.getBoundingClientRect();
+  // Use clickEl's rect for offset when drag starts on a different element (e.g. continuation)
+  const rect = (clickEl || groupEl).getBoundingClientRect();
   _catDragState = { catId, groupEl, ghostEl,
     offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top,
     targetGroupEl: null, targetBefore: false, targetColEl: null };
   _dragCatId = catId;
-  groupEl.classList.add('dragging');
+  document.querySelectorAll(`.summary-group[data-cat-id="${catId}"]`).forEach(el => el.classList.add('dragging'));
 
   document.addEventListener('pointermove', onCatDragMove);
   document.addEventListener('pointerup',   onCatDragEnd);
@@ -1373,8 +1374,12 @@ function onCatDragMove(e) {
   _catDragState.targetColEl   = null;
 
   const targetGroup = below?.closest('.summary-group[data-cat-id]');
-  if (targetGroup && targetGroup !== _catDragState.groupEl
-      && !targetGroup.classList.contains('summary-group-cont')) {
+  const isCont = targetGroup?.classList.contains('summary-group-cont');
+  // In overflow mode allow continuation segments as targets; in manual mode skip them
+  const allowTarget = targetGroup
+    && targetGroup.dataset.catId !== _catDragState.catId
+    && (!isCont || state.summarySettings.overflow);
+  if (allowTarget) {
     const r = targetGroup.getBoundingClientRect();
     const before = e.clientY < r.top + r.height / 2;
     targetGroup.classList.add(before ? 'drop-before' : 'drop-after');
@@ -1385,6 +1390,26 @@ function onCatDragMove(e) {
     if (targetCol) {
       targetCol.classList.add('drag-over');
       _catDragState.targetColEl = targetCol;
+    }
+    // In overflow mode, highlight the nearest valid group even when cursor is
+    // over the dragged category's own columns — gives clear drop feedback
+    if (state.summarySettings.overflow) {
+      let nearest = null, minDist = Infinity;
+      document.querySelectorAll('.summary-group[data-cat-id]').forEach(g => {
+        if (g.dataset.catId === _catDragState.catId) return;
+        const r = g.getBoundingClientRect();
+        const nearX = Math.max(r.left, Math.min(e.clientX, r.right));
+        const nearY = Math.max(r.top, Math.min(e.clientY, r.bottom));
+        const dist = Math.hypot(e.clientX - nearX, e.clientY - nearY);
+        if (dist < minDist) { minDist = dist; nearest = g; }
+      });
+      if (nearest) {
+        const r = nearest.getBoundingClientRect();
+        const before = e.clientY < r.top + r.height / 2;
+        nearest.classList.add(before ? 'drop-before' : 'drop-after');
+        _catDragState.targetGroupEl = nearest;
+        _catDragState.targetBefore  = before;
+      }
     }
   }
 }
@@ -1403,17 +1428,21 @@ function onCatDragEnd() {
   const { groupEl, ghostEl, targetGroupEl, targetBefore, targetColEl } = _catDragState;
 
   if (targetGroupEl || targetColEl) {
-    if (state.summarySettings.overflow) snapshotLayoutFromDOM();
-    if (targetGroupEl) {
-      moveCategoryInLayout(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
+    if (state.summarySettings.overflow) {
+      if (targetGroupEl) moveCategoryInOverflowOrder(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
+      // Dropping on an empty column in overflow mode has no effect — layout is auto-computed
     } else {
-      const colIdx = parseInt(targetColEl.dataset.col, 10);
-      if (!isNaN(colIdx)) moveCategoryToColumn(_catDragState.catId, colIdx);
+      if (targetGroupEl) {
+        moveCategoryInLayout(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
+      } else {
+        const colIdx = parseInt(targetColEl.dataset.col, 10);
+        if (!isNaN(colIdx)) moveCategoryToColumn(_catDragState.catId, colIdx);
+      }
     }
   }
 
   ghostEl.remove();
-  groupEl.classList.remove('dragging');
+  document.querySelectorAll(`.summary-group[data-cat-id="${_catDragState.catId}"]`).forEach(el => el.classList.remove('dragging'));
   clearDragIndicators();
   _dragCatId    = null;
   _catDragState = null;
@@ -1426,9 +1455,9 @@ function onCatDragEnd() {
 
 function onCatDragKeydown(e) {
   if (e.key !== 'Escape' || !_catDragState) return;
-  const { groupEl, ghostEl } = _catDragState;
+  const { catId, ghostEl } = _catDragState;
   ghostEl.remove();
-  groupEl.classList.remove('dragging');
+  document.querySelectorAll(`.summary-group[data-cat-id="${catId}"]`).forEach(el => el.classList.remove('dragging'));
   clearDragIndicators();
   _dragCatId    = null;
   _catDragState = null;
@@ -1476,6 +1505,20 @@ function moveItemInSummary(keyId, srcCatId, tgtCatId, targetKeyId, before) {
   saveToStorage();
   renderKeyboard();
   renderLegend();
+  renderSummary();
+}
+
+function moveCategoryInOverflowOrder(srcId, targetId, before) {
+  const order = [...(state.summarySettings.catOrder || [])];
+  const filtered = order.filter(id => id !== srcId);
+  const tgtIdx = filtered.indexOf(targetId);
+  if (tgtIdx === -1) {
+    filtered.push(srcId);
+  } else {
+    filtered.splice(before ? tgtIdx : tgtIdx + 1, 0, srcId);
+  }
+  state.summarySettings.catOrder = filtered;
+  saveToStorage();
   renderSummary();
 }
 
@@ -1732,6 +1775,28 @@ function makeSummaryGroupContinuation(cat, items) {
   const hdr = document.createElement('div');
   hdr.className = 'summary-group-header summary-group-header-cont';
 
+  // Continuation headers are draggable in overflow mode — same logic as primary header
+  hdr.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    e.preventDefault();
+    const startX = e.clientX, startY = e.clientY;
+    // Find the primary group element for this cat so the ghost looks right
+    const primaryEl = document.querySelector(`.summary-grid .summary-group[data-cat-id="${cat.id}"]:not(.summary-group-cont)`) || group;
+    const onPreMove = ev => {
+      if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+      cleanup();
+      startCatDrag(cat.id, primaryEl, e, group);
+    };
+    const cleanup = () => {
+      document.removeEventListener('pointermove', onPreMove);
+      document.removeEventListener('pointerup',   cleanup);
+      document.removeEventListener('pointercancel', cleanup);
+    };
+    document.addEventListener('pointermove', onPreMove);
+    document.addEventListener('pointerup',   cleanup);
+    document.addEventListener('pointercancel', cleanup);
+  });
+
   const swatch = document.createElement('span');
   swatch.className = 'summary-group-swatch';
   swatch.style.background = cat.color;
@@ -1753,44 +1818,79 @@ function makeSummaryGroupContinuation(cat, items) {
 }
 
 function computeColumnLayout(buckets, overflowAt) {
+  const catOrder = state.summarySettings.catOrder || [];
+  const orderMap = {};
+  catOrder.forEach((id, i) => { orderMap[id] = i; });
+  const hasOrder = catOrder.length > 0;
+
   const cats = allCategories()
     .map(cat => ({ cat, items: buckets[cat.id] || [] }))
     .filter(x => x.items.length > 0)
-    .sort((a, b) => b.items.length - a.items.length);
+    .sort((a, b) => {
+      if (hasOrder) {
+        const ia = orderMap[a.cat.id] ?? Infinity;
+        const ib = orderMap[b.cat.id] ?? Infinity;
+        return ia - ib;
+      }
+      return b.items.length - a.items.length;
+    });
 
   const columns    = Array.from({ length: SUMMARY_COLS }, () => []);
   const colHeights = Array(SUMMARY_COLS).fill(0);
 
-  // Large categories (multi-chunk) get placed first into consecutive columns
-  const small = [];
-  cats.forEach(({ cat, items }) => {
+  function placeChunks(cat, items) {
     const chunks = [];
     let rem = [...items];
     while (rem.length > 0) chunks.push(rem.splice(0, overflowAt));
-
-    if (chunks.length <= 1) { small.push({ cat, items }); return; }
-
-    // Find the best run of `chunks.length` consecutive columns (lowest max height)
-    const needed = Math.min(chunks.length, SUMMARY_COLS);
-    let bestStart = 0, bestScore = Infinity;
-    for (let i = 0; i <= SUMMARY_COLS - needed; i++) {
-      const score = Math.max(...colHeights.slice(i, i + needed));
-      if (score < bestScore) { bestScore = score; bestStart = i; }
+    if (chunks.length <= 1) {
+      const minCol = colHeights.indexOf(Math.min(...colHeights));
+      columns[minCol].push({ cat, items, isCont: false, totalCount: items.length });
+      colHeights[minCol] += items.length;
+    } else {
+      const needed = Math.min(chunks.length, SUMMARY_COLS);
+      let bestStart = 0, bestScore = Infinity;
+      for (let i = 0; i <= SUMMARY_COLS - needed; i++) {
+        const score = Math.max(...colHeights.slice(i, i + needed));
+        if (score < bestScore) { bestScore = score; bestStart = i; }
+      }
+      chunks.forEach((chunk, j) => {
+        const col = bestStart + j;
+        columns[col].push({ cat, items: chunk, isCont: j > 0, totalCount: items.length });
+        colHeights[col] += chunk.length;
+      });
     }
+  }
 
-    chunks.forEach((chunk, j) => {
-      const col = bestStart + j;
-      columns[col].push({ cat, items: chunk, isCont: j > 0, totalCount: items.length });
-      colHeights[col] += chunk.length;
+  if (hasOrder) {
+    // User-specified order: process every category strictly in sequence
+    cats.forEach(({ cat, items }) => placeChunks(cat, items));
+  } else {
+    // Default bin-pack: large (multi-chunk) categories grab their column runs first,
+    // then small categories fill remaining space via LPT
+    const small = [];
+    cats.forEach(({ cat, items }) => {
+      const chunks = [];
+      let rem = [...items];
+      while (rem.length > 0) chunks.push(rem.splice(0, overflowAt));
+      if (chunks.length <= 1) { small.push({ cat, items }); return; }
+      const needed = Math.min(chunks.length, SUMMARY_COLS);
+      let bestStart = 0, bestScore = Infinity;
+      for (let i = 0; i <= SUMMARY_COLS - needed; i++) {
+        const score = Math.max(...colHeights.slice(i, i + needed));
+        if (score < bestScore) { bestScore = score; bestStart = i; }
+      }
+      chunks.forEach((chunk, j) => {
+        const col = bestStart + j;
+        columns[col].push({ cat, items: chunk, isCont: j > 0, totalCount: items.length });
+        colHeights[col] += chunk.length;
+      });
     });
-  });
-
-  // Small categories distributed via LPT into whatever columns remain
-  small.forEach(({ cat, items }) => {
-    const minCol = colHeights.indexOf(Math.min(...colHeights));
-    columns[minCol].push({ cat, items, isCont: false, totalCount: items.length });
-    colHeights[minCol] += items.length;
-  });
+    small.forEach(({ cat, items }) => {
+      const minCol = colHeights.indexOf(Math.min(...colHeights));
+      columns[minCol].push({ cat, items, isCont: false, totalCount: items.length });
+      colHeights[minCol] += items.length;
+    });
+  }
 
   return columns;
 }
@@ -1833,6 +1933,13 @@ function renderSummary() {
   colsEl.className = 'summary-columns';
 
   if (state.summarySettings.overflow) {
+    // Lazy-init catOrder to match the default size-descending sort
+    if (!state.summarySettings.catOrder?.length) {
+      state.summarySettings.catOrder = allCategories()
+        .filter(c => buckets[c.id]?.length)
+        .sort((a, b) => (buckets[b.id]?.length || 0) - (buckets[a.id]?.length || 0))
+        .map(c => c.id);
+    }
     const columns = computeColumnLayout(buckets, state.summarySettings.overflowAt);
     columns.forEach((colGroups, colIdx) => {
       const colEl = document.createElement('div');
@@ -2274,11 +2381,109 @@ function clearHotkey() {
   closePopover();
 }
 
+/* ── Context tabs ─────────────────────────────────────────────── */
+function genTabId() {
+  return 'tab-' + Math.random().toString(36).slice(2, 8);
+}
+
+function syncActiveTab() {
+  const tab = state.tabs.find(t => t.id === state.activeTabId);
+  if (tab) tab.hotkeys = JSON.parse(JSON.stringify(state.hotkeys));
+}
+
+function switchTab(id) {
+  syncActiveTab();
+  state.activeTabId = id;
+  const tab = state.tabs.find(t => t.id === id);
+  state.hotkeys = tab ? JSON.parse(JSON.stringify(tab.hotkeys)) : {};
+  renderTabBar();
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
+  saveToStorage();
+}
+
+function showTabNameDialog(onConfirm) {
+  const modal  = document.getElementById('tab-name-modal');
+  const input  = document.getElementById('tab-name-input');
+  const ok     = document.getElementById('tab-name-ok');
+  const cancel = document.getElementById('tab-name-cancel');
+  const overlay = document.getElementById('confirm-overlay');
+
+  input.value = '';
+  modal.classList.remove('hidden');
+  overlay.classList.remove('hidden');
+  input.focus();
+
+  function commit() {
+    const name = input.value.trim();
+    if (!name) { input.focus(); return; }
+    cleanup();
+    onConfirm(name);
+  }
+
+  function cleanup() {
+    modal.classList.add('hidden');
+    overlay.classList.add('hidden');
+    ok.removeEventListener('click', commit);
+    cancel.removeEventListener('click', cleanup);
+    input.removeEventListener('keydown', onKey);
+  }
+
+  function onKey(e) {
+    if (e.key === 'Enter') commit();
+    if (e.key === 'Escape') cleanup();
+  }
+
+  ok.addEventListener('click', commit);
+  cancel.addEventListener('click', cleanup);
+  input.addEventListener('keydown', onKey);
+}
+
+function addTab() {
+  showTabNameDialog(name => {
+    syncActiveTab();
+    const id = genTabId();
+    state.tabs.push({ id, name, hotkeys: {} });
+    state.activeTabId = id;
+    state.hotkeys = {};
+    renderTabBar();
+    renderKeyboard();
+    renderLegend();
+    renderSummary();
+    saveToStorage();
+  });
+}
+
+function renderTabBar() {
+  const el = document.getElementById('context-tabs');
+  if (!el) return;
+  el.innerHTML = '';
+
+  state.tabs.forEach(tab => {
+    const btn = document.createElement('button');
+    btn.className = 'context-tab' + (tab.id === state.activeTabId ? ' active' : '');
+    btn.textContent = tab.name;
+    btn.addEventListener('click', () => { if (tab.id !== state.activeTabId) switchTab(tab.id); });
+    el.appendChild(btn);
+  });
+
+  const addBtn = document.createElement('button');
+  addBtn.className = 'context-tab-add';
+  addBtn.title = 'Add tab';
+  addBtn.textContent = '+';
+  addBtn.addEventListener('click', addTab);
+  el.appendChild(addBtn);
+}
+
 /* ── Storage ──────────────────────────────────────────────────── */
 function saveToStorage() {
+  syncActiveTab();
   try {
     localStorage.setItem('keybindr', JSON.stringify({
       hotkeys:         state.hotkeys,
+      tabs:            state.tabs,
+      activeTabId:     state.activeTabId,
       mapName:         document.getElementById('map-name').value,
       layout:          state.layout,
       keyMap:          state.keyMap,
@@ -2319,6 +2524,19 @@ function loadFromStorage() {
         btn.classList.toggle('active', btn.dataset.platform === state.platform);
       });
     }
+    // Load tabs (with migration from pre-tabs saves)
+    if (data.tabs && Array.isArray(data.tabs) && data.tabs.length > 0) {
+      state.tabs = data.tabs;
+      state.activeTabId = data.activeTabId || data.tabs[0].id;
+    } else {
+      // Migration: wrap existing hotkeys in a Default tab
+      state.tabs = [{ id: 'tab-default', name: 'Default', hotkeys: JSON.parse(JSON.stringify(state.hotkeys)) }];
+      state.activeTabId = 'tab-default';
+    }
+    // Always load active tab's hotkeys as the working copy
+    const activeTab = state.tabs.find(t => t.id === state.activeTabId) || state.tabs[0];
+    state.activeTabId = activeTab.id;
+    state.hotkeys = JSON.parse(JSON.stringify(activeTab.hotkeys));
   } catch (_) {}
 }
 
@@ -3227,6 +3445,7 @@ function init() {
   populateCategorySelect();
   renderLegend();
   renderSummary();
+  renderTabBar();
   initEvents();
   initLayoutControls();
   initTemplates();

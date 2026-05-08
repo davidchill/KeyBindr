@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.16 — work in progress, active development.
+  <strong>Version:</strong> 0.4.17 — work in progress, active development.
 </p>
 
 ---
@@ -55,8 +55,14 @@
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; each category group shows an item count badge and a collapse/expand chevron; collapsed state persists across sessions
-- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another; arrangement persists; if auto-overflow layout is active, the first drag automatically snapshots the current layout and switches to manual mode
+- **Drag-to-reorder** — drag category groups in the summary to reorder within or across columns; arrangement persists; in overflow mode, drag updates the category sequence without disabling overflow; dragging an overflowing category highlights the nearest valid drop target even when the cursor stays within the category's own columns
 - **Summary Settings** — gear icon in the top-right corner of the summary card opens a settings popup; includes a column overflow toggle (off by default) that splits large categories across consecutive adjacent columns at a configurable threshold (default 8 items), with remaining categories auto-balancing into available space
+
+### Context tabs
+
+- **Per-map tabs** — create multiple named tabs within a single map for situational hotkey sets (e.g. On Foot, Driving, Flying, Menu); each tab holds its own independent hotkey assignments; always starts with a Default tab
+- **Tab switching** — clicking a tab saves the current tab's hotkeys and loads the selected tab's, re-rendering the keyboard and summary instantly
+- **Add tabs** — "+" button opens an in-app naming dialog; tab names up to 30 characters
 
 ### Data & export
 
@@ -96,7 +102,9 @@ App state:
   categories:       [ { id, name, color } ],
   platform:         'windows' | 'mac',
   collapsedCats:    Set<catId>,
-  summarySettings:  { overflow: boolean, overflowAt: number }
+  summarySettings:  { overflow: boolean, overflowAt: number, catOrder: string[] },
+  tabs:             [ { id, name, hotkeys: {} } ],
+  activeTabId:      string
 }
 ```
 

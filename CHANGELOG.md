@@ -1,5 +1,24 @@
 # Changelog
 
+## [0.4.17] – 2026-05-08
+
+### Added
+
+- **Context tabs** — per-map tabs for situational hotkey sets (e.g. On Foot, Driving, Flying); a Default tab is always present; the "+" button creates additional named tabs; each tab stores its own independent hotkey map in `state.tabs[].hotkeys`; switching tabs calls `syncActiveTab()` to flush live hotkeys back to the active tab before loading the new one; `state.hotkeys` remains the live working copy
+- **In-app tab naming dialog** — new tab creation uses a custom modal (`#tab-name-modal`) matching the app's design rather than a blocking system `prompt()`; includes a text input (max 30 chars), Cancel and Create buttons, and Enter-key submit; the old `prompt()` approach was causing hotkey clearing to fail because it blocked browser repaints before the state change was applied
+- **Storage migration** — `loadFromStorage()` detects saves without a `tabs` array and wraps the existing `hotkeys` object into a Default tab, preserving all data from older saves
+
+### Fixed
+
+- **Overflow drag no longer resets overflow to disabled** — previously `onCatDragEnd` called `snapshotLayoutFromDOM()` on every drop, which set `state.summarySettings.overflow = false` and discarded the overflow arrangement; now in overflow mode all drops route through `moveCategoryInOverflowOrder` and never call `snapshotLayoutFromDOM`
+- **All overflow segments highlighted during drag** — `startCatDrag` previously added the `dragging` class only to the primary group element; now uses `querySelectorAll('.summary-group[data-cat-id="…"]')` to add it to all segments (primary + continuations)
+- **`computeColumnLayout` respects `catOrder` for all categories** — when `hasOrder` was true, large (multi-chunk) categories were still being sorted by item count in the bin-packing path; the algorithm now strictly processes all categories in `catOrder` sequence
+- **Drop feedback when dragging overflowing categories** — when the cursor hovers over the dragged category's own columns (which have no valid drop targets), the nearest valid group in any other column is now found by bounding-rect distance and highlighted with a drop indicator; previously there was zero visual feedback in this common scenario, making overflow drag appear broken
+- **Continuation header ghost offset fixed** — when a drag was started from a continuation header, `startCatDrag` used the primary group's bounding rect to compute the cursor offset, placing the ghost element hundreds of pixels away from the cursor (e.g. 322 px off); `startCatDrag` now accepts an optional `clickEl` parameter; the continuation passes itself as `clickEl` so the offset is calculated from the element the user actually clicked
+- **Continuation header cursor** — changed from `cursor: default` to `cursor: grab` so the header visually signals it is draggable
+
+---
+
 ## [0.4.16] – 2026-05-07
 
 ### Fixed

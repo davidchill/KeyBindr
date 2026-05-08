@@ -160,6 +160,7 @@
     </div>
 
     <div class="summary-section">
+      <div class="context-tabs" id="context-tabs"></div>
       <div class="summary-card">
         <button id="btn-summary-settings" class="icon-btn summary-settings-btn" title="Summary settings" aria-label="Summary settings">
           <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="3"/><path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1-2.83 2.83l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-4 0v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83-2.83l.06-.06A1.65 1.65 0 0 0 4.68 15a1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1 0-4h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 2.83-2.83l.06.06A1.65 1.65 0 0 0 9 4.68a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 4 0v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 2.83l-.06.06A1.65 1.65 0 0 0 19.4 9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 0 4h-.09a1.65 1.65 0 0 0-1.51 1z"/></svg>
@@ -223,6 +224,16 @@
       <button class="template-tab" data-cat="Development">Development</button>
     </div>
     <div id="template-grid" class="template-grid"></div>
+  </div>
+
+  <!-- Tab name dialog -->
+  <div id="tab-name-modal" class="confirm-modal hidden" role="dialog" aria-modal="true" aria-labelledby="tab-name-title">
+    <p id="tab-name-title" class="confirm-message">New Tab Name</p>
+    <input type="text" id="tab-name-input" class="form-input tab-name-dialog-input" placeholder="e.g. On Foot, Flying, Menu…" maxlength="30" autocomplete="off" spellcheck="false">
+    <div class="confirm-actions">
+      <button id="tab-name-cancel" class="btn btn-ghost">Cancel</button>
+      <button id="tab-name-ok" class="btn btn-primary">Create Tab</button>
+    </div>
   </div>
 
   <!-- Confirm dialog -->

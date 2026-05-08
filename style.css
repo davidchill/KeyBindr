@@ -1556,6 +1556,65 @@ body::before {
   opacity: 0.5;
 }
 
+/* ── Context tabs ─────────────────────────────────────────────── */
+.context-tabs {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  margin-bottom: 0;
+  padding: 0 0 0 20px;
+}
+
+.context-tab {
+  font-family: var(--font);
+  font-size: 0.78rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  background: var(--surface);
+  border: 1px solid var(--border);
+  border-radius: 6px 6px 0 0;
+  padding: 5px 14px;
+  cursor: pointer;
+  transition: color 0.15s, background 0.15s, border-color 0.15s;
+  white-space: nowrap;
+}
+
+.context-tab:hover {
+  color: var(--text);
+  background: var(--surface-2);
+}
+
+.context-tab.active {
+  color: var(--text);
+  background: var(--surface-2);
+  border-color: var(--border);
+  border-top: 2px solid var(--accent);
+}
+
+.context-tab-add {
+  font-family: var(--font);
+  font-size: 1rem;
+  font-weight: 400;
+  line-height: 1;
+  color: var(--text-muted);
+  background: transparent;
+  border: 1px dashed var(--border);
+  border-radius: 6px;
+  width: 26px;
+  height: 26px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  cursor: pointer;
+  transition: color 0.15s, border-color 0.15s;
+  padding: 0;
+}
+
+.context-tab-add:hover {
+  color: var(--accent);
+  border-color: var(--accent);
+}
+
 /* ── Hotkey summary ───────────────────────────────────────────── */
 .summary-section {
   width: 100%;
@@ -1650,7 +1709,10 @@ body::before {
 
 .summary-group[draggable="true"] { cursor: default; }
 
-.summary-group.dragging { opacity: 0.35; }
+.summary-group.dragging {
+  box-shadow: 0 0 0 2px var(--accent);
+  opacity: 0.6;
+}
 
 .summary-group.drop-before { box-shadow: 0 -2px 0 var(--accent); }
 .summary-group.drop-after  { box-shadow: 0  2px 0 var(--accent); }
@@ -1750,7 +1812,7 @@ body::before {
 
 /* Continuation block — same category spilling into another column */
 .summary-group-header-cont {
-  cursor: default;
+  cursor: grab;
   opacity: 0.7;
   margin-bottom: 6px;
 }
@@ -2092,6 +2154,13 @@ body::before {
 .settings-number-unit {
   font-size: 0.72rem;
   color: var(--text-muted);
+}
+
+/* ── Tab name dialog ──────────────────────────────────────────── */
+.tab-name-dialog-input {
+  width: 100%;
+  margin-bottom: 16px;
+  box-sizing: border-box;
 }
 
 /* ── Confirm dialog ───────────────────────────────────────────── */
