@@ -1026,7 +1026,7 @@ body::before {
 }
 
 .legend.collapsed .legend-toggle svg {
-  transform: rotate(-90deg);
+  transform: rotate(90deg);
 }
 
 .legend-title {
@@ -1434,16 +1434,17 @@ body::before {
   display: flex;
   align-items: center;
   gap: 6px;
-  padding: 8px 14px;
-  background: linear-gradient(180deg, var(--surface-2) 0%, var(--surface) 100%);
-  border: 1px solid var(--border-2);
-  border-radius: 14px;
-  box-shadow: 0 8px 32px rgba(0,0,0,0.32), 0 2px 8px rgba(0,0,0,0.18), inset 0 1px 0 rgba(255,255,255,0.07);
-  align-self: center;
-  width: calc(100% - 48px);
-  max-width: 1140px;
-  margin: 12px 0 0;
+  padding: 8px 20px;
+  background: var(--surface);
+  border-bottom: 1px solid var(--border);
+  border-radius: 0;
+  box-shadow: none;
+  align-self: stretch;
+  width: 100%;
+  max-width: none;
+  margin: 0;
   flex-shrink: 0;
+  justify-content: center;
 }
 
 .layout-bar-divider {
@@ -1938,8 +1939,9 @@ body::before {
   background: color-mix(in srgb, var(--accent) 7%, transparent);
 }
 
-.template-icon { font-size: 1.5rem; line-height: 1; align-self: center; }
+.template-icon { font-size: 1.5rem; line-height: 1; align-self: center; height: 32px; display: flex; align-items: center; justify-content: center; }
 .template-logo { width: 32px; height: 32px; object-fit: contain; display: block; }
+.template-logo--wide { width: 90px; height: 20px; }
 
 .template-name {
   font-size: 0.82rem;
@@ -2275,9 +2277,13 @@ body::before {
   }
 
   .legend-stat {
-    margin-left: auto;
+    margin-left: 0;
     margin-right: 0;
     white-space: nowrap;
+  }
+
+  .legend-toggle {
+    margin-left: auto;
   }
 
   .stat-suffix { display: none; }

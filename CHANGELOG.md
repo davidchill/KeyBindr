@@ -1,5 +1,22 @@
 # Changelog
 
+## [0.4.14] – 2026-05-07
+
+### Added
+
+- **Counter-Strike 2 template** — new Gaming template with 40 key assignments across 6 custom categories (Movement, Weapons, UI, Communication, Chat Wheel, Misc); icon uses a wide SVG wordmark rendered via `iconWide: true` flag and `.template-logo--wide` CSS class
+- **Template `iconWide` support** — templates can set `iconWide: true` to opt into a wider (90×20 px) logo box in the template gallery tile; standard square icons are unaffected
+- **Template icon zone fixed height** — `.template-icon` now has `height: 32px; display: flex; align-items: center; justify-content: center` so all tiles align consistently regardless of icon aspect ratio
+
+### Changed
+
+- **Layout bar styling** — converted from a floating pill (border-radius, box-shadow, `width: calc(100% - 48px)`) to a full-width flush second nav bar attached below the header; uses `var(--surface)` background with `border-bottom` only; `justify-content: center` centers all controls
+- **Categories sorted alphabetically** — `renderLegend()` now sorts a copy of `state.categories` by name via `localeCompare` before rendering chips; underlying state order is preserved
+- **Categories toggle chevron placement** — `#btn-legend-toggle` moved to appear before `#stat-assigned` in the HTML; on mobile, `margin-left: auto` transferred from `.legend-stat` to `.legend-toggle` to maintain correct right-side grouping
+- **Toggle chevron direction** — collapsed state rotates `90deg` (pointing left `<`) instead of `-90deg` (pointing right `>`); open state remains pointing down `∨`
+
+---
+
 ## [0.4.13] – 2026-05-07
 
 ### Fixed

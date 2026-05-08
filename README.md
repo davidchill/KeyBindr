@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.13 — work in progress, active development.
+  <strong>Version:</strong> 0.4.14 — work in progress, active development.
 </p>
 
 ---
@@ -33,7 +33,7 @@
 
 ### Templates & map management
 
-- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, or VS Code via the Templates button; each tile shows the app's official product icon
+- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, Counter-Strike 2, or VS Code via the Templates button; each tile shows the app's official product icon
 - **New Map** — "New Map" tile in the Templates modal; enter a name and create a blank map in one step
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template

@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.13';
+const VERSION = '0.4.14';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -1574,7 +1574,7 @@ function renderLegend() {
     if (hk.category) counts[hk.category] = (counts[hk.category] || 0) + 1;
   });
 
-  state.categories.forEach(cat => {
+  [...state.categories].sort((a, b) => a.name.localeCompare(b.name)).forEach(cat => {
     list.appendChild(buildCatChip(cat, counts[cat.id] || 0));
   });
 
@@ -2306,7 +2306,7 @@ function initTemplates() {
     const img = document.createElement('img');
     img.src = template.iconSrc;
     img.alt = template.name;
-    img.className = 'template-logo';
+    img.className = template.iconWide ? 'template-logo template-logo--wide' : 'template-logo';
     iconSpan.appendChild(img);
 
     const nameSpan = document.createElement('span');
