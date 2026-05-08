@@ -1669,6 +1669,29 @@ body::before {
   color: var(--text-muted);
   opacity: 0.45;
   flex-shrink: 0;
+  cursor: grab;
+  touch-action: none;
+  padding: 4px;
+  margin: -4px;
+}
+.summary-grip:hover { opacity: 0.8; }
+
+.cat-drag-ghost {
+  position: fixed;
+  z-index: 9999;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 10px 14px;
+  background: var(--surface-2);
+  border: 1px solid var(--border-2);
+  border-radius: var(--r);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  opacity: 0.92;
+  transform: rotate(1.5deg) scale(1.03);
+  cursor: grabbing;
+  white-space: nowrap;
 }
 
 .summary-group-swatch {
@@ -1785,6 +1808,37 @@ body::before {
   opacity: 1;
 }
 
+/* ── Summary item drag-and-drop ───────────────────────────────── */
+.summary-item-grip {
+  flex-shrink: 0;
+  color: var(--text-muted);
+  opacity: 0;
+  cursor: grab;
+  transition: opacity 0.15s;
+}
+.summary-item:hover .summary-item-grip {
+  opacity: 0.5;
+}
+.summary-item-grip:hover {
+  opacity: 1 !important;
+}
+
+.summary-item.item-dragging {
+  opacity: 0.4;
+}
+
+.summary-item.item-drop-before {
+  box-shadow: 0 -2px 0 var(--accent);
+}
+.summary-item.item-drop-after {
+  box-shadow: 0 2px 0 var(--accent);
+}
+
+.summary-group.items-drag-target {
+  outline: 2px solid color-mix(in srgb, var(--accent) 60%, transparent);
+  outline-offset: -2px;
+}
+
 /* ── Category hover highlight ─────────────────────────────────── */
 #keyboard.cat-dim .key {
   opacity: 0.2;
@@ -1809,6 +1863,7 @@ body::before {
   flex-shrink: 0;
   align-self: center;
 }
+.summary-mods-cell[hidden] { display: none; }
 
 .summary-key-cell {
   display: flex;
@@ -1847,6 +1902,7 @@ body::before {
   flex-direction: column;
   gap: 1px;
   min-width: 0;
+  margin-left: 6px;
 }
 
 .summary-action {
@@ -2540,6 +2596,21 @@ body::before {
 
   .template-grid {
     grid-template-columns: repeat(2, 1fr);
+  }
+
+  /* ── Hotkey popover ── */
+  .popover {
+    width: min(92vw, 320px);
+    top: calc(50% - 100px);
+  }
+
+  .popover-header {
+    padding: 10px 12px 8px;
+  }
+
+  .popover-body {
+    padding: 12px;
+    gap: 10px;
   }
 }
 
