@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.4.16] – 2026-05-07
+
+### Fixed
+
+- **Category drag now works in overflow layout mode** — previously, dragging a category group in the Hotkey Summary had no visible effect when the column overflow setting was enabled; root cause was that overflow mode renders from `computeColumnLayout` (an auto-balancing algorithm) rather than `state.summaryCols`, so drag updates to `summaryCols` were silently discarded on re-render; fix: on the first drag-to-drop gesture while overflow is active, `snapshotLayoutFromDOM()` captures the current visible column arrangement into `state.summaryCols` and sets `overflow = false`, switching the layout to manual mode before applying the move; the drag then applies correctly and the arrangement persists
+
+---
+
 ## [0.4.15] – 2026-05-07
 
 ### Added

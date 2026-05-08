@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.15 — work in progress, active development.
+  <strong>Version:</strong> 0.4.16 — work in progress, active development.
 </p>
 
 ---
@@ -55,7 +55,7 @@
 - **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; each category group shows an item count badge and a collapse/expand chevron; collapsed state persists across sessions
-- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another; arrangement persists
+- **Drag-to-reorder** — drag category groups in the summary to reorder within a column or move to another; arrangement persists; if auto-overflow layout is active, the first drag automatically snapshots the current layout and switches to manual mode
 - **Summary Settings** — gear icon in the top-right corner of the summary card opens a settings popup; includes a column overflow toggle (off by default) that splits large categories across consecutive adjacent columns at a configurable threshold (default 8 items), with remaining categories auto-balancing into available space
 
 ### Data & export

@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.15';
+const VERSION = '0.4.16';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -560,7 +560,7 @@ const ZSA_KEYBOARDS = {
 };
 
 /* ── App state ────────────────────────────────────────────────── */
-const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows', collapsedCats: new Set(), summarySettings: { overflow: false, overflowAt: 8 } };
+const state = { hotkeys: {}, layout: 'full', keyMap: 'qwerty', categories: [], platform: 'windows', collapsedCats: new Set(), summarySettings: { overflow: false, overflowAt: 8 }, catItemOrder: {} };
 
 const MOD_MAP_MAC = { Ctrl: 'Cmd', Alt: 'Opt', Shift: 'Shift', Win: 'Cmd' };
 function displayMod(mod) {
@@ -1288,7 +1288,10 @@ function reapplyFilter() {
 }
 
 /* ── Hotkey summary ───────────────────────────────────────────── */
-let _dragCatId = null;
+let _dragCatId     = null;
+let _catDragState  = null; // pointer-event cat drag: { catId, groupEl, ghostEl, offsetX, offsetY, targetGroupEl, targetBefore, targetColEl }
+let _dragItemId    = null;
+let _dragItemCatId = null;
 
 function initSummaryCols() {
   if (!state.summaryCols || state.summaryCols.length !== SUMMARY_COLS) {
@@ -1322,6 +1325,158 @@ function clearDragIndicators() {
     el.classList.remove('drop-before', 'drop-after'));
   document.querySelectorAll('.summary-col.drag-over').forEach(el =>
     el.classList.remove('drag-over'));
+}
+
+function clearItemDragIndicators() {
+  document.querySelectorAll('.item-drop-before, .item-drop-after').forEach(el =>
+    el.classList.remove('item-drop-before', 'item-drop-after'));
+  document.querySelectorAll('.items-drag-target').forEach(el =>
+    el.classList.remove('items-drag-target'));
+}
+
+/* ── Category drag (pointer events) ──────────────────────────── */
+function startCatDrag(catId, groupEl, e) {
+  const hdr = groupEl.querySelector('.summary-group-header');
+  const ghostEl = hdr.cloneNode(true);
+  ghostEl.className = 'cat-drag-ghost';
+  ghostEl.style.width = groupEl.getBoundingClientRect().width + 'px';
+  const catColor = groupEl.style.getPropertyValue('--cat-color');
+  if (catColor) ghostEl.style.setProperty('--cat-color', catColor);
+  document.body.appendChild(ghostEl);
+
+  const rect = groupEl.getBoundingClientRect();
+  _catDragState = { catId, groupEl, ghostEl,
+    offsetX: e.clientX - rect.left, offsetY: e.clientY - rect.top,
+    targetGroupEl: null, targetBefore: false, targetColEl: null };
+  _dragCatId = catId;
+  groupEl.classList.add('dragging');
+
+  document.addEventListener('pointermove', onCatDragMove);
+  document.addEventListener('pointerup',   onCatDragEnd);
+  document.addEventListener('pointercancel', onCatDragEnd);
+  document.addEventListener('keydown',     onCatDragKeydown);
+}
+
+function onCatDragMove(e) {
+  if (!_catDragState) return;
+  const { ghostEl } = _catDragState;
+
+  ghostEl.style.left = (e.clientX - _catDragState.offsetX) + 'px';
+  ghostEl.style.top  = (e.clientY - _catDragState.offsetY) + 'px';
+
+  ghostEl.style.display = 'none';
+  const below = document.elementFromPoint(e.clientX, e.clientY);
+  ghostEl.style.display = '';
+
+  clearDragIndicators();
+  _catDragState.targetGroupEl = null;
+  _catDragState.targetColEl   = null;
+
+  const targetGroup = below?.closest('.summary-group[data-cat-id]');
+  if (targetGroup && targetGroup !== _catDragState.groupEl
+      && !targetGroup.classList.contains('summary-group-cont')) {
+    const r = targetGroup.getBoundingClientRect();
+    const before = e.clientY < r.top + r.height / 2;
+    targetGroup.classList.add(before ? 'drop-before' : 'drop-after');
+    _catDragState.targetGroupEl = targetGroup;
+    _catDragState.targetBefore  = before;
+  } else {
+    const targetCol = below?.closest('.summary-col');
+    if (targetCol) {
+      targetCol.classList.add('drag-over');
+      _catDragState.targetColEl = targetCol;
+    }
+  }
+}
+
+function snapshotLayoutFromDOM() {
+  const cols = document.querySelectorAll('.summary-col');
+  if (!cols.length) return;
+  state.summaryCols = [...cols].map(col =>
+    [...col.querySelectorAll('.summary-group[data-cat-id]:not(.summary-group-cont)')].map(g => g.dataset.catId)
+  );
+  state.summarySettings.overflow = false;
+}
+
+function onCatDragEnd() {
+  if (!_catDragState) return;
+  const { groupEl, ghostEl, targetGroupEl, targetBefore, targetColEl } = _catDragState;
+
+  if (targetGroupEl || targetColEl) {
+    if (state.summarySettings.overflow) snapshotLayoutFromDOM();
+    if (targetGroupEl) {
+      moveCategoryInLayout(_catDragState.catId, targetGroupEl.dataset.catId, targetBefore);
+    } else {
+      const colIdx = parseInt(targetColEl.dataset.col, 10);
+      if (!isNaN(colIdx)) moveCategoryToColumn(_catDragState.catId, colIdx);
+    }
+  }
+
+  ghostEl.remove();
+  groupEl.classList.remove('dragging');
+  clearDragIndicators();
+  _dragCatId    = null;
+  _catDragState = null;
+
+  document.removeEventListener('pointermove',   onCatDragMove);
+  document.removeEventListener('pointerup',     onCatDragEnd);
+  document.removeEventListener('pointercancel', onCatDragEnd);
+  document.removeEventListener('keydown',       onCatDragKeydown);
+}
+
+function onCatDragKeydown(e) {
+  if (e.key !== 'Escape' || !_catDragState) return;
+  const { groupEl, ghostEl } = _catDragState;
+  ghostEl.remove();
+  groupEl.classList.remove('dragging');
+  clearDragIndicators();
+  _dragCatId    = null;
+  _catDragState = null;
+  document.removeEventListener('pointermove',   onCatDragMove);
+  document.removeEventListener('pointerup',     onCatDragEnd);
+  document.removeEventListener('pointercancel', onCatDragEnd);
+  document.removeEventListener('keydown',       onCatDragKeydown);
+}
+
+function normalizeItemOrder() {
+  state.catItemOrder = state.catItemOrder || {};
+  const catMap = {};
+  Object.entries(state.hotkeys).forEach(([keyId, hk]) => {
+    const cid = hk.category;
+    if (cid) (catMap[cid] = catMap[cid] || []).push(keyId);
+  });
+  Object.keys(catMap).forEach(catId => {
+    const existing = state.catItemOrder[catId] || [];
+    const current  = new Set(catMap[catId]);
+    const kept     = existing.filter(id => current.has(id));
+    const added    = catMap[catId].filter(id => !kept.includes(id));
+    state.catItemOrder[catId] = [...kept, ...added];
+  });
+  Object.keys(state.catItemOrder).forEach(catId => {
+    if (!catMap[catId]) delete state.catItemOrder[catId];
+  });
+}
+
+function moveItemInSummary(keyId, srcCatId, tgtCatId, targetKeyId, before) {
+  if (srcCatId !== tgtCatId) state.hotkeys[keyId].category = tgtCatId || null;
+  if (srcCatId && state.catItemOrder[srcCatId]) {
+    state.catItemOrder[srcCatId] = state.catItemOrder[srcCatId].filter(id => id !== keyId);
+  }
+  if (tgtCatId) {
+    if (!state.catItemOrder[tgtCatId]) state.catItemOrder[tgtCatId] = [];
+    const arr = state.catItemOrder[tgtCatId].filter(id => id !== keyId);
+    if (targetKeyId && arr.includes(targetKeyId)) {
+      const idx = arr.indexOf(targetKeyId);
+      arr.splice(before ? idx : idx + 1, 0, keyId);
+    } else {
+      arr.push(keyId);
+    }
+    state.catItemOrder[tgtCatId] = arr;
+  }
+  saveToStorage();
+  renderKeyboard();
+  renderLegend();
+  renderSummary();
 }
 
 function moveCategoryInLayout(srcId, targetId, before) {
@@ -1379,12 +1534,51 @@ function makeSummaryItem({ hk, def, keyId }) {
   const item = document.createElement('div');
   item.className = 'summary-item';
   item.dataset.keyId = keyId;
+  item.draggable = true;
   item.addEventListener('mouseenter', () => setHoverHighlight(keyId));
   item.addEventListener('mouseleave', clearHoverHighlight);
   item.addEventListener('click', () => {
     populateCategorySelect();
     openPopover(keyId);
   });
+
+  item.addEventListener('dragstart', e => {
+    e.stopPropagation();
+    _dragItemId    = keyId;
+    _dragItemCatId = hk.category || null;
+    e.dataTransfer.effectAllowed = 'move';
+    e.dataTransfer.setData('text/plain', keyId);
+    setTimeout(() => item.classList.add('item-dragging'), 0);
+  });
+  item.addEventListener('dragend', () => {
+    _dragItemId    = null;
+    _dragItemCatId = null;
+    item.classList.remove('item-dragging');
+    clearItemDragIndicators();
+  });
+  item.addEventListener('dragover', e => {
+    e.preventDefault(); // must always accept so drop fires here and can bubble to group
+    if (!_dragItemId || _dragItemId === keyId) return;
+    e.stopPropagation();
+    clearItemDragIndicators();
+    const before = e.clientY < item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2;
+    item.classList.add(before ? 'item-drop-before' : 'item-drop-after');
+  });
+  item.addEventListener('drop', e => {
+    if (!_dragItemId || _dragItemId === keyId) return; // bubbles to group for category drags
+    e.preventDefault();
+    e.stopPropagation();
+    clearItemDragIndicators();
+    const before = e.clientY < item.getBoundingClientRect().top + item.getBoundingClientRect().height / 2;
+    moveItemInSummary(_dragItemId, _dragItemCatId, hk.category || null, keyId, before);
+  });
+
+  const grip = document.createElementNS('http://www.w3.org/2000/svg', 'svg');
+  grip.setAttribute('class', 'summary-item-grip');
+  grip.setAttribute('viewBox', '0 0 8 14');
+  grip.setAttribute('width', '8');
+  grip.setAttribute('height', '14');
+  grip.innerHTML = '<circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="6" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="7" r="1.2" fill="currentColor"/><circle cx="6" cy="7" r="1.2" fill="currentColor"/><circle cx="2" cy="12" r="1.2" fill="currentColor"/><circle cx="6" cy="12" r="1.2" fill="currentColor"/>';
 
   const modsCell = document.createElement('div');
   modsCell.className = 'summary-mods-cell';
@@ -1418,14 +1612,10 @@ function makeSummaryItem({ hk, def, keyId }) {
     info.appendChild(desc);
   }
 
-  const editIcon = document.createElement('span');
-  editIcon.className = 'summary-item-edit';
-  editIcon.innerHTML = '<svg xmlns="http://www.w3.org/2000/svg" width="12" height="12" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>';
-
+  item.appendChild(grip);
   item.appendChild(modsCell);
   item.appendChild(keyCell);
   item.appendChild(info);
-  item.appendChild(editIcon);
   return item;
 }
 
@@ -1435,37 +1625,25 @@ function makeSummaryGroup(cat, items, totalCount) {
   const group = document.createElement('div');
   group.className = 'summary-group' + (isCollapsed ? ' collapsed' : '');
   group.dataset.catId = cat.id;
-  group.draggable = true;
   group.style.setProperty('--cat-color', cat.color);
 
-  group.addEventListener('dragstart', e => {
-    _dragCatId = cat.id;
-    e.dataTransfer.effectAllowed = 'move';
-    e.dataTransfer.setData('text/plain', cat.id);
-    setTimeout(() => group.classList.add('dragging'), 0);
-  });
-
-  group.addEventListener('dragend', () => {
-    _dragCatId = null;
-    group.classList.remove('dragging');
-    clearDragIndicators();
-  });
-
+  // Item-drop handlers (category drag is pointer-event based, handled globally)
   group.addEventListener('dragover', e => {
+    if (!_dragItemId) return;
     e.preventDefault();
     e.stopPropagation();
-    if (!_dragCatId || _dragCatId === cat.id) return;
-    clearDragIndicators();
-    const before = e.clientY < group.getBoundingClientRect().top + group.getBoundingClientRect().height / 2;
-    group.classList.add(before ? 'drop-before' : 'drop-after');
+    clearItemDragIndicators();
+    group.classList.add('items-drag-target');
   });
-
+  group.addEventListener('dragleave', e => {
+    if (!group.contains(e.relatedTarget)) group.classList.remove('items-drag-target');
+  });
   group.addEventListener('drop', e => {
+    if (!_dragItemId) return;
     e.preventDefault();
     e.stopPropagation();
-    if (!_dragCatId || _dragCatId === cat.id) return;
-    const before = e.clientY < group.getBoundingClientRect().top + group.getBoundingClientRect().height / 2;
-    moveCategoryInLayout(_dragCatId, cat.id, before);
+    group.classList.remove('items-drag-target');
+    if (_dragItemCatId !== cat.id) moveItemInSummary(_dragItemId, _dragItemCatId, cat.id, null, false);
   });
 
   // Header
@@ -1479,6 +1657,27 @@ function makeSummaryGroup(cat, items, totalCount) {
   grip.setAttribute('height', '14');
   grip.innerHTML = '<circle cx="2" cy="2" r="1.2" fill="currentColor"/><circle cx="6" cy="2" r="1.2" fill="currentColor"/><circle cx="2" cy="7" r="1.2" fill="currentColor"/><circle cx="6" cy="7" r="1.2" fill="currentColor"/><circle cx="2" cy="12" r="1.2" fill="currentColor"/><circle cx="6" cy="12" r="1.2" fill="currentColor"/>';
   hdr.appendChild(grip);
+
+  // Drag on the whole header (threshold prevents accidental drags from plain clicks)
+  hdr.addEventListener('pointerdown', e => {
+    if (e.button !== 0 && e.pointerType === 'mouse') return;
+    if (e.target.closest('.summary-collapse-btn')) return;
+    e.preventDefault(); // must be here — prevents browser text-select / image-drag that swallows pointerup
+    const startX = e.clientX, startY = e.clientY;
+    const onPreMove = ev => {
+      if (Math.hypot(ev.clientX - startX, ev.clientY - startY) < 5) return;
+      cleanup();
+      startCatDrag(cat.id, group, e);
+    };
+    const cleanup = () => {
+      document.removeEventListener('pointermove', onPreMove);
+      document.removeEventListener('pointerup', cleanup);
+      document.removeEventListener('pointercancel', cleanup);
+    };
+    document.addEventListener('pointermove', onPreMove);
+    document.addEventListener('pointerup', cleanup);
+    document.addEventListener('pointercancel', cleanup);
+  });
 
   const swatch = document.createElement('span');
   swatch.className = 'summary-group-swatch';
@@ -1621,18 +1820,17 @@ function renderSummary() {
     else     { uncategorized.push(entry); }
   });
 
+  normalizeItemOrder();
+  Object.keys(buckets).forEach(catId => {
+    const order = state.catItemOrder[catId];
+    if (!order?.length) return;
+    const byId = {};
+    buckets[catId].forEach(e => byId[e.keyId] = e);
+    buckets[catId] = order.map(id => byId[id]).filter(Boolean);
+  });
+
   const colsEl = document.createElement('div');
   colsEl.className = 'summary-columns';
-
-  const addColDragEvents = (colEl, colIdx) => {
-    colEl.addEventListener('dragover', e => { e.preventDefault(); colEl.classList.add('drag-over'); });
-    colEl.addEventListener('dragleave', e => { if (!colEl.contains(e.relatedTarget)) colEl.classList.remove('drag-over'); });
-    colEl.addEventListener('drop', e => {
-      e.preventDefault();
-      colEl.classList.remove('drag-over');
-      if (_dragCatId) moveCategoryToColumn(_dragCatId, colIdx);
-    });
-  };
 
   if (state.summarySettings.overflow) {
     const columns = computeColumnLayout(buckets, state.summarySettings.overflowAt);
@@ -1643,7 +1841,6 @@ function renderSummary() {
       colGroups.forEach(({ cat, items, isCont, totalCount }) => {
         colEl.appendChild(isCont ? makeSummaryGroupContinuation(cat, items) : makeSummaryGroup(cat, items, totalCount));
       });
-      addColDragEvents(colEl, colIdx);
       colsEl.appendChild(colEl);
     });
   } else {
@@ -1657,7 +1854,6 @@ function renderSummary() {
         const cat = allCategories().find(c => c.id === catId);
         if (cat) colEl.appendChild(makeSummaryGroup(cat, items, items.length));
       });
-      addColDragEvents(colEl, colIdx);
       colsEl.appendChild(colEl);
     });
   }
@@ -2091,6 +2287,7 @@ function saveToStorage() {
       platform:        state.platform,
       collapsedCats:   [...state.collapsedCats],
       summarySettings: state.summarySettings,
+      catItemOrder:    state.catItemOrder,
     }));
   } catch (_) {}
 }
@@ -2115,6 +2312,7 @@ function loadFromStorage() {
     });
     if (data.collapsedCats) state.collapsedCats = new Set(data.collapsedCats);
     if (data.summarySettings) state.summarySettings = { ...state.summarySettings, ...data.summarySettings };
+    if (data.catItemOrder)    state.catItemOrder    = data.catItemOrder;
     if (data.platform) {
       state.platform = data.platform;
       document.querySelectorAll('.platform-btn').forEach(btn => {
