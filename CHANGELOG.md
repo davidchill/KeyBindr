@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.4.20] – 2026-05-08
+
+### Changed
+
+- **SEO metadata** — expanded JSON-LD structured data (`WebApplication`) with `browserRequirements`, `softwareVersion`, `dateModified`, `creator`, `screenshot`, and a fuller `featureList` covering all layouts, key maps, tabs, templates, and themes
+- **Sitemap `lastmod`** updated to `2026-05-08`
+
+### Added
+
+- **Visually hidden `<h1>`** — `<h1 class="sr-only">` added to the page body for crawler topic signaling; invisible to sighted users via the standard `.sr-only` CSS pattern (position absolute, 1×1 px, clipped)
+- **`.sr-only` utility class** — added to `style.css` for use by any future hidden-but-crawlable content
+- **`<noscript>` description block** — brief prose description of the app rendered for non-JS crawlers and as a JavaScript-disabled fallback; does not affect the normal UI
+
+---
+
 ## [0.4.19] – 2026-05-08
 
 ### Added

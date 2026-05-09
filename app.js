@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.19';
+const VERSION = '0.4.20';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -2509,18 +2509,8 @@ function deleteTab(tabId) {
 }
 
 function addTab() {
-  showTabNameDialog(name => {
-    syncActiveTab();
-    const id = genTabId();
-    state.tabs.push({ id, name, hotkeys: {} });
-    state.activeTabId = id;
-    state.hotkeys = {};
-    renderTabBar();
-    renderKeyboard();
-    renderLegend();
-    renderSummary();
-    saveToStorage();
-  });
+  _addingNewTab = true;
+  openTemplatesModal();
 }
 
 function renderTabBar() {
@@ -2818,6 +2808,7 @@ function closeConfirm(confirmed) {
 
 /* ── Templates ────────────────────────────────────────────────── */
 let _collapseNewTile = null;
+let _addingNewTab = false;
 
 function openTemplatesModal() {
   document.getElementById('template-modal').classList.remove('hidden');
@@ -2828,30 +2819,39 @@ function closeTemplatesModal() {
   document.getElementById('template-modal').classList.add('hidden');
   document.getElementById('template-overlay').classList.add('hidden');
   if (_collapseNewTile) _collapseNewTile();
+  _addingNewTab = false;
 }
 
 function loadTemplate(template) {
   const doLoad = () => {
-    state.hotkeys = Object.fromEntries(
+    const hotkeys = Object.fromEntries(
       Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
     );
-    // Populate categories from the template's explicit list, or derive from hotkey assignments
-    if (template.categories) {
-      state.categories = template.categories.map(c => ({ ...c }));
+    const categories = template.categories
+      ? template.categories.map(c => ({ ...c }))
+      : DEFAULT_CATEGORIES.filter(c => new Set(Object.values(hotkeys).map(hk => hk.category).filter(Boolean)).has(c.id)).map(c => ({ ...c }));
+
+    if (_addingNewTab) {
+      syncActiveTab();
+      const id = genTabId();
+      state.tabs.push({ id, name: template.name, hotkeys });
+      state.activeTabId = id;
+      state.hotkeys = JSON.parse(JSON.stringify(hotkeys));
     } else {
-      const usedIds = new Set(Object.values(state.hotkeys).map(hk => hk.category).filter(Boolean));
-      state.categories = DEFAULT_CATEGORIES.filter(c => usedIds.has(c.id)).map(c => ({ ...c }));
+      state.hotkeys = hotkeys;
     }
+    state.categories = categories;
     document.getElementById('map-name').value = template.name;
     track('template_loaded', { template_name: template.name, template_category: template.appCategory, session_count: ++_sessionCounts.saves });
     populateCategorySelect();
+    renderTabBar();
     renderKeyboard();
     renderLegend();
     renderSummary();
     saveToStorage();
     closeTemplatesModal();
   };
-  if (Object.keys(state.hotkeys).length > 0) {
+  if (!_addingNewTab && Object.keys(state.hotkeys).length > 0) {
     showConfirm(`Load "${template.name}"? This will replace your current map.`, doLoad);
   } else {
     doLoad();
@@ -2921,18 +2921,27 @@ function initTemplates() {
   const doCreate = () => {
     const name = nameInput.value.trim() || 'Untitled Map';
     const apply = () => {
-      state.hotkeys    = {};
-      state.categories = [];
+      if (_addingNewTab) {
+        syncActiveTab();
+        const id = genTabId();
+        state.tabs.push({ id, name, hotkeys: {} });
+        state.activeTabId = id;
+        state.hotkeys = {};
+      } else {
+        state.hotkeys    = {};
+        state.categories = [];
+      }
       document.getElementById('map-name').value = name;
       track('new_map_created', { session_count: ++_sessionCounts.saves });
       populateCategorySelect();
+      renderTabBar();
       renderKeyboard();
       renderLegend();
       renderSummary();
       saveToStorage();
       closeTemplatesModal();
     };
-    if (Object.keys(state.hotkeys).length > 0) {
+    if (!_addingNewTab && Object.keys(state.hotkeys).length > 0) {
       showConfirm(`Start a new map named "${name}"? This will clear your current map.`, apply);
     } else {
       apply();
