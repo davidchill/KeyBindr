@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.5.0 — work in progress, active development.
+  <strong>Version:</strong> 0.5.1 — work in progress, active development.
 </p>
 
 ---
@@ -139,7 +139,9 @@ site/
 ├── index.html          # App shell — header, layout bar, keyboard, legend, summary, popovers
 ├── style.css           # Themed stylesheet using CSS custom properties (light + dark)
 ├── app.js              # All layout data, key maps, and application logic
+├── analytics.js        # Google Analytics 4 gtag() initialization (extracted from index.html for CSP)
 ├── templates.js        # Built-in template maps (loaded before app.js)
+├── _headers            # Cloudflare Pages headers — sitemap MIME type, HSTS, CSP, security headers
 ├── package.json        # Metadata only — no dependencies, no build tools
 ├── logos/              # Brand assets (app icon, square logo, wide banner)
 ├── favicon.svg

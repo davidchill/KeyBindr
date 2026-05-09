@@ -1,5 +1,25 @@
 # Changelog
 
+## [0.5.1] – 2026-05-09
+
+### Changed
+
+- **Meta description tightened** — shortened from 203 to 156 characters; now leads with action-oriented keywords ("plan, visualize, share"), includes "free, no signup", and lists priority template names (Photoshop, VS Code, WoW, CS2, Battlefield 6) for better search snippet quality
+- **JSON-LD `softwareVersion`** updated from `0.4.19` to `0.5.0` in the `WebApplication` structured data block
+
+### Added
+
+- **`analytics.js`** — extracted the inline `gtag()` initialization from `index.html` into a standalone script file; allows a strict Content Security Policy without requiring `'unsafe-inline'` on `script-src`
+- **`_headers`** — new Cloudflare Pages headers file that sets:
+  - `Content-Type: application/xml` for `/sitemap.xml` (fixes crawler rejection due to wrong MIME type)
+  - `Strict-Transport-Security` with `preload` directive
+  - `X-Content-Type-Options: nosniff`
+  - `Referrer-Policy: strict-origin-when-cross-origin`
+  - `X-Frame-Options: DENY`
+  - `Content-Security-Policy` locking down script, style, font, image, and connect sources
+
+---
+
 ## [0.5.0] – 2026-05-08
 
 ### Added
