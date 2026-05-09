@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.4.20';
+const VERSION = '0.5.0';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -2676,6 +2676,13 @@ function loadFromHash() {
 }
 
 /* ── Copy / Print ─────────────────────────────────────────────── */
+function shareDate() {
+  return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
+}
+function siteUrl() {
+  return location.origin + location.pathname;
+}
+
 function formatShortcut(hk, def) {
   const keyLabel = def ? getKeyLabel(def) : '';
   return [...(hk.modifiers || []).map(displayMod), keyLabel].filter(Boolean).join('+');
@@ -2696,7 +2703,7 @@ function buildSummaryBuckets() {
 function buildPlainText() {
   const mapName = document.getElementById('map-name').value || 'Hotkey Map';
   const { buckets, uncategorized } = buildSummaryBuckets();
-  const lines = [mapName, '='.repeat(mapName.length), ''];
+  const lines = [mapName, '='.repeat(mapName.length), `Generated: ${shareDate()}`, ''];
 
   const addGroup = (name, items) => {
     lines.push(name);
@@ -2714,13 +2721,14 @@ function buildPlainText() {
   });
   if (uncategorized.length) addGroup('Uncategorized', uncategorized);
 
+  lines.push('---', `Created with KeyBindr — ${siteUrl()}`);
   return lines.join('\n').trimEnd();
 }
 
 function buildMarkdown() {
   const mapName = document.getElementById('map-name').value || 'Hotkey Map';
   const { buckets, uncategorized } = buildSummaryBuckets();
-  const lines = [`# ${mapName}`, ''];
+  const lines = [`# ${mapName}`, `*Generated ${shareDate()} · [KeyBindr](${siteUrl()})*`, ''];
 
   const addGroup = (name, items) => {
     lines.push(`## ${name}`, '');
@@ -2741,6 +2749,40 @@ function buildMarkdown() {
   return lines.join('\n').trimEnd();
 }
 
+function markdownToHtml(md) {
+  const inline = s =>
+    s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
+     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
+
+  const out = [];
+  let tableLines = [];
+
+  const flushTable = () => {
+    if (!tableLines.length) return;
+    const rows = tableLines.filter(l => !/^\|[-:\s|]+\|$/.test(l));
+    if (!rows.length) { tableLines = []; return; }
+    out.push('<table>');
+    rows.forEach((row, i) => {
+      const cells = row.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
+      const t = i === 0 ? 'th' : 'td';
+      out.push(`<tr>${cells.map(c => `<${t}>${inline(c)}</${t}>`).join('')}</tr>`);
+    });
+    out.push('</table>');
+    tableLines = [];
+  };
+
+  for (const line of md.split('\n')) {
+    if (line.startsWith('|')) { tableLines.push(line); continue; }
+    flushTable();
+    if (line.startsWith('# '))  out.push(`<h1>${inline(line.slice(2))}</h1>`);
+    else if (line.startsWith('## ')) out.push(`<h2>${inline(line.slice(3))}</h2>`);
+    else if (line === '---')    out.push('<hr>');
+    else if (line.trim())       out.push(`<p>${inline(line)}</p>`);
+  }
+  flushTable();
+  return out.join('');
+}
+
 async function copyToClipboard(text, btn) {
   try {
     await navigator.clipboard.writeText(text);
@@ -2754,7 +2796,7 @@ async function copyToClipboard(text, btn) {
 function exportMap() {
   const name = document.getElementById('map-name').value || 'hotkey-map';
   track('map_exported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
-  const data = { version: 1, name, hotkeys: state.hotkeys, categories: state.categories };
+  const data = { version: 1, name, generatedOn: shareDate(), source: 'KeyBindr', sourceUrl: siteUrl(), hotkeys: state.hotkeys, categories: state.categories };
   const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
   const url  = URL.createObjectURL(blob);
   const a    = document.createElement('a');
@@ -2824,21 +2866,40 @@ function closeTemplatesModal() {
 
 function loadTemplate(template) {
   const doLoad = () => {
-    const hotkeys = Object.fromEntries(
-      Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
-    );
     const categories = template.categories
       ? template.categories.map(c => ({ ...c }))
-      : DEFAULT_CATEGORIES.filter(c => new Set(Object.values(hotkeys).map(hk => hk.category).filter(Boolean)).has(c.id)).map(c => ({ ...c }));
+      : [];
 
-    if (_addingNewTab) {
-      syncActiveTab();
-      const id = genTabId();
-      state.tabs.push({ id, name: template.name, hotkeys });
-      state.activeTabId = id;
-      state.hotkeys = JSON.parse(JSON.stringify(hotkeys));
+    if (template.tabs) {
+      const newTabs = template.tabs.map(t => ({
+        id: genTabId(),
+        name: t.name,
+        hotkeys: Object.fromEntries(Object.entries(t.hotkeys).map(([k, v]) => [k, { ...v }])),
+      }));
+      if (_addingNewTab) {
+        syncActiveTab();
+        state.tabs.push(...newTabs);
+      } else {
+        state.tabs = newTabs;
+      }
+      state.activeTabId = newTabs[0].id;
+      state.hotkeys = JSON.parse(JSON.stringify(newTabs[0].hotkeys));
     } else {
-      state.hotkeys = hotkeys;
+      const hotkeys = Object.fromEntries(
+        Object.entries(template.hotkeys).map(([k, v]) => [k, { ...v }])
+      );
+      if (!categories.length) {
+        categories.push(...DEFAULT_CATEGORIES.filter(c => new Set(Object.values(hotkeys).map(hk => hk.category).filter(Boolean)).has(c.id)).map(c => ({ ...c })));
+      }
+      if (_addingNewTab) {
+        syncActiveTab();
+        const id = genTabId();
+        state.tabs.push({ id, name: template.name, hotkeys });
+        state.activeTabId = id;
+        state.hotkeys = JSON.parse(JSON.stringify(hotkeys));
+      } else {
+        state.hotkeys = hotkeys;
+      }
     }
     state.categories = categories;
     document.getElementById('map-name').value = template.name;
@@ -2851,8 +2912,10 @@ function loadTemplate(template) {
     saveToStorage();
     closeTemplatesModal();
   };
-  if (!_addingNewTab && Object.keys(state.hotkeys).length > 0) {
-    showConfirm(`Load "${template.name}"? This will replace your current map.`, doLoad);
+  const hasContent = Object.keys(state.hotkeys).length > 0;
+  if (!_addingNewTab && hasContent) {
+    const tabNote = template.tabs ? ` It will create ${template.tabs.length} tabs.` : '';
+    showConfirm(`Load "${template.name}"? This will replace your current map.${tabNote}`, doLoad);
   } else {
     doLoad();
   }
@@ -2959,8 +3022,10 @@ function initTemplates() {
   grid.appendChild(newTile);
 
   // Existing template tiles
-  TEMPLATES.forEach(template => {
-    const count = Object.keys(template.hotkeys).length;
+  [...TEMPLATES].sort((a, b) => a.name.localeCompare(b.name)).forEach(template => {
+    const count = template.tabs
+      ? template.tabs.reduce((sum, t) => sum + Object.keys(t.hotkeys).length, 0)
+      : Object.keys(template.hotkeys).length;
     const tile = document.createElement('button');
     tile.className = 'template-tile';
     tile.dataset.category = template.appCategory;
@@ -2970,7 +3035,7 @@ function initTemplates() {
     const img = document.createElement('img');
     img.src = template.iconSrc;
     img.alt = template.name;
-    img.className = template.iconWide ? 'template-logo template-logo--wide' : 'template-logo';
+    img.className = template.iconClass || (template.iconWide ? 'template-logo template-logo--wide' : 'template-logo');
     iconSpan.appendChild(img);
 
     const nameSpan = document.createElement('span');
@@ -2983,7 +3048,7 @@ function initTemplates() {
 
     const countSpan = document.createElement('span');
     countSpan.className = 'template-count';
-    countSpan.textContent = `${count} keys`;
+    countSpan.textContent = template.tabs ? `${template.tabs.length} tabs` : `${count} keys`;
 
     const metaSpan = document.createElement('span');
     metaSpan.className = 'template-meta';
@@ -3024,6 +3089,7 @@ let _dropdownAnchor = null;
 
 function closeActionDropdown() {
   _dropdownEl.style.display = 'none';
+  _dropdownEl.style.minWidth = '';
   if (_dropdownAnchor) { _dropdownAnchor.classList.remove('open'); _dropdownAnchor = null; }
   if (_dropdownOutsideClick) {
     document.removeEventListener('click', _dropdownOutsideClick, true);
@@ -3067,6 +3133,100 @@ function showActionDropdown(anchor, items) {
     _dropdownEl.appendChild(btn);
   });
   const rect = anchor.getBoundingClientRect();
+  _dropdownEl.style.top  = (rect.bottom + 4) + 'px';
+  _dropdownEl.style.left = rect.left + 'px';
+  _dropdownEl.style.display = '';
+  _dropdownAnchor = anchor;
+  anchor.classList.add('open');
+  setTimeout(() => {
+    _dropdownOutsideClick = e => {
+      if (!_dropdownEl.contains(e.target) && e.target !== anchor) closeActionDropdown();
+    };
+    document.addEventListener('click', _dropdownOutsideClick, true);
+  }, 0);
+}
+
+function showClearDropdown(anchor) {
+  if (_dropdownAnchor === anchor) { closeActionDropdown(); return; }
+  closeActionDropdown();
+
+  const sel = { hotkeys: false, categories: false, tabs: false };
+  _dropdownEl.innerHTML = '';
+
+  const options = [
+    { key: 'hotkeys',    label: 'Hotkeys'    },
+    { key: 'categories', label: 'Categories' },
+    { key: 'tabs',       label: 'Tabs'       },
+  ];
+
+  let applyBtn;
+  function updateApplyBtn() {
+    if (applyBtn) applyBtn.disabled = !Object.values(sel).some(Boolean);
+  }
+
+  options.forEach((opt, i) => {
+    if (i > 0) {
+      const sep = document.createElement('div');
+      sep.className = 'action-dropdown-sep';
+      _dropdownEl.appendChild(sep);
+    }
+    const row = document.createElement('div');
+    row.className = 'clear-toggle-row';
+    const labelSpan = document.createElement('span');
+    labelSpan.className = 'settings-label';
+    labelSpan.textContent = opt.label;
+    const toggleLabel = document.createElement('label');
+    toggleLabel.className = 'toggle-switch';
+    const cb = document.createElement('input');
+    cb.type = 'checkbox';
+    cb.checked = false;
+    cb.addEventListener('change', () => { sel[opt.key] = cb.checked; updateApplyBtn(); });
+    const track = document.createElement('span');
+    track.className = 'toggle-track';
+    toggleLabel.appendChild(cb);
+    toggleLabel.appendChild(track);
+    row.appendChild(labelSpan);
+    row.appendChild(toggleLabel);
+    _dropdownEl.appendChild(row);
+  });
+
+  const footerSep = document.createElement('div');
+  footerSep.className = 'action-dropdown-sep';
+  _dropdownEl.appendChild(footerSep);
+
+  applyBtn = document.createElement('button');
+  applyBtn.className = 'action-dropdown-footer-btn';
+  applyBtn.textContent = 'Clear';
+  applyBtn.disabled = true;
+  applyBtn.addEventListener('click', () => {
+    if (!Object.values(sel).some(Boolean)) return;
+    closeActionDropdown();
+    const parts = [];
+    if (sel.hotkeys)    parts.push('hotkeys');
+    if (sel.categories) parts.push('categories');
+    if (sel.tabs)       parts.push('tabs');
+    showConfirm(`Clear ${parts.join(', ')} from this map?`, () => {
+      pushUndo();
+      if (sel.tabs) {
+        syncActiveTab();
+        const kept = sel.hotkeys ? {} : JSON.parse(JSON.stringify(state.hotkeys));
+        const id = genTabId();
+        state.tabs = [{ id, name: 'Default', hotkeys: kept }];
+        state.activeTabId = id;
+        state.hotkeys = kept;
+      } else if (sel.hotkeys) {
+        state.hotkeys = {};
+        state.tabs.forEach(t => { t.hotkeys = {}; });
+      }
+      if (sel.categories) state.categories = [];
+      track('clear_all', { clear_hotkeys: sel.hotkeys, clear_cats: sel.categories, clear_tabs: sel.tabs });
+      renderKeyboard(); renderLegend(); renderSummary(); renderTabBar(); saveToStorage();
+    });
+  });
+  _dropdownEl.appendChild(applyBtn);
+
+  const rect = anchor.getBoundingClientRect();
+  _dropdownEl.style.minWidth = '170px';
   _dropdownEl.style.top  = (rect.bottom + 4) + 'px';
   _dropdownEl.style.left = rect.left + 'px';
   _dropdownEl.style.display = '';
@@ -3226,70 +3386,24 @@ function initEvents() {
 
   document.getElementById('map-name').addEventListener('input', saveToStorage);
 
-  document.getElementById('btn-new').addEventListener('click', e => {
-    showActionDropdown(e.currentTarget, [
-      {
-        label: 'New Hotkeys',
-        action: () => {
-          const hasContent = Object.keys(state.hotkeys).length > 0 || document.getElementById('map-name').value.trim();
-          const apply = () => {
-            track('new_map_started', { session_count: ++_sessionCounts.saves });
-            pushUndo();
-            state.hotkeys = {};
-            document.getElementById('map-name').value = '';
-            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
-          };
-          if (hasContent) showConfirm('Start a new map? This will clear the name and all assigned hotkeys.', apply);
-          else apply();
-        }
-      },
-      {
-        label: 'New Hotkeys & Categories',
-        action: () => {
-          const hasContent = Object.keys(state.hotkeys).length > 0 || state.categories.length > 0 || !!document.getElementById('map-name').value.trim();
-          const apply = () => {
-            track('new_map_started', { session_count: ++_sessionCounts.saves });
-            pushUndo();
-            state.hotkeys = {}; state.categories = [];
-            document.getElementById('map-name').value = '';
-            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
-          };
-          if (hasContent) showConfirm('Start a new map? This will clear the name, all assigned hotkeys, and all categories.', apply);
-          else apply();
-        }
-      }
-    ]);
+  document.getElementById('btn-new').addEventListener('click', () => {
+    showConfirm('Create a new map? This will wipe all hotkeys, categories, and tabs.', () => {
+      track('new_map_started', { session_count: ++_sessionCounts.saves });
+      pushUndo();
+      const id = genTabId();
+      state.tabs = [{ id, name: 'New Map', hotkeys: {} }];
+      state.activeTabId = id;
+      state.hotkeys = {};
+      state.categories = [];
+      document.getElementById('map-name').value = 'New Map';
+      renderKeyboard(); renderLegend(); renderSummary(); renderTabBar(); saveToStorage();
+    });
   });
 
   document.getElementById('btn-heatmap').addEventListener('click', toggleHeatmap);
 
   document.getElementById('btn-clear-all').addEventListener('click', e => {
-    showActionDropdown(e.currentTarget, [
-      {
-        label: 'Clear Hotkeys',
-        action: () => {
-          if (!Object.keys(state.hotkeys).length) return;
-          showConfirm('Clear all assigned hotkeys from this map?', () => {
-            track('clear_all', { key_count: Object.keys(state.hotkeys).length });
-            pushUndo();
-            state.hotkeys = {};
-            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
-          });
-        }
-      },
-      {
-        label: 'Clear Hotkeys & Categories',
-        action: () => {
-          if (!Object.keys(state.hotkeys).length && !state.categories.length) return;
-          showConfirm('Clear all hotkeys and categories from this map?', () => {
-            track('clear_all', { key_count: Object.keys(state.hotkeys).length });
-            pushUndo();
-            state.hotkeys = {}; state.categories = [];
-            renderKeyboard(); renderLegend(); renderSummary(); saveToStorage();
-          });
-        }
-      }
-    ]);
+    showClearDropdown(e.currentTarget);
   });
 
   /* ── Style panel ── */
@@ -3350,7 +3464,7 @@ function initEvents() {
   document.getElementById('share-twitter').addEventListener('click', () => {
     const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
     const url = buildShareUrl();
-    const text = encodeURIComponent(`Check out my KeyBindr keyboard map: ${mapName}`);
+    const text = encodeURIComponent(`Check out my keyboard shortcut map "${mapName}" — created with KeyBindr`);
     track('map_shared', { method: 'twitter', session_count: ++_sessionCounts.shares });
     window.open(`https://x.com/intent/tweet?text=${text}&url=${encodeURIComponent(url)}`, '_blank', 'noopener');
     closeSharePanel();
@@ -3367,8 +3481,8 @@ function initEvents() {
   document.getElementById('share-email').addEventListener('click', () => {
     const mapName = document.getElementById('map-name').value || 'My Keyboard Map';
     const url = buildShareUrl();
-    const subject = encodeURIComponent(`KeyBindr map: ${mapName}`);
-    const body = encodeURIComponent(`Check out my keyboard shortcut map on KeyBindr:\n\n${url}`);
+    const subject = encodeURIComponent(`${mapName} — KeyBindr`);
+    const body = encodeURIComponent(`${mapName}\nGenerated: ${shareDate()}\n\nView this keyboard shortcut map online:\n${url}\n\n---\nCreated with KeyBindr — ${siteUrl()}`);
     track('map_shared', { method: 'email', session_count: ++_sessionCounts.shares });
     window.location.href = `mailto:?subject=${subject}&body=${body}`;
     closeSharePanel();
@@ -3387,13 +3501,21 @@ function initEvents() {
 
   document.getElementById('share-copy-md').addEventListener('click', async e => {
     const nameEl = e.currentTarget.querySelector('.share-option-name');
+    const md = buildMarkdown();
     try {
-      await navigator.clipboard.writeText(buildMarkdown());
-      track('map_shared', { method: 'markdown', session_count: ++_sessionCounts.shares });
-      const orig = nameEl.textContent;
-      nameEl.textContent = 'Copied!';
-      setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
-    } catch (_) {}
+      await navigator.clipboard.write([
+        new ClipboardItem({
+          'text/plain': new Blob([md], { type: 'text/plain' }),
+          'text/html':  new Blob([markdownToHtml(md)], { type: 'text/html' }),
+        }),
+      ]);
+    } catch (_) {
+      try { await navigator.clipboard.writeText(md); } catch (_) { return; }
+    }
+    track('map_shared', { method: 'markdown', session_count: ++_sessionCounts.shares });
+    const orig = nameEl.textContent;
+    nameEl.textContent = 'Copied!';
+    setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
   });
 
   document.getElementById('share-export').addEventListener('click', () => {
@@ -3406,6 +3528,47 @@ function initEvents() {
     track('map_printed', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.prints });
     closeSharePanel();
     window.print();
+  });
+
+  document.getElementById('share-export-png').addEventListener('click', async () => {
+    track('map_exported_png', { key_count: Object.keys(state.hotkeys).length });
+    closeSharePanel();
+
+    const target = document.querySelector('.app-main');
+    if (!target || typeof htmlToImage === 'undefined') {
+      alert('PNG export is not available right now.');
+      return;
+    }
+
+    const isDark = document.documentElement.getAttribute('data-theme') === 'dark';
+    const bg = isDark ? '#1a1a1a' : '#ffffff';
+
+    const legend = document.getElementById('legend');
+    const wasCollapsed = legend && legend.classList.contains('collapsed');
+    if (wasCollapsed) legend.classList.remove('collapsed');
+
+    const mapName = (document.getElementById('map-name').value || 'hotkey-map')
+      .trim().replace(/\s+/g, '-').toLowerCase();
+    const datePart = new Date().toISOString().slice(0, 10);
+    const filename = `${mapName}-${datePart}.png`;
+
+    try {
+      const blob = await htmlToImage.toBlob(target, {
+        pixelRatio: 2,
+        backgroundColor: bg,
+      });
+      if (wasCollapsed) legend.classList.add('collapsed');
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = filename;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      if (wasCollapsed) legend.classList.add('collapsed');
+      console.error('PNG export failed:', err);
+      alert('PNG export failed. Check the console for details.');
+    }
   });
 
   document.getElementById('summary-search').addEventListener('input', filterSummary);

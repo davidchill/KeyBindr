@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.4.20 — work in progress, active development.
+  <strong>Version:</strong> 0.5.0 — work in progress, active development.
 </p>
 
 ---
@@ -33,8 +33,9 @@
 
 ### Templates & map management
 
-- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, World of Warcraft, Counter-Strike 2, or VS Code via the Templates button; each tile shows the app's official product icon
-- **New Map** — "New Map" tile in the Templates modal; enter a name and create a blank map in one step
+- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, Battlefield 6, Counter-Strike 2, VS Code, or World of Warcraft via the Templates button (sorted alphabetically); each tile shows the app's official product icon; template list is sorted alphabetically
+- **Multi-tab templates** — templates can define multiple context tabs (e.g. Battlefield 6 ships with 7 tabs: Infantry, Ground Vehicle, Aircraft, etc.); loading a multi-tab template replaces all existing tabs
+- **New Map** — clicking "New" opens a confirmation dialog; on confirm, all hotkeys, categories, and tabs are cleared and the map name is set to "New Map"
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development
 - Same JSON shape as Export/Import — any exported map can become a template
 
@@ -70,10 +71,10 @@
 ### Data & export
 
 - **Named maps** — editable map name in the layout bar
-- **New / Save / Clear All** — layout bar controls for starting fresh, opening the Templates modal, or wiping the current map
-- **Export / Import** — save any map as a `.json` file and reload it later
-- **Share panel** — "Share" button opens a dropdown with eight options: Copy Link (shareable URL with map encoded in the hash), Copy Text (plain-text summary), Copy as Markdown (GitHub/Notion/Obsidian-compatible), Post on X, Share on Reddit, Share via Email, Export JSON, and Print
-- **Copy as Text / Markdown** — copies the full hotkey summary as formatted plain text or a Markdown document with category headings and shortcut tables
+- **New / Clear** — "New" opens a confirm dialog that wipes hotkeys, categories, and tabs and sets the map name to "New Map"; "Clear ▾" opens a dropdown with toggle switches for Hotkeys, Categories, and Tabs — enable any combination and click Clear to selectively wipe
+- **Export / Import** — save any map as a `.json` file and reload it later; exported JSON includes map name, generation date, and KeyBindr source attribution
+- **Share panel** — "Share" button opens a dropdown with nine options: Copy Link (shareable URL with map encoded in the hash), Copy Text (plain-text summary), Copy as Markdown (rich-text clipboard with `text/html` + `text/plain` for Notion/Docs compatibility), Post on X, Share on Reddit, Share via Email, Export JSON, Export PNG, and Print; all outputs include the map name, date, and a KeyBindr backlink
+- **Export PNG** — captures the full app view (categories bar, active summary tab, keyboard) as a high-resolution PNG (2× pixel ratio) using `html-to-image`; filename is `{map-name}-{YYYY-MM-DD}.png`; collapsed categories bar is temporarily expanded for the capture
 - **Undo / Redo** — Ctrl+Z / Ctrl+Shift+Z (or layout bar buttons) with a 50-entry history
 - **Key conflict detection** — warning in the edit popover when a label is already used on another key
 - **Label autocomplete** — typeahead dropdown on the Action Label field showing matching labels from existing assignments

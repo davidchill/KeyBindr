@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.5.0] – 2026-05-08
+
+### Added
+
+- **Battlefield 6 template** — new multi-tab template with 7 context tabs (Infantry, Ground Vehicle, Transport Vehicle, Aircraft, Helicopter, Gunner, UI) and 4 shared categories (`bf6-general`, `bf6-movement`, `bf6-weapons`, `bf6-ui`); uses the official BF6 wordmark SVG scaled to `140×20 px` with `filter: invert(1)` in dark mode and `filter: none` in light mode
+- **Multi-tab template support** — `loadTemplate()` now handles both single-tab (`template.hotkeys`) and multi-tab (`template.tabs`) shapes; confirm message reports tab count for multi-tab templates; `syncActiveTab()` is called before replacing `state.tabs` to preserve the active tab's hotkeys
+- **PNG Export** — new "Export PNG" option in the Share panel (image icon, between Export JSON and Print); captures the full `.app-main` region (categories bar, active summary tab, keyboard) at 2× resolution via `html-to-image`; filename is `{map-name}-{YYYY-MM-DD}.png`; if the categories bar is collapsed it is temporarily expanded for the capture and restored immediately after; background matches the active theme (`#1a1a1a` dark / `#ffffff` light)
+- **Share branding** — all share outputs now include the map name, generation date, and a KeyBindr backlink: Copy Text adds a `---` footer with date and URL; Copy as Markdown adds an italic subtitle line after the H1; Email subject and body include map name and date; Twitter tweet includes the map name in quotes; Export JSON payload includes `generatedOn` and `source`/`sourceUrl` fields
+- **Copy as Markdown — rich-text clipboard** — `share-copy-md` now writes both `text/html` and `text/plain` MIME types via `ClipboardItem`; a `markdownToHtml()` converter handles H1/H2 headings, tables (with header/separator/body detection), horizontal rules, paragraphs, and inline links/emphasis; rich-text apps (Notion, Google Docs) receive formatted output; Firefox fallback to `writeText()` retained
+
+### Changed
+
+- **Clear dropdown redesigned** — "Clear All" button renamed to "Clear ▾"; static menu items replaced with three toggle-switch rows (Hotkeys, Categories, Tabs) using the same toggle style as the Settings panel; a full-width "Clear" button at the bottom of the dropdown is enabled only when at least one toggle is on; clearing Tabs deletes all tabs and leaves a single Default tab
+- **New button simplified** — removed the dropdown from the "New" button; clicking now goes directly to a confirm dialog noting that hotkeys, categories, and tabs will be wiped; on confirm, all three are cleared and the map name is set to "New Map"
+- **Template list sorted alphabetically** — `initTemplates()` now sorts `TEMPLATES` by `name` with `localeCompare` before rendering
+
+### Fixed
+
+- **PNG export color-mix() error** — switched from `html2canvas` (which crashed on `color-mix()` CSS) to `html-to-image` (which delegates rendering to the browser and handles all modern color functions correctly)
+
+---
+
 ## [0.4.20] – 2026-05-08
 
 ### Changed
