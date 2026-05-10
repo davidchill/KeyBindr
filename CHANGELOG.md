@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.2] – 2026-05-09
+
+### Added
+
+- **Self-hosted Chakra Petch font** — WOFF2 files for weights 400/500/600/700 (latin subset, ~48 KB total) downloaded from Google Fonts and placed in `fonts/`; `@font-face` declarations added to the top of `style.css`; removes the Google Fonts DNS + TLS round-trip (~150 ms on cold loads)
+- **`<link rel="preload">`** for `chakra-petch-400.woff2` added to `<head>` so the primary weight is fetched at highest priority alongside the stylesheet
+- **`validateImport(data)`** — schema validator added to `app.js` before `importMap()`; checks that the root is a plain object, `hotkeys` is a non-array object, every hotkey entry has a string `label` and valid optional `description`/`category`/`modifiers` fields, `categories` (if present) is an array of `{ id, name, color }` objects, and `tabs` (if present) is an array of objects with a `name` and `hotkeys`; called before `pushUndo()` so a rejected file wastes no undo slot; error messages are now descriptive (e.g. `Hotkey "KeyA" must have a string label`)
+
+### Changed
+
+- **CSP tightened** — `style-src` no longer allows `https://fonts.googleapis.com`; `font-src` reduced from `https://fonts.gstatic.com` to `'self'` now that fonts are self-hosted
+- **Google Fonts `<link>` tags removed** from `index.html` — the two `<link rel="preconnect">` tags and the stylesheet `<link>` are replaced by the single preload tag above
+- **Import error message improved** — was a generic "Invalid file" alert; now surfaces the specific validation failure (e.g. missing field name)
+
+---
+
 ## [0.5.1] – 2026-05-09
 
 ### Changed

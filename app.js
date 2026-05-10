@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.5.1';
+const VERSION = '0.5.2';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -2806,12 +2806,49 @@ function exportMap() {
   URL.revokeObjectURL(url);
 }
 
+function validateImport(data) {
+  if (!data || typeof data !== 'object' || Array.isArray(data))
+    throw new Error('Root must be a JSON object');
+  if (!data.hotkeys || typeof data.hotkeys !== 'object' || Array.isArray(data.hotkeys))
+    throw new Error('Missing or invalid "hotkeys" field');
+  for (const [keyId, hk] of Object.entries(data.hotkeys)) {
+    if (!hk || typeof hk !== 'object' || Array.isArray(hk))
+      throw new Error(`Hotkey "${keyId}" must be an object`);
+    if (typeof hk.label !== 'string')
+      throw new Error(`Hotkey "${keyId}" must have a string label`);
+    if (hk.description !== undefined && typeof hk.description !== 'string')
+      throw new Error(`Hotkey "${keyId}" has an invalid description`);
+    if (hk.category !== undefined && typeof hk.category !== 'string')
+      throw new Error(`Hotkey "${keyId}" has an invalid category`);
+    if (hk.modifiers !== undefined && !Array.isArray(hk.modifiers))
+      throw new Error(`Hotkey "${keyId}" has invalid modifiers`);
+  }
+  if (data.categories !== undefined) {
+    if (!Array.isArray(data.categories))
+      throw new Error('"categories" must be an array');
+    for (const cat of data.categories) {
+      if (!cat || typeof cat !== 'object' || typeof cat.id !== 'string' || typeof cat.name !== 'string' || typeof cat.color !== 'string')
+        throw new Error('Each category must have string "id", "name", and "color" fields');
+    }
+  }
+  if (data.tabs !== undefined) {
+    if (!Array.isArray(data.tabs))
+      throw new Error('"tabs" must be an array');
+    for (const tab of data.tabs) {
+      if (!tab || typeof tab !== 'object' || typeof tab.name !== 'string')
+        throw new Error('Each tab must have a string "name"');
+      if (!tab.hotkeys || typeof tab.hotkeys !== 'object' || Array.isArray(tab.hotkeys))
+        throw new Error(`Tab "${tab.name}" has missing or invalid "hotkeys"`);
+    }
+  }
+}
+
 function importMap(file) {
   const reader = new FileReader();
   reader.onload = e => {
     try {
       const data = JSON.parse(e.target.result);
-      if (!data.hotkeys) throw new Error();
+      validateImport(data);
       pushUndo();
       state.hotkeys   = data.hotkeys;
       state.categories = data.categories || [];
@@ -2822,8 +2859,8 @@ function importMap(file) {
       renderLegend();
       renderSummary();
       saveToStorage();
-    } catch (_) {
-      alert('Invalid file. Please import a KeyBindr JSON file.');
+    } catch (err) {
+      alert(`Could not import: ${err.message || 'Invalid KeyBindr JSON file.'}`);
     }
   };
   reader.readAsText(file);
