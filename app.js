@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.5.2';
+const VERSION = '0.5.3';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;

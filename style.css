@@ -2801,6 +2801,62 @@ body::before {
   }
 }
 
+/* ── About section ────────────────────────────────────────────── */
+.about-section {
+  border-top: 1px solid var(--border);
+  padding: 48px 24px 40px;
+}
+.about-inner {
+  max-width: 860px;
+  margin: 0 auto;
+}
+.about-heading {
+  font-size: 1rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 12px;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+.about-lead {
+  font-size: 0.875rem;
+  color: var(--text-muted);
+  line-height: 1.7;
+  margin: 0 0 28px;
+  max-width: 680px;
+}
+.about-grid {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 20px 40px;
+  margin-bottom: 28px;
+}
+.about-item h3 {
+  font-size: 0.8rem;
+  font-weight: 600;
+  color: var(--text);
+  margin: 0 0 6px;
+  letter-spacing: 0.03em;
+  text-transform: uppercase;
+}
+.about-item p {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+}
+.about-footer-note {
+  font-size: 0.8rem;
+  color: var(--text-muted);
+  line-height: 1.65;
+  margin: 0;
+  max-width: 680px;
+}
+@media (max-width: 600px) {
+  .about-grid { grid-template-columns: 1fr; }
+  .about-section { padding: 36px 16px 32px; }
+}
+
 /* ── Footer ───────────────────────────────────────────────────── */
 .app-footer {
   display: flex;

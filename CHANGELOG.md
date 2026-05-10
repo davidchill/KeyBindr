@@ -1,5 +1,13 @@
 # Changelog
 
+## [0.5.3] – 2026-05-09
+
+### Added
+
+- **About section** — prose block added below the app UI (above the footer) explaining what KeyBindr is and who it's for; four audience callouts (Gamers, Developers, Designers, Ergo enthusiasts) in a 2-column responsive grid; closing paragraph covers the no-account, no-install workflow and lists all current templates; uses existing CSS variables for consistent theming across all color schemes and modes; collapses to single column on narrow screens
+
+---
+
 ## [0.5.2] – 2026-05-09
 
 ### Added
