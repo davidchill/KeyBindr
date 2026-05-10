@@ -1,5 +1,21 @@
 # Changelog
 
+## [0.5.4] – 2026-05-09
+
+### Added
+
+- **404 page** — branded `404.html` served automatically by Cloudflare Pages for any unmatched route; uses `style.css` variables, Chakra Petch font, and the site logo; copy: "Key not found — Looks like you've wandered into unmapped territory."
+- **Heat map density legend** — a `Sparse → Dense` gradient bar now appears below the keyboard whenever Heat Map mode is active; fades in/out with a subtle slide transition; gradient matches the blue → green → yellow → red color scale used on the keys
+- **Heat map section in Help modal** — new section in the "How to Use KeyBindr" modal explaining what the heat map shows, how the color scale works (blue = sparse, red = dense), and how to use it to spot ergonomic hotspots
+
+### Fixed
+
+- **Heat map theme/scheme recompute** — switching color scheme or light/dark theme while Heat Map is active now correctly reapplies the heatmap colors; previously the old HSL values persisted until the user toggled heat map off and on again
+- **Heat map cold-key legibility** — raised the lightness floor on cold (sparse) keys from `20%` to `28%` so key labels remain readable in low-density areas
+- **Conflict detection whitespace** — `checkConflict()` now trims stored label values before comparing, so labels imported with accidental leading/trailing whitespace are caught correctly
+
+---
+
 ## [0.5.3] – 2026-05-09
 
 ### Added

@@ -169,6 +169,11 @@
           <div id="keyboard" class="keyboard"></div>
         </div>
       </div>
+      <div id="heatmap-legend" class="heatmap-legend hidden">
+        <span class="heatmap-legend-label">Sparse</span>
+        <div class="heatmap-legend-bar"></div>
+        <span class="heatmap-legend-label">Dense</span>
+      </div>
     </div>
 
     <div class="summary-section">
@@ -271,6 +276,17 @@
           <li><strong>Copy Text / Copy Markdown</strong> — Export the current summary to your clipboard.</li>
           <li><strong>Summary Settings</strong> (gear icon) — Toggle column overflow and set how many items fit per column before spilling.</li>
         </ul>
+      </div>
+
+      <div class="help-section">
+        <h3 class="help-section-title">Heat Map</h3>
+        <p class="help-section-desc">Click <strong>Heat Map</strong> in the toolbar to overlay a density visualization on the keyboard. Keys are colored based on how clustered your assigned bindings are in that region of the keyboard — not just the key itself, but everything nearby.</p>
+        <ul class="help-list">
+          <li><span style="color:#6080cc;font-weight:600;">Blue (cool)</span> — few or no assigned keys nearby. That area of the keyboard is lightly used.</li>
+          <li><span style="color:#40b060;font-weight:600;">Green / Yellow</span> — moderate density. A decent number of bindings are within reach.</li>
+          <li><span style="color:#cc4040;font-weight:600;">Red (hot)</span> — high density. Many assigned keys are clustered in this region.</li>
+        </ul>
+        <p class="help-section-desc">Use it to spot ergonomic hotspots — if one hand's region is entirely red, your bindings may be overloading that side. The color scale bar below the keyboard shows the full Sparse → Dense range. Heat Map turns off automatically when you switch back to the normal view.</p>
       </div>
 
       <div class="help-section">

@@ -741,8 +741,40 @@ body::before {
 .keyboard-section {
   width: 100%;
   display: flex;
-  justify-content: center;
+  flex-direction: column;
+  align-items: center;
   margin-top: 20px;
+}
+
+.heatmap-legend {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+  opacity: 0;
+  transform: translateY(-4px);
+  transition: opacity 0.25s, transform 0.25s;
+}
+.heatmap-legend:not(.hidden) {
+  opacity: 1;
+  transform: translateY(0);
+}
+.heatmap-legend-bar {
+  width: 160px;
+  height: 8px;
+  border-radius: 4px;
+  background: linear-gradient(to right,
+    hsl(240, 45%, 28%),
+    hsl(180, 55%, 32%),
+    hsl(120, 60%, 35%),
+    hsl(60,  70%, 38%),
+    hsl(0,   85%, 42%));
+}
+.heatmap-legend-label {
+  font-size: 0.72rem;
+  font-weight: 500;
+  color: var(--text-muted);
+  letter-spacing: 0.02em;
 }
 
 .keyboard-scroll {

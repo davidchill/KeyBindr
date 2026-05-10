@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.5.3 — work in progress, active development.
+  <strong>Version:</strong> 0.5.4 — work in progress, active development.
 </p>
 
 ---
@@ -43,7 +43,7 @@
 
 - **Hover tooltips** — hovering any assigned key shows a floating tooltip with the action label, modifiers, description, and category
 - **Category hover highlight** — hovering a category chip dims all non-matching keys and fades other summary groups; clicking locks the filter with a ✓ indicator; click again to clear
-- **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to warm (dense clusters)
+- **Heat map mode** — toggle in the layout bar; colors every key by proximity density to assigned keys, from cool (sparse) to warm (dense clusters); a `Sparse → Dense` gradient legend bar appears below the keyboard while active
 - **Hover cross-highlight** — hovering an assigned key highlights its summary row, and vice versa
 
 ### UI & theming
@@ -53,7 +53,7 @@
 - **Responsive scaling** — keyboard scales dynamically to fit any viewport via `ResizeObserver` and `transform: scale()`; visual corner radius compensated inversely so rounded corners look consistent at any zoom level; header collapses to a hamburger menu on narrow screens (≤768 px); a tablet breakpoint (≤1024 px) trims the layout bar to Templates + Form Factor + Key Map to avoid crowding; categories and summary reflow for single-column display
 - **Style dropdown** — "Style" button in the header nav opens a panel with two sections: Color Scheme (five full UI themes: Default, Synthwave, Phosphor, Crimson, Forge) and Mode (Light / System / Dark); each scheme has independent dark and light variants with per-scheme aurora background and key hover glow; preferences persist under `keybindr-scheme` and `keybindr-theme`
 - **Windows / Mac platform toggle** — Win / Mac segmented control in the header nav left side; switches modifier labels throughout the UI (`Ctrl → Cmd`, `Alt → Opt`) in summary chips, key tooltips, and copy output; persists across sessions
-- **Chakra Petch font** — UI uses Chakra Petch (Google Fonts) for a technical, game-UI character across all platforms
+- **Chakra Petch font** — UI uses self-hosted Chakra Petch (WOFF2, weights 400/500/600/700) for a technical, game-UI character across all platforms; preloaded at highest priority to avoid layout shift
 - **Category legend** above the keyboard with per-category key counts and total coverage (`X / Y keys assigned`)
 - **Hotkey summary panel** below the keyboard — all assigned hotkeys grouped by category in 4 draggable columns; searchable by label or description; each category group shows an item count badge and a collapse/expand chevron; collapsed state persists across sessions
 - **Drag-to-reorder** — drag category groups in the summary to reorder within or across columns; arrangement persists; drop indicators appear only when hovering over a category header (top half = insert before, bottom half = insert after), preventing false positives over item lists; a 40 px drop zone below each column's last group allows appending without needing to target a header; in overflow mode, drag updates the category sequence without disabling overflow; dragging an overflowing category highlights the nearest valid drop target even when the cursor stays within the category's own columns
@@ -137,6 +137,7 @@ Then open `http://localhost:3000` (or `:8080`).
 ```
 site/
 ├── index.html          # App shell — header, layout bar, keyboard, legend, summary, popovers
+├── 404.html            # Branded 404 page (served automatically by Cloudflare Pages)
 ├── style.css           # Themed stylesheet using CSS custom properties (light + dark)
 ├── app.js              # All layout data, key maps, and application logic
 ├── analytics.js        # Google Analytics 4 gtag() initialization (extracted from index.html for CSP)

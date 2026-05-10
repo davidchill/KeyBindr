@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.5.3';
+const VERSION = '0.5.4';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -591,6 +591,7 @@ function applyTheme(pref) {
   document.querySelectorAll('.theme-btn').forEach(btn => {
     btn.classList.toggle('active', btn.dataset.themeVal === pref);
   });
+  if (heatmapActive) applyHeatmap();
 }
 
 /* ── Keyboard scale (ResizeObserver) ──────────────────────────── */
@@ -685,6 +686,7 @@ const SCHEME_OPTIONS = [
 
 function applyScheme(scheme) {
   document.documentElement.setAttribute('data-scheme', scheme);
+  if (heatmapActive) applyHeatmap();
   const btn = document.getElementById('scheme-picker');
   if (btn) {
     const opt = SCHEME_OPTIONS.find(o => o.value === scheme);
@@ -1215,7 +1217,7 @@ function applyHeatmap() {
     const t = (score - min) / range;
     const hue = Math.round(240 - t * 240);
     const sat = Math.round(45 + t * 40);
-    const lit = Math.round(20 + t * 22);
+    const lit = Math.round(28 + t * 14);
     el.style.background = `hsl(${hue}, ${sat}%, ${lit}%)`;
     el.style.setProperty('box-shadow',
       `0 3px 0 hsl(${hue}, ${sat}%, ${lit - 10}%), 0 1px 2px rgba(0,0,0,0.5)`);
@@ -1233,6 +1235,7 @@ function toggleHeatmap() {
   heatmapActive = !heatmapActive;
   track('heatmap_toggled', { active: heatmapActive });
   document.getElementById('btn-heatmap').classList.toggle('btn-on', heatmapActive);
+  document.getElementById('heatmap-legend').classList.toggle('hidden', !heatmapActive);
   if (heatmapActive) {
     applyHeatmap();
   } else {
@@ -2329,7 +2332,7 @@ function checkConflict(label) {
   if (!label) return null;
   const lower = label.toLowerCase();
   for (const [keyId, hk] of Object.entries(state.hotkeys)) {
-    if (keyId !== activeKeyId && hk.label.toLowerCase() === lower) return keyId;
+    if (keyId !== activeKeyId && hk.label.trim().toLowerCase() === lower) return keyId;
   }
   return null;
 }
