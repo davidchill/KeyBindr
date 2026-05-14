@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.5.4 — work in progress, active development.
+  <strong>Version:</strong> 0.5.5 — work in progress, active development.
 </p>
 
 ---
@@ -73,7 +73,9 @@
 - **Named maps** — editable map name in the layout bar
 - **New / Clear** — "New" opens a confirm dialog that wipes hotkeys, categories, and tabs and sets the map name to "New Map"; "Clear ▾" opens a dropdown with toggle switches for Hotkeys, Categories, and Tabs — enable any combination and click Clear to selectively wipe
 - **Export / Import** — save any map as a `.json` file and reload it later; exported JSON includes map name, generation date, and KeyBindr source attribution
-- **Share panel** — "Share" button opens a dropdown with nine options: Copy Link (shareable URL with map encoded in the hash), Copy Text (plain-text summary), Copy as Markdown (rich-text clipboard with `text/html` + `text/plain` for Notion/Docs compatibility), Post on X, Share on Reddit, Share via Email, Export JSON, Export PNG, and Print; all outputs include the map name, date, and a KeyBindr backlink
+- **Share panel** — "Share" button opens a dropdown with ten options: Copy Link (shareable URL with map encoded in the hash), Copy Text (plain-text summary), Copy as Markdown (rich-text clipboard with `text/html` + `text/plain` for Notion/Docs compatibility), Post on X, Share on Reddit, Share via Email, Export CSV, Export JSON, Export PNG, and Print; all outputs include the map name, date, and a KeyBindr backlink
+- **Compressed share URLs** — Copy Link uses LZString compression before encoding, producing URLs ~65% shorter than the previous base64-only format; legacy `#map=` links remain fully functional
+- **Export CSV** — exports all tabs as a comma-separated file with columns for Tab, Key, Label, Modifiers, Category, and Description; values are properly escaped (quoted if containing commas, quotes, or newlines); filename is `{map-name}.csv`
 - **Export PNG** — captures the full app view (categories bar, active summary tab, keyboard) as a high-resolution PNG (2× pixel ratio) using `html-to-image`; filename is `{map-name}-{YYYY-MM-DD}.png`; collapsed categories bar is temporarily expanded for the capture
 - **Undo / Redo** — Ctrl+Z / Ctrl+Shift+Z (or layout bar buttons) with a 50-entry history
 - **Key conflict detection** — warning in the edit popover when a label is already used on another key

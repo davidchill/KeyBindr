@@ -1,5 +1,5 @@
 /* ── Constants ────────────────────────────────────────────────── */
-const VERSION = '0.5.4';
+const VERSION = '0.5.5';
 const UNIT        = 44;
 const GAP         = 4;
 const FN_H        = 30;
@@ -2659,18 +2659,25 @@ function buildShareUrl() {
     keyMap:     state.keyMap,
     categories: state.categories,
   };
-  const encoded = btoa(encodeURIComponent(JSON.stringify(data)));
-  return `${location.origin}${location.pathname}#map=${encoded}`;
+  const compressed = LZString.compressToEncodedURIComponent(JSON.stringify(data));
+  return `${location.origin}${location.pathname}#lzmap=${compressed}`;
 }
 
 function loadFromHash() {
   try {
     const hash = window.location.hash;
-    if (!hash.startsWith('#map=')) return false;
-    const data = JSON.parse(decodeURIComponent(atob(hash.slice(5))));
+    let json;
+    if (hash.startsWith('#lzmap=')) {
+      json = LZString.decompressFromEncodedURIComponent(hash.slice(7));
+    } else if (hash.startsWith('#map=')) {
+      json = decodeURIComponent(atob(hash.slice(5)));
+    } else {
+      return false;
+    }
+    const data = JSON.parse(json);
     if (data.hotkeys) state.hotkeys = data.hotkeys;
     if (data.mapName) document.getElementById('map-name').value = data.mapName;
-    if (data.layout && VALID_LAYOUTS.has(data.layout))   state.layout = data.layout;
+    if (data.layout && VALID_LAYOUTS.has(data.layout))  state.layout = data.layout;
     if (data.keyMap && VALID_KEY_MAPS.has(data.keyMap)) state.keyMap = data.keyMap;
     state.categories = data.categories || data.customCategories || [];
     history.replaceState(null, '', location.pathname);
@@ -2805,6 +2812,39 @@ function exportMap() {
   const a    = document.createElement('a');
   a.href     = url;
   a.download = name.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.json';
+  a.click();
+  URL.revokeObjectURL(url);
+}
+
+function exportMapCSV() {
+  syncActiveTab();
+  const mapName = document.getElementById('map-name').value || 'hotkey-map';
+  track('map_exported_csv', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
+
+  const catMap = Object.fromEntries(state.categories.map(c => [c.id, c.name]));
+  const esc = v => {
+    const s = String(v ?? '');
+    return (s.includes(',') || s.includes('"') || s.includes('\n'))
+      ? `"${s.replace(/"/g, '""')}"` : s;
+  };
+
+  const rows = [['Tab', 'Key', 'Label', 'Modifiers', 'Category', 'Description']];
+  state.tabs.forEach(tab => {
+    Object.entries(tab.hotkeys).forEach(([keyId, hk]) => {
+      const def      = findKeyDef(keyId);
+      const keyLabel = (def ? getKeyLabel(def) : '') || keyId;
+      const mods     = (hk.modifiers || []).join('+');
+      const catName  = catMap[hk.category] || '';
+      rows.push([tab.name, keyLabel, hk.label || '', mods, catName, hk.description || '']);
+    });
+  });
+
+  const csv  = rows.map(r => r.map(esc).join(',')).join('\r\n');
+  const blob = new Blob([csv], { type: 'text/csv' });
+  const url  = URL.createObjectURL(blob);
+  const a    = document.createElement('a');
+  a.href     = url;
+  a.download = mapName.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.csv';
   a.click();
   URL.revokeObjectURL(url);
 }
@@ -3556,6 +3596,11 @@ function initEvents() {
     const orig = nameEl.textContent;
     nameEl.textContent = 'Copied!';
     setTimeout(() => { nameEl.textContent = orig; closeSharePanel(); }, 1500);
+  });
+
+  document.getElementById('share-export-csv').addEventListener('click', () => {
+    exportMapCSV();
+    closeSharePanel();
   });
 
   document.getElementById('share-export').addEventListener('click', () => {

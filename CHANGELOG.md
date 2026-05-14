@@ -1,5 +1,14 @@
 # Changelog
 
+## [0.5.5] – 2026-05-13
+
+### Added
+
+- **CSV Export** — new "Export CSV" option in the Share panel (between Copy as Markdown and Export JSON); exports all tabs as a properly-escaped CSV with columns: Tab, Key, Label, Modifiers, Category, Description; values containing commas, quotes, or newlines are double-quoted per RFC 4180; filename is `{map-name}.csv`
+- **LZ-compressed share URLs** — "Copy Link" and all social share buttons now produce URLs compressed with LZString before base64 encoding, reducing typical URL length by ~65%; new URLs use a `#lzmap=` hash prefix; old `#map=` links remain fully functional for backward compatibility; `lz-string@1.5.0` added via jsDelivr CDN
+
+---
+
 ## [0.5.4] – 2026-05-09
 
 ### Added
