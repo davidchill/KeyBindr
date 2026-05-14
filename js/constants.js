@@ -1,5 +1,5 @@
 /* ── Sizing & layout constants ─────────────────────────────────── */
-export const VERSION        = '0.5.8';
+export const VERSION        = '0.5.9';
 export const UNIT           = 44;
 export const GAP            = 4;
 export const FN_H           = 30;
