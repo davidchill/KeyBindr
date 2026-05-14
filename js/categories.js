@@ -5,13 +5,7 @@ import {
   setCategoryHighlight, clearCategoryHighlight, darkenHex,
 } from './keyboard.js';
 import { renderSummary } from './summary.js';
-
-/* ── Callback injected by app.js ──────────────────────────────── */
-let _showConfirm = (msg, onConfirm) => { if (confirm(msg)) onConfirm(); };
-
-export function setCategoriesCallbacks({ showConfirm }) {
-  if (showConfirm) _showConfirm = showConfirm;
-}
+import { showConfirm } from './confirm.js';
 
 /* ── Active filter state ──────────────────────────────────────── */
 let filterCat = null;
@@ -201,7 +195,7 @@ export function deleteCategory(id) {
     saveToStorage();
   };
   if (usedCount > 0) {
-    _showConfirm(`Delete "${cat.name}"? ${usedCount} hotkey${usedCount > 1 ? 's' : ''} will become uncategorized.`, doDelete);
+    showConfirm(`Delete "${cat.name}"? ${usedCount} hotkey${usedCount > 1 ? 's' : ''} will become uncategorized.`, doDelete);
   } else {
     doDelete();
   }

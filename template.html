@@ -1,0 +1,160 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Map — KeyBindr</title>
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y1EQFTC8YR"></script>
+  <script src="analytics.js"></script>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/chakra-petch-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+
+  <script type="module" src="js/template-page.js"></script>
+
+  <style>
+    .template-header {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+      padding: 10px 20px;
+      background: var(--header-bg);
+      border-bottom: 1px solid var(--border);
+      flex-wrap: wrap;
+    }
+    .template-header-brand {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      text-decoration: none;
+      color: inherit;
+      flex-shrink: 0;
+    }
+    .template-header-brand .brand-icon { height: 26px; width: auto; }
+    .template-header-brand .brand-name {
+      font-size: 1rem;
+      font-weight: 600;
+      letter-spacing: .03em;
+      color: var(--text-primary);
+    }
+    .template-header-divider {
+      width: 1px;
+      height: 20px;
+      background: var(--border);
+      flex-shrink: 0;
+    }
+    .template-header-info {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      flex: 1;
+      min-width: 0;
+    }
+    #template-title {
+      font-size: 1rem;
+      font-weight: 600;
+      color: var(--text-primary);
+      white-space: nowrap;
+      overflow: hidden;
+      text-overflow: ellipsis;
+    }
+    #template-category {
+      font-size: 0.7rem;
+      padding: 2px 7px;
+      border-radius: 999px;
+      background: var(--accent-subtle);
+      color: var(--accent);
+      font-weight: 600;
+      flex-shrink: 0;
+    }
+    #template-tab-note {
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      margin: 0;
+    }
+    .template-cta-btn {
+      margin-left: auto;
+      flex-shrink: 0;
+    }
+    .template-page-footer {
+      text-align: center;
+      padding: 16px;
+      font-size: 0.75rem;
+      color: var(--text-muted);
+      border-top: 1px solid var(--border);
+    }
+    .template-page-footer a { color: var(--accent); text-decoration: none; }
+    .template-page-footer a:hover { text-decoration: underline; }
+  </style>
+</head>
+<body>
+
+  <header class="template-header">
+    <a class="template-header-brand" href="https://keybindr.app">
+      <img class="brand-icon" src="logos/main_nobackground.png" alt="KeyBindr" aria-hidden="true">
+      <span class="brand-name">KeyBindr</span>
+    </a>
+    <div class="template-header-divider"></div>
+    <div class="template-header-info">
+      <span id="template-title"></span>
+      <span id="template-category"></span>
+    </div>
+    <a id="template-cta" class="btn btn-primary template-cta-btn" href="https://keybindr.app">
+      Map your own →
+    </a>
+  </header>
+
+  <p id="template-tab-note" hidden style="margin:6px 20px 0; font-size:0.78rem; color:var(--text-muted);"></p>
+
+  <main class="app-main">
+    <div class="legend-section">
+      <div class="legend" id="legend">
+        <div class="legend-title-row">
+          <span class="legend-title">Categories</span>
+        </div>
+        <div class="legend-mid">
+          <div id="category-list" class="category-list"></div>
+          <div class="legend-active-preview" id="legend-active-preview"></div>
+        </div>
+        <span id="stat-assigned" class="legend-stat">0 keys assigned</span>
+      </div>
+    </div>
+
+    <div class="keyboard-section">
+      <div class="keyboard-scale-wrap">
+        <div class="keyboard-scroll">
+          <div id="keyboard" class="keyboard"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="summary-section">
+      <div class="summary-card">
+        <div class="summary-header-row">
+          <span class="legend-title">Hotkey Summary</span>
+        </div>
+        <p id="summary-empty" class="summary-empty">No hotkeys loaded.</p>
+        <div id="summary-grid" class="summary-grid"></div>
+      </div>
+    </div>
+  </main>
+
+  <div id="key-tooltip" class="key-tooltip" hidden>
+    <div class="kt-label"></div>
+    <div class="kt-mods"></div>
+    <div class="kt-desc"></div>
+    <div class="kt-cat"></div>
+  </div>
+
+  <footer class="template-page-footer">
+    <span id="footer-version"></span> &nbsp;·&nbsp;
+    <a href="https://keybindr.app">KeyBindr</a> — map and share your keyboard shortcuts
+  </footer>
+
+</body>
+</html>

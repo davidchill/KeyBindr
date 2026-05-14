@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.6.0] – 2026-05-14
+
+### Added
+
+- **Template pages** — new `template.html` page renders any built-in template as a shareable read-only view; keyboard, category legend, and hotkey summary are fully rendered with no editing UI; accessible at `/template?id=photoshop` (or any template ID); powered by `js/template-page.js` which imports only the modules it needs (keyboard, categories, summary, state, constants)
+- Header on template page shows the KeyBindr logo, template name, app category badge, and a "Map your own →" CTA linking back to the main app; footer shows the current version
+
+### Internal
+
+- **ES module migration Phase 6 complete** — all six phases done; `app.js` → `js/main.js`; `index.html` updated to `<script type="module" src="js/main.js">`; old `app.js` stubbed
+- **`js/confirm.js` extracted** — `showConfirm`, `closeConfirm`, `initConfirmEvents` moved out of `main.js`; `categories.js` and `tabs.js` now import `showConfirm` directly, removing the last callback-injection use of `setCategoriesCallbacks`
+- Module graph is now complete: `constants → state → keyboard / theme / categories / summary / popover / export / tabs / heatmap / confirm → main`
+
+---
+
 ## [0.5.10] – 2026-05-14
 
 ### Internal

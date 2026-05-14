@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.5.10 — work in progress, active development.
+  <strong>Version:</strong> 0.6.0 — work in progress, active development.
 </p>
 
 ---
@@ -141,7 +141,7 @@ site/
 ├── index.html          # App shell — header, layout bar, keyboard, legend, summary, popovers
 ├── 404.html            # Branded 404 page (served automatically by Cloudflare Pages)
 ├── style.css           # Themed stylesheet using CSS custom properties (light + dark)
-├── app.js              # Entry point — wires modules, handles undo/redo, templates modal, init()
+├── app.js              # Stub — superseded by js/main.js (safe to delete)
 ├── analytics.js        # Google Analytics 4 gtag() initialization (extracted from index.html for CSP)
 ├── js/
 │   ├── constants.js    # All pure data: layout arrays, key maps, defaults, sizing constants
@@ -154,7 +154,10 @@ site/
 │   ├── export.js       # Plain text, Markdown, JSON, CSV export; JSON import; share helpers
 │   ├── tabs.js         # Context tab bar rendering, switching, renaming, reordering
 │   ├── heatmap.js      # Heatmap density computation and toggle
-│   └── templates.js    # Built-in template map definitions
+│   ├── templates.js    # Built-in template map definitions
+│   ├── main.js         # Entry point — wires all modules, undo/redo, templates modal, init()
+│   └── template-page.js # Read-only template view init (used by template.html)
+├── template.html       # Shareable read-only template view (/template?id=photoshop)
 ├── _headers            # Cloudflare Pages headers — sitemap MIME type, HSTS, CSP, security headers
 ├── package.json        # Metadata only — no dependencies, no build tools
 ├── logos/              # Brand assets (app icon, square logo, wide banner)

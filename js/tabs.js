@@ -1,11 +1,11 @@
 import { state, genTabId, syncActiveTab, saveToStorage } from './state.js';
+import { showConfirm } from './confirm.js';
 
 let _dragTabId = null;
 let _cbs = {
   renderKeyboard: () => {},
   renderLegend: () => {},
   renderSummary: () => {},
-  showConfirm: () => {},
   openTemplatesModal: () => {},
   track: () => {},
 };
@@ -92,7 +92,7 @@ export function renameTab(tabId, currentName) {
       const detail = hotkeyCount > 0
         ? ` ${hotkeyCount} hotkey${hotkeyCount > 1 ? 's' : ''} will be permanently deleted.`
         : '';
-      _cbs.showConfirm(`Delete "${currentName}"?${detail}`, () => deleteTab(tabId));
+      showConfirm(`Delete "${currentName}"?${detail}`, () => deleteTab(tabId));
     } : null,
   });
 }
