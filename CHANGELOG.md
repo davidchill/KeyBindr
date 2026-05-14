@@ -1,5 +1,20 @@
 # Changelog
 
+## [0.5.10] – 2026-05-14
+
+### Internal
+
+- **ES module migration Phase 5** — extracted four new modules from `app.js`, completing the modularisation of all major feature areas:
+  - `js/heatmap.js` — `applyHeatmap`, `clearHeatmap`, `toggleHeatmap`, `isHeatmapActive`
+  - `js/popover.js` — `openPopover`, `closePopover`, label autocomplete (`renderLabelSuggestions`, `moveSuggestionFocus`, `hideLabelSuggestions`), conflict detection (`updateConflictWarning`, `checkConflict`), `saveHotkey`, `clearHotkey`
+  - `js/export.js` — `buildPlainText`, `buildMarkdown`, `markdownToHtml`, `exportMap`, `exportMapCSV`, `validateImport`, `importMap`, `shareDate`, `siteUrl`, `copyToClipboard`
+  - `js/tabs.js` — `renderTabBar`, `switchTab`, `addTab`, `renameTab`, `deleteTab`, `showTabNameDialog`
+- All cross-cutting dependencies resolved via callback injection (`setHeatmapCallbacks`, `setPopoverCallbacks`, `setExportCallbacks`, `setTabsCallbacks`) wired in `init()`
+- `app.js` reduced from ~1,790 lines to ~780 lines; now contains only: undo/redo stack, `showConfirm`, templates modal, action dropdowns, layout controls, `initEvents`, and `init()`
+- No behaviour changes; zero console errors
+
+---
+
 ## [0.5.5] – 2026-05-13
 
 ### Added

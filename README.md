@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.5.5 — work in progress, active development.
+  <strong>Version:</strong> 0.5.10 — work in progress, active development.
 </p>
 
 ---
@@ -93,7 +93,7 @@
 
 ## How It Works
 
-The keyboard is rendered entirely at runtime from layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`, `ZSA_KEYBOARDS`) in `app.js`. Switching form factor or key map re-renders the keyboard without touching stored hotkey data.
+The keyboard is rendered entirely at runtime from layout data arrays (`MAIN_ROWS`, `NAV_ROWS`, `NUMPAD_KEYS`, `ZSA_KEYBOARDS`) defined in `js/constants.js`. Switching form factor or key map re-renders the keyboard without touching stored hotkey data.
 
 The numpad uses CSS Grid with explicit `grid-column` / `grid-row` placement to handle special-shaped keys (`+` and `Enter` span 2 rows, `0` spans 2 columns). ZSA split keyboards use a column-stagger renderer with computed thumb cluster offsets.
 
@@ -141,9 +141,20 @@ site/
 ├── index.html          # App shell — header, layout bar, keyboard, legend, summary, popovers
 ├── 404.html            # Branded 404 page (served automatically by Cloudflare Pages)
 ├── style.css           # Themed stylesheet using CSS custom properties (light + dark)
-├── app.js              # All layout data, key maps, and application logic
+├── app.js              # Entry point — wires modules, handles undo/redo, templates modal, init()
 ├── analytics.js        # Google Analytics 4 gtag() initialization (extracted from index.html for CSP)
-├── templates.js        # Built-in template maps (loaded before app.js)
+├── js/
+│   ├── constants.js    # All pure data: layout arrays, key maps, defaults, sizing constants
+│   ├── state.js        # App state object, localStorage persistence, share URL, undo helpers
+│   ├── keyboard.js     # Key rendering, ZSA layouts, hover/tooltip, keyboard scaling
+│   ├── theme.js        # Theme and color scheme application
+│   ├── categories.js   # Category legend, filter, custom category editing
+│   ├── summary.js      # Hotkey summary panel, column layout, drag-to-reorder
+│   ├── popover.js      # Key assignment popover, label autocomplete, conflict detection
+│   ├── export.js       # Plain text, Markdown, JSON, CSV export; JSON import; share helpers
+│   ├── tabs.js         # Context tab bar rendering, switching, renaming, reordering
+│   ├── heatmap.js      # Heatmap density computation and toggle
+│   └── templates.js    # Built-in template map definitions
 ├── _headers            # Cloudflare Pages headers — sitemap MIME type, HSTS, CSP, security headers
 ├── package.json        # Metadata only — no dependencies, no build tools
 ├── logos/              # Brand assets (app icon, square logo, wide banner)

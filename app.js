@@ -38,6 +38,23 @@ import {
   showKeyTooltip, positionTooltip, hideKeyTooltip,
   applyKbScale, measureAndScaleKeyboard, initKeyboardScale,
 } from './js/keyboard.js';
+import { applyHeatmap, clearHeatmap, toggleHeatmap, isHeatmapActive, setHeatmapCallbacks } from './js/heatmap.js';
+import {
+  openPopover, closePopover, getActiveKeyId,
+  renderLabelSuggestions, hideLabelSuggestions,
+  moveSuggestionFocus, updateConflictWarning,
+  saveHotkey, clearHotkey, setPopoverCallbacks,
+} from './js/popover.js';
+import {
+  shareDate, siteUrl,
+  buildPlainText, buildMarkdown, markdownToHtml,
+  copyToClipboard, exportMap, exportMapCSV,
+  validateImport, importMap, setExportCallbacks,
+} from './js/export.js';
+import {
+  switchTab, showTabNameDialog, renameTab, deleteTab, addTab, renderTabBar,
+  setTabsCallbacks,
+} from './js/tabs.js';
 
 /* ── Analytics ────────────────────────────────────────────────── */
 const _sessionCounts = { saves: 0, shares: 0, prints: 0, exports: 0, imports: 0 };
@@ -45,76 +62,6 @@ const _sessionCounts = { saves: 0, shares: 0, prints: 0, exports: 0, imports: 0 
 function track(name, params) {
   if (typeof gtag === 'function') gtag('event', name, params || {});
 }
-
-/* ── Keyboard scaling state ───────────────────────────────────── */
-
-
-
-
-
-
-/* ── App state — defined in js/state.js, imported above ───────── */
-
-
-// Returns a darkened version of a hex color by blending with black at the given ratio.
-// Replaces color-mix() in JS contexts where CSS fallbacks aren't possible.
-
-let activeKeyId = null;
-
-/* ── Theme ───────────────────────────────────────────────────── */
-
-
-/* ── Keyboard scale (ResizeObserver) ──────────────────────────── */
-
-
-
-
-/* ── Scheme ──────────────────────────────────────────────────── */
-
-
-
-function initScheme() {
-  const saved = localStorage.getItem(SCHEME_KEY) || 'default';
-  applyScheme(saved);
-
-  document.getElementById('scheme-picker').addEventListener('click', e => {
-    const current = localStorage.getItem(SCHEME_KEY) || 'default';
-    showActionDropdown(e.currentTarget, SCHEME_OPTIONS.map(opt => ({
-      ...opt,
-      selected: opt.value === current,
-      action: () => {
-        localStorage.setItem(SCHEME_KEY, opt.value);
-        track('scheme_changed', { scheme: opt.value });
-        applyScheme(opt.value);
-      }
-    })));
-  });
-}
-
-/* ── Helpers ──────────────────────────────────────────────────── */
-
-
-
-/* ── Key element factory ──────────────────────────────────────── */
-
-
-/* ── Rendering ────────────────────────────────────────────────── */
-
-
-/* ── ZSA keyboard renderer ────────────────────────────────────── */
-
-
-
-/* ── Hover cross-highlight ────────────────────────────────────── */
-
-
-/* ── Category hover highlight ─────────────────────────────────── */
-
-
-/* ── Key tooltip ──────────────────────────────────────────────── */
-
-
-
 
 /* ── Undo / Redo ──────────────────────────────────────────────── */
 let undoStack = [];
@@ -127,7 +74,7 @@ function snapshotState() {
   };
 }
 
-function pushUndo() {
+export function pushUndo() {
   undoStack.push(snapshotState());
   if (undoStack.length > UNDO_LIMIT) undoStack.shift();
   redoStack = [];
@@ -165,712 +112,23 @@ function updateUndoRedoButtons() {
   if (btnRedo) btnRedo.disabled = redoStack.length === 0;
 }
 
-/* ── Heat map ─────────────────────────────────────────────────── */
-let heatmapActive = false;
+/* ── Scheme ──────────────────────────────────────────────────── */
+function initScheme() {
+  const saved = localStorage.getItem(SCHEME_KEY) || 'default';
+  applyScheme(saved);
 
-function applyHeatmap() {
-  const keys = [...document.querySelectorAll('#keyboard .key')];
-  if (!keys.length) return;
-
-  const assignedIds = new Set(Object.keys(state.hotkeys));
-  if (!assignedIds.size) return;
-
-  const centers = new Map();
-  keys.forEach(el => {
-    const r = el.getBoundingClientRect();
-    centers.set(el.dataset.id, { x: r.left + r.width / 2, y: r.top + r.height / 2 });
+  document.getElementById('scheme-picker').addEventListener('click', e => {
+    const current = localStorage.getItem(SCHEME_KEY) || 'default';
+    showActionDropdown(e.currentTarget, SCHEME_OPTIONS.map(opt => ({
+      ...opt,
+      selected: opt.value === current,
+      action: () => {
+        localStorage.setItem(SCHEME_KEY, opt.value);
+        track('scheme_changed', { scheme: opt.value });
+        applyScheme(opt.value);
+      }
+    })));
   });
-
-  const assignedCenters = [...assignedIds]
-    .map(id => centers.get(id))
-    .filter(Boolean);
-
-  const scores = new Map();
-  const SIGMA = 90;
-  keys.forEach(el => {
-    const c = centers.get(el.dataset.id);
-    if (!c) return;
-    let score = 0;
-    assignedCenters.forEach(ac => {
-      const dx = c.x - ac.x, dy = c.y - ac.y;
-      score += Math.exp(-(dx * dx + dy * dy) / (2 * SIGMA * SIGMA));
-    });
-    scores.set(el, score);
-  });
-
-  const vals = [...scores.values()];
-  const min = Math.min(...vals);
-  const max = Math.max(...vals);
-  const range = max - min || 1;
-
-  scores.forEach((score, el) => {
-    const t = (score - min) / range;
-    const hue = Math.round(240 - t * 240);
-    const sat = Math.round(45 + t * 40);
-    const lit = Math.round(28 + t * 14);
-    el.style.background = `hsl(${hue}, ${sat}%, ${lit}%)`;
-    el.style.setProperty('box-shadow',
-      `0 3px 0 hsl(${hue}, ${sat}%, ${lit - 10}%), 0 1px 2px rgba(0,0,0,0.5)`);
-  });
-}
-
-function clearHeatmap() {
-  document.querySelectorAll('#keyboard .key').forEach(el => {
-    el.style.background = '';
-    el.style.removeProperty('box-shadow');
-  });
-}
-
-function toggleHeatmap() {
-  heatmapActive = !heatmapActive;
-  track('heatmap_toggled', { active: heatmapActive });
-  document.getElementById('btn-heatmap').classList.toggle('btn-on', heatmapActive);
-  document.getElementById('heatmap-legend').classList.toggle('hidden', !heatmapActive);
-  if (heatmapActive) {
-    applyHeatmap();
-  } else {
-    renderKeyboard();
-    renderLegend();
-  }
-}
-
-/* ── Category filter ──────────────────────────────────────────── */
-
-
-
-
-/* ── Hotkey summary ───────────────────────────────────────────── */
-
-
-
-
-/* ── Category drag (pointer events) ──────────────────────────── */
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/* ── Legend ───────────────────────────────────────────────────── */
-
-
-
-
-/* ── Summary search ───────────────────────────────────────────── */
-
-/* ── Category select ──────────────────────────────────────────── */
-
-/* ── Key full names ───────────────────────────────────────────── */
-
-function getKeyFullName(keyId, def) {
-  if (KEY_FULL_NAMES[keyId]) return KEY_FULL_NAMES[keyId];
-  return (def ? getKeyLabel(def) : '') || keyId;
-}
-
-/* ── Popover ──────────────────────────────────────────────────── */
-function openPopover(keyId) {
-  activeKeyId = keyId;
-  const def = findKeyDef(keyId);
-  const label = (def ? getKeyLabel(def) : '') || keyId;
-
-  document.getElementById('popover-key-badge').textContent = label || keyId;
-  document.getElementById('popover-title').textContent = getKeyFullName(keyId, def);
-
-  // Reset
-  document.querySelectorAll('.mod-chip').forEach(c => c.classList.remove('active'));
-  document.querySelectorAll('.mod-chip input').forEach(cb => cb.checked = false);
-  document.getElementById('hotkey-label').value    = '';
-  document.getElementById('hotkey-desc').value     = '';
-  document.getElementById('hotkey-category').value = '';
-
-  // Prefill existing
-  const existing = state.hotkeys[keyId];
-  if (existing) {
-    document.getElementById('hotkey-label').value    = existing.label       || '';
-    document.getElementById('hotkey-desc').value     = existing.description || '';
-    document.getElementById('hotkey-category').value = existing.category    || '';
-    (existing.modifiers || []).forEach(mod => {
-      const cb = document.querySelector(`.mod-chip input[value="${mod}"]`);
-      if (cb) { cb.checked = true; cb.closest('.mod-chip').classList.add('active'); }
-    });
-  }
-
-  document.getElementById('conflict-warning').hidden = true;
-  document.getElementById('popover').classList.remove('hidden');
-  document.getElementById('popover-overlay').classList.remove('hidden');
-  setTimeout(() => document.getElementById('hotkey-label').focus(), 30);
-}
-
-function closePopover() {
-  activeKeyId = null;
-  hideLabelSuggestions();
-  document.getElementById('popover').classList.add('hidden');
-  document.getElementById('popover-overlay').classList.add('hidden');
-}
-
-/* ── Label autocomplete ───────────────────────────────────────── */
-let _suggestionIdx = -1;
-
-function buildSuggestions(query) {
-  const q = query.toLowerCase();
-  return Object.entries(state.hotkeys)
-    .filter(([keyId, hk]) => keyId !== activeKeyId && hk.label.toLowerCase().includes(q))
-    .map(([keyId, hk]) => {
-      const def = findKeyDef(keyId);
-      return { label: hk.label, keyName: def ? (getKeyLabel(def) || keyId) : keyId };
-    })
-    .sort((a, b) => a.label.localeCompare(b.label));
-}
-
-function renderLabelSuggestions() {
-  const input = document.getElementById('hotkey-label');
-  const box = document.getElementById('label-suggestions');
-  const query = input.value.trim();
-
-  if (!query) { hideLabelSuggestions(); return; }
-
-  const matches = buildSuggestions(query);
-  if (!matches.length) { hideLabelSuggestions(); return; }
-
-  _suggestionIdx = -1;
-  box.innerHTML = '';
-  matches.forEach((m, i) => {
-    const item = document.createElement('div');
-    item.className = 'label-suggestion';
-    item.dataset.idx = i;
-    const keySpan = document.createElement('span');
-    keySpan.className = 'label-suggestion-key';
-    keySpan.textContent = m.keyName;
-    const divSpan = document.createElement('span');
-    divSpan.className = 'label-suggestion-divider';
-    divSpan.textContent = '|';
-    const textSpan = document.createElement('span');
-    textSpan.className = 'label-suggestion-text';
-    textSpan.textContent = m.label;
-    item.append(keySpan, divSpan, textSpan);
-    item.addEventListener('mousedown', e => {
-      e.preventDefault();
-      selectSuggestion(m.label);
-    });
-    box.appendChild(item);
-  });
-
-  box.hidden = false;
-}
-
-function hideLabelSuggestions() {
-  const box = document.getElementById('label-suggestions');
-  if (box) box.hidden = true;
-  _suggestionIdx = -1;
-}
-
-function selectSuggestion(label) {
-  const input = document.getElementById('hotkey-label');
-  input.value = label;
-  hideLabelSuggestions();
-  updateConflictWarning();
-  input.focus();
-}
-
-function moveSuggestionFocus(dir) {
-  const box = document.getElementById('label-suggestions');
-  if (!box || box.hidden) return;
-  const items = box.querySelectorAll('.label-suggestion');
-  if (!items.length) return;
-  items[_suggestionIdx]?.classList.remove('ls-focused');
-  _suggestionIdx = (_suggestionIdx + dir + items.length) % items.length;
-  items[_suggestionIdx].classList.add('ls-focused');
-  items[_suggestionIdx].scrollIntoView({ block: 'nearest' });
-}
-
-function checkConflict(label) {
-  if (!label) return null;
-  const lower = label.toLowerCase();
-  for (const [keyId, hk] of Object.entries(state.hotkeys)) {
-    if (keyId !== activeKeyId && hk.label.trim().toLowerCase() === lower) return keyId;
-  }
-  return null;
-}
-
-function updateConflictWarning() {
-  const label = document.getElementById('hotkey-label').value.trim();
-  const warn = document.getElementById('conflict-warning');
-  const conflictKeyId = checkConflict(label);
-  if (conflictKeyId) {
-    const def = findKeyDef(conflictKeyId);
-    const keyName = def ? getKeyLabel(def) : conflictKeyId;
-    document.getElementById('conflict-warning-text').textContent =
-      `"${label}" is already assigned to ${keyName}`;
-    warn.hidden = false;
-  } else {
-    warn.hidden = true;
-  }
-}
-
-function saveHotkey() {
-  if (!activeKeyId) return;
-  const label = document.getElementById('hotkey-label').value.trim();
-  if (!label) {
-    document.getElementById('hotkey-label').focus();
-    document.getElementById('hotkey-label').style.borderColor = 'var(--danger)';
-    setTimeout(() => document.getElementById('hotkey-label').style.borderColor = '', 1200);
-    return;
-  }
-
-  pushUndo();
-  const modifiers = [...document.querySelectorAll('.mod-chip input:checked')].map(cb => cb.value);
-
-  state.hotkeys[activeKeyId] = {
-    label,
-    description: document.getElementById('hotkey-desc').value.trim(),
-    category:    document.getElementById('hotkey-category').value,
-    modifiers,
-  };
-
-  track('key_assigned', {
-    key_id:          activeKeyId,
-    category:        state.hotkeys[activeKeyId].category || 'none',
-    has_modifiers:   modifiers.length > 0,
-    has_description: !!state.hotkeys[activeKeyId].description,
-  });
-
-  refreshKey(activeKeyId);
-  renderLegend();
-  renderSummary();
-  saveToStorage();
-  closePopover();
-}
-
-function clearHotkey() {
-  if (!activeKeyId) return;
-  pushUndo();
-  track('key_cleared', { key_id: activeKeyId });
-  delete state.hotkeys[activeKeyId];
-  refreshKey(activeKeyId);
-  renderLegend();
-  renderSummary();
-  saveToStorage();
-  closePopover();
-}
-
-/* ── Context tabs ─────────────────────────────────────────────── */
-
-
-function switchTab(id) {
-  syncActiveTab();
-  state.activeTabId = id;
-  const tab = state.tabs.find(t => t.id === id);
-  state.hotkeys = tab ? JSON.parse(JSON.stringify(tab.hotkeys)) : {};
-  renderTabBar();
-  renderKeyboard();
-  renderLegend();
-  renderSummary();
-  saveToStorage();
-}
-
-function showTabNameDialog(onConfirm, opts = {}) {
-  const { title = 'New Tab Name', buttonLabel = 'Create Tab', initialValue = '', onDelete = null } = opts;
-  const modal     = document.getElementById('tab-name-modal');
-  const input     = document.getElementById('tab-name-input');
-  const ok        = document.getElementById('tab-name-ok');
-  const cancel    = document.getElementById('tab-name-cancel');
-  const deleteBtn = document.getElementById('tab-name-delete');
-  const overlay   = document.getElementById('confirm-overlay');
-  const titleEl   = document.getElementById('tab-name-title');
-
-  titleEl.textContent = title;
-  ok.textContent      = buttonLabel;
-  input.value         = initialValue;
-  deleteBtn.classList.toggle('hidden', !onDelete);
-  modal.classList.remove('hidden');
-  overlay.classList.remove('hidden');
-  input.focus();
-  input.select();
-
-  function commit() {
-    const name = input.value.trim();
-    if (!name) { input.focus(); return; }
-    cleanup();
-    onConfirm(name);
-  }
-
-  function handleDelete() {
-    cleanup();
-    onDelete();
-  }
-
-  function cleanup() {
-    modal.classList.add('hidden');
-    overlay.classList.add('hidden');
-    ok.removeEventListener('click', commit);
-    cancel.removeEventListener('click', cleanup);
-    deleteBtn.removeEventListener('click', handleDelete);
-    input.removeEventListener('keydown', onKey);
-  }
-
-  function onKey(e) {
-    if (e.key === 'Enter') commit();
-    if (e.key === 'Escape') cleanup();
-  }
-
-  ok.addEventListener('click', commit);
-  cancel.addEventListener('click', cleanup);
-  if (onDelete) deleteBtn.addEventListener('click', handleDelete);
-  input.addEventListener('keydown', onKey);
-}
-
-let _dragTabId = null;
-
-function renameTab(tabId, currentName) {
-  const canDelete = state.tabs.length > 1;
-  showTabNameDialog(name => {
-    const tab = state.tabs.find(t => t.id === tabId);
-    if (!tab) return;
-    tab.name = name;
-    renderTabBar();
-    saveToStorage();
-  }, {
-    title: 'Rename Tab',
-    buttonLabel: 'Rename',
-    initialValue: currentName,
-    onDelete: canDelete ? () => {
-      const hotkeyCount = Object.keys(state.tabs.find(t => t.id === tabId)?.hotkeys || {}).length;
-      const detail = hotkeyCount > 0
-        ? ` ${hotkeyCount} hotkey${hotkeyCount > 1 ? 's' : ''} will be permanently deleted.`
-        : '';
-      showConfirm(`Delete "${currentName}"?${detail}`, () => deleteTab(tabId));
-    } : null,
-  });
-}
-
-function deleteTab(tabId) {
-  const idx = state.tabs.findIndex(t => t.id === tabId);
-  if (idx === -1 || state.tabs.length <= 1) return;
-  state.tabs.splice(idx, 1);
-  if (state.activeTabId === tabId) {
-    const next = state.tabs[Math.min(idx, state.tabs.length - 1)];
-    state.activeTabId = next.id;
-    state.hotkeys = { ...next.hotkeys };
-  }
-  renderTabBar();
-  renderKeyboard();
-  renderLegend();
-  renderSummary();
-  saveToStorage();
-}
-
-function addTab() {
-  _addingNewTab = true;
-  openTemplatesModal();
-}
-
-function renderTabBar() {
-  const el = document.getElementById('context-tabs');
-  if (!el) return;
-  el.innerHTML = '';
-
-  state.tabs.forEach(tab => {
-    const btn = document.createElement('button');
-    btn.className = 'context-tab' + (tab.id === state.activeTabId ? ' active' : '');
-    btn.draggable = true;
-    btn.dataset.tabId = tab.id;
-
-    const nameSpan = document.createElement('span');
-    nameSpan.className = 'context-tab-name';
-    nameSpan.textContent = tab.name;
-    nameSpan.title = 'Double-click to rename';
-    nameSpan.addEventListener('dblclick', e => {
-      e.stopPropagation();
-      renameTab(tab.id, tab.name);
-    });
-    btn.appendChild(nameSpan);
-
-    btn.addEventListener('click', () => { if (tab.id !== state.activeTabId) switchTab(tab.id); });
-
-    btn.addEventListener('dragstart', e => {
-      _dragTabId = tab.id;
-      e.dataTransfer.effectAllowed = 'move';
-      setTimeout(() => btn.classList.add('dragging'), 0);
-    });
-    btn.addEventListener('dragend', () => {
-      _dragTabId = null;
-      btn.classList.remove('dragging');
-      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
-    });
-    btn.addEventListener('dragover', e => {
-      if (!_dragTabId || _dragTabId === tab.id) return;
-      e.preventDefault();
-      e.dataTransfer.dropEffect = 'move';
-      const rect = btn.getBoundingClientRect();
-      const before = e.clientX < rect.left + rect.width / 2;
-      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
-      btn.classList.add(before ? 'drag-before' : 'drag-after');
-    });
-    btn.addEventListener('dragleave', () => {
-      btn.classList.remove('drag-before', 'drag-after');
-    });
-    btn.addEventListener('drop', e => {
-      e.preventDefault();
-      if (!_dragTabId || _dragTabId === tab.id) return;
-      el.querySelectorAll('.context-tab').forEach(t => t.classList.remove('drag-before', 'drag-after'));
-      const rect = btn.getBoundingClientRect();
-      const before = e.clientX < rect.left + rect.width / 2;
-      const fromIdx = state.tabs.findIndex(t => t.id === _dragTabId);
-      const [moved] = state.tabs.splice(fromIdx, 1);
-      const toIdx = state.tabs.findIndex(t => t.id === tab.id);
-      state.tabs.splice(before ? toIdx : toIdx + 1, 0, moved);
-      renderTabBar();
-      saveToStorage();
-    });
-
-    el.appendChild(btn);
-  });
-
-  const addBtn = document.createElement('button');
-  addBtn.className = 'context-tab-add';
-  addBtn.title = 'Add tab';
-  addBtn.textContent = '+';
-  addBtn.addEventListener('click', addTab);
-  el.appendChild(addBtn);
-}
-
-/* ── Storage ──────────────────────────────────────────────────── */
-
-
-
-
-/* ── Copy / Print ─────────────────────────────────────────────── */
-function shareDate() {
-  return new Date().toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' });
-}
-function siteUrl() {
-  return location.origin + location.pathname;
-}
-
-function formatShortcut(hk, def) {
-  const keyLabel = def ? getKeyLabel(def) : '';
-  return [...(hk.modifiers || []).map(displayMod), keyLabel].filter(Boolean).join('+');
-}
-
-function buildSummaryBuckets() {
-  const entries = getOrderedHotkeys();
-  const buckets = {};
-  const uncategorized = [];
-  entries.forEach(entry => {
-    const id = entry.hk.category;
-    if (id) { (buckets[id] = buckets[id] || []).push(entry); }
-    else uncategorized.push(entry);
-  });
-  return { buckets, uncategorized };
-}
-
-function buildPlainText() {
-  const mapName = document.getElementById('map-name').value || 'Hotkey Map';
-  const { buckets, uncategorized } = buildSummaryBuckets();
-  const lines = [mapName, '='.repeat(mapName.length), `Generated: ${shareDate()}`, ''];
-
-  const addGroup = (name, items) => {
-    lines.push(name);
-    items.forEach(({ hk, def }) => {
-      const shortcut = formatShortcut(hk, def).padEnd(20);
-      let line = `  ${shortcut}  ${hk.label}`;
-      if (hk.description) line += `  — ${hk.description}`;
-      lines.push(line);
-    });
-    lines.push('');
-  };
-
-  allCategories().forEach(cat => {
-    if (buckets[cat.id]?.length) addGroup(cat.name, buckets[cat.id]);
-  });
-  if (uncategorized.length) addGroup('Uncategorized', uncategorized);
-
-  lines.push('---', `Created with KeyBindr — ${siteUrl()}`);
-  return lines.join('\n').trimEnd();
-}
-
-function buildMarkdown() {
-  const mapName = document.getElementById('map-name').value || 'Hotkey Map';
-  const { buckets, uncategorized } = buildSummaryBuckets();
-  const lines = [`# ${mapName}`, `*Generated ${shareDate()} · [KeyBindr](${siteUrl()})*`, ''];
-
-  const addGroup = (name, items) => {
-    lines.push(`## ${name}`, '');
-    lines.push('| Shortcut | Action | Description |');
-    lines.push('|----------|--------|-------------|');
-    items.forEach(({ hk, def }) => {
-      const shortcut = formatShortcut(hk, def);
-      lines.push(`| ${shortcut} | ${hk.label} | ${hk.description || ''} |`);
-    });
-    lines.push('');
-  };
-
-  allCategories().forEach(cat => {
-    if (buckets[cat.id]?.length) addGroup(cat.name, buckets[cat.id]);
-  });
-  if (uncategorized.length) addGroup('Uncategorized', uncategorized);
-
-  return lines.join('\n').trimEnd();
-}
-
-function markdownToHtml(md) {
-  const inline = s =>
-    s.replace(/\[([^\]]+)\]\(([^)]+)\)/g, '<a href="$2">$1</a>')
-     .replace(/\*([^*]+)\*/g, '<em>$1</em>');
-
-  const out = [];
-  let tableLines = [];
-
-  const flushTable = () => {
-    if (!tableLines.length) return;
-    const rows = tableLines.filter(l => !/^\|[-:\s|]+\|$/.test(l));
-    if (!rows.length) { tableLines = []; return; }
-    out.push('<table>');
-    rows.forEach((row, i) => {
-      const cells = row.replace(/^\||\|$/g, '').split('|').map(c => c.trim());
-      const t = i === 0 ? 'th' : 'td';
-      out.push(`<tr>${cells.map(c => `<${t}>${inline(c)}</${t}>`).join('')}</tr>`);
-    });
-    out.push('</table>');
-    tableLines = [];
-  };
-
-  for (const line of md.split('\n')) {
-    if (line.startsWith('|')) { tableLines.push(line); continue; }
-    flushTable();
-    if (line.startsWith('# '))  out.push(`<h1>${inline(line.slice(2))}</h1>`);
-    else if (line.startsWith('## ')) out.push(`<h2>${inline(line.slice(3))}</h2>`);
-    else if (line === '---')    out.push('<hr>');
-    else if (line.trim())       out.push(`<p>${inline(line)}</p>`);
-  }
-  flushTable();
-  return out.join('');
-}
-
-async function copyToClipboard(text, btn) {
-  try {
-    await navigator.clipboard.writeText(text);
-    const orig = btn.textContent;
-    btn.textContent = 'Copied!';
-    setTimeout(() => { btn.textContent = orig; }, 1800);
-  } catch (_) {}
-}
-
-/* ── Export / Import ──────────────────────────────────────────── */
-function exportMap() {
-  const name = document.getElementById('map-name').value || 'hotkey-map';
-  track('map_exported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
-  const data = { version: 1, name, generatedOn: shareDate(), source: 'KeyBindr', sourceUrl: siteUrl(), hotkeys: state.hotkeys, categories: state.categories };
-  const blob = new Blob([JSON.stringify(data, null, 2)], { type: 'application/json' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = name.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.json';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function exportMapCSV() {
-  syncActiveTab();
-  const mapName = document.getElementById('map-name').value || 'hotkey-map';
-  track('map_exported_csv', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.exports });
-
-  const catMap = Object.fromEntries(state.categories.map(c => [c.id, c.name]));
-  const esc = v => {
-    const s = String(v ?? '');
-    return (s.includes(',') || s.includes('"') || s.includes('\n'))
-      ? `"${s.replace(/"/g, '""')}"` : s;
-  };
-
-  const rows = [['Tab', 'Key', 'Label', 'Modifiers', 'Category', 'Description']];
-  state.tabs.forEach(tab => {
-    Object.entries(tab.hotkeys).forEach(([keyId, hk]) => {
-      const def      = findKeyDef(keyId);
-      const keyLabel = (def ? getKeyLabel(def) : '') || keyId;
-      const mods     = (hk.modifiers || []).join('+');
-      const catName  = catMap[hk.category] || '';
-      rows.push([tab.name, keyLabel, hk.label || '', mods, catName, hk.description || '']);
-    });
-  });
-
-  const csv  = rows.map(r => r.map(esc).join(',')).join('\r\n');
-  const blob = new Blob([csv], { type: 'text/csv' });
-  const url  = URL.createObjectURL(blob);
-  const a    = document.createElement('a');
-  a.href     = url;
-  a.download = mapName.replace(/[^a-z0-9]/gi, '-').toLowerCase() + '.csv';
-  a.click();
-  URL.revokeObjectURL(url);
-}
-
-function validateImport(data) {
-  if (!data || typeof data !== 'object' || Array.isArray(data))
-    throw new Error('Root must be a JSON object');
-  if (!data.hotkeys || typeof data.hotkeys !== 'object' || Array.isArray(data.hotkeys))
-    throw new Error('Missing or invalid "hotkeys" field');
-  for (const [keyId, hk] of Object.entries(data.hotkeys)) {
-    if (!hk || typeof hk !== 'object' || Array.isArray(hk))
-      throw new Error(`Hotkey "${keyId}" must be an object`);
-    if (typeof hk.label !== 'string')
-      throw new Error(`Hotkey "${keyId}" must have a string label`);
-    if (hk.description !== undefined && typeof hk.description !== 'string')
-      throw new Error(`Hotkey "${keyId}" has an invalid description`);
-    if (hk.category !== undefined && typeof hk.category !== 'string')
-      throw new Error(`Hotkey "${keyId}" has an invalid category`);
-    if (hk.modifiers !== undefined && !Array.isArray(hk.modifiers))
-      throw new Error(`Hotkey "${keyId}" has invalid modifiers`);
-  }
-  if (data.categories !== undefined) {
-    if (!Array.isArray(data.categories))
-      throw new Error('"categories" must be an array');
-    for (const cat of data.categories) {
-      if (!cat || typeof cat !== 'object' || typeof cat.id !== 'string' || typeof cat.name !== 'string' || typeof cat.color !== 'string')
-        throw new Error('Each category must have string "id", "name", and "color" fields');
-    }
-  }
-  if (data.tabs !== undefined) {
-    if (!Array.isArray(data.tabs))
-      throw new Error('"tabs" must be an array');
-    for (const tab of data.tabs) {
-      if (!tab || typeof tab !== 'object' || typeof tab.name !== 'string')
-        throw new Error('Each tab must have a string "name"');
-      if (!tab.hotkeys || typeof tab.hotkeys !== 'object' || Array.isArray(tab.hotkeys))
-        throw new Error(`Tab "${tab.name}" has missing or invalid "hotkeys"`);
-    }
-  }
-}
-
-function importMap(file) {
-  const reader = new FileReader();
-  reader.onload = e => {
-    try {
-      const data = JSON.parse(e.target.result);
-      validateImport(data);
-      pushUndo();
-      state.hotkeys   = data.hotkeys;
-      state.categories = data.categories || [];
-      if (data.name) document.getElementById('map-name').value = data.name;
-      track('map_imported', { key_count: Object.keys(state.hotkeys).length, session_count: ++_sessionCounts.imports });
-      populateCategorySelect();
-      renderKeyboard();
-      renderLegend();
-      renderSummary();
-      saveToStorage();
-    } catch (err) {
-      alert(`Could not import: ${err.message || 'Invalid KeyBindr JSON file.'}`);
-    }
-  };
-  reader.readAsText(file);
 }
 
 /* ── Confirm dialog ───────────────────────────────────────────── */
@@ -896,7 +154,8 @@ function closeConfirm(confirmed) {
 let _collapseNewTile = null;
 let _addingNewTab = false;
 
-function openTemplatesModal() {
+function openTemplatesModal(addingNewTab = false) {
+  _addingNewTab = addingNewTab === true;
   document.getElementById('template-modal').classList.remove('hidden');
   document.getElementById('template-overlay').classList.remove('hidden');
 }
@@ -1120,9 +379,7 @@ function initTemplates() {
   document.getElementById('template-overlay').addEventListener('click', closeTemplatesModal);
 }
 
-/* ── Action dropdown (module-scoped so all init fns can use it) ── */
-// Persistent element stays in the DOM so its GPU layer is always allocated,
-// eliminating the black-texture flash on first show.
+/* ── Action dropdown ──────────────────────────────────────────── */
 const _dropdownEl = document.createElement('div');
 _dropdownEl.className = 'action-dropdown';
 _dropdownEl.style.display = 'none';
@@ -1225,10 +482,10 @@ function showClearDropdown(anchor) {
     cb.type = 'checkbox';
     cb.checked = false;
     cb.addEventListener('change', () => { sel[opt.key] = cb.checked; updateApplyBtn(); });
-    const track = document.createElement('span');
-    track.className = 'toggle-track';
+    const trackEl = document.createElement('span');
+    trackEl.className = 'toggle-track';
     toggleLabel.appendChild(cb);
-    toggleLabel.appendChild(track);
+    toggleLabel.appendChild(trackEl);
     row.appendChild(labelSpan);
     row.appendChild(toggleLabel);
     _dropdownEl.appendChild(row);
@@ -1285,8 +542,6 @@ function showClearDropdown(anchor) {
 }
 
 /* ── Layout controls ──────────────────────────────────────────── */
-
-
 function initLayoutControls() {
   const layoutBtn = document.getElementById('select-layout');
   const keymapBtn = document.getElementById('select-keymap');
@@ -1377,7 +632,7 @@ function initEvents() {
       if (e.key === 'Escape')    { hideLabelSuggestions(); return; }
       if (e.key === 'Enter') {
         const focused = box.querySelector('.ls-focused');
-        if (focused) { e.preventDefault(); selectSuggestion(focused.querySelector('.label-suggestion-text').textContent); return; }
+        if (focused) { e.preventDefault(); selectSuggestionFromFocused(focused); return; }
       }
     }
     if (e.key === 'Enter') saveHotkey();
@@ -1406,7 +661,7 @@ function initEvents() {
       return;
     }
     if (e.key !== 'Escape') return;
-    if (activeKeyId) closePopover();
+    if (getActiveKeyId()) closePopover();
     else if (!document.getElementById('template-modal').classList.contains('hidden')) closeTemplatesModal();
   });
 
@@ -1604,7 +859,6 @@ function initEvents() {
 
   document.getElementById('summary-search').addEventListener('input', filterSummary);
 
-
   document.getElementById('btn-import').addEventListener('click', () => {
     document.getElementById('file-input').click();
   });
@@ -1614,8 +868,6 @@ function initEvents() {
     e.target.value = '';
   });
 }
-
-/* ── Custom categories ────────────────────────────────────────── */
 
 /* ── Platform toggle ──────────────────────────────────────────── */
 function initPlatformToggle() {
@@ -1627,7 +879,6 @@ function initPlatformToggle() {
       b.classList.toggle('active', b === btn);
     });
     renderSummary();
-    if (_tooltipTarget) showKeyTooltip(_tooltipTarget);
     saveToStorage();
   });
 }
@@ -1748,16 +999,31 @@ function initFooter() {
   document.getElementById('footer-version').textContent = `v${VERSION}`;
 }
 
+function selectSuggestionFromFocused(focused) {
+  const text = focused.querySelector('.label-suggestion-text')?.textContent;
+  if (text) {
+    document.getElementById('hotkey-label').value = text;
+    hideLabelSuggestions();
+    updateConflictWarning();
+    document.getElementById('hotkey-label').focus();
+  }
+}
+
 function init() {
-  setThemeChangeCallback(() => { if (heatmapActive) applyHeatmap(); });
+  setThemeChangeCallback(() => { if (isHeatmapActive()) applyHeatmap(); });
   setKeyboardCallbacks({
     openPopover,
     reapplyFilter,
     applyHeatmap,
-    isHeatmapActive: () => heatmapActive,
+    isHeatmapActive,
   });
+  setHeatmapCallbacks({ track, renderKeyboard, renderLegend });
   setSummaryCallbacks({ openPopover, populateCategorySelect, renderLegend });
   setCategoriesCallbacks({ showConfirm });
+  setPopoverCallbacks({ pushUndo, renderLegend, renderSummary, track });
+  setExportCallbacks({ pushUndo, renderKeyboard, renderLegend, renderSummary, track, sessionCounts: _sessionCounts });
+  setTabsCallbacks({ renderKeyboard, renderLegend, renderSummary, showConfirm, openTemplatesModal, track });
+
   initTheme();
   initScheme();
   loadFromStorage();
