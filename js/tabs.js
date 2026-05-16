@@ -117,10 +117,29 @@ export function addTab() {
   _cbs.openTemplatesModal(true);
 }
 
+function updateTabsFade() {
+  const el = document.getElementById('context-tabs');
+  const wrap = el?.closest('.context-tabs-wrap');
+  if (!el || !wrap) return;
+  const hasOverflow = el.scrollWidth > el.clientWidth + 2;
+  const scrolled    = el.scrollLeft > 2;
+  const atEnd       = el.scrollLeft + el.clientWidth >= el.scrollWidth - 2;
+  wrap.classList.toggle('tabs-scrolled', hasOverflow && scrolled);
+  wrap.classList.toggle('tabs-at-end',   !hasOverflow || atEnd);
+}
+
+let _fadeListenerAdded = false;
+
 export function renderTabBar() {
   const el = document.getElementById('context-tabs');
   if (!el) return;
   el.innerHTML = '';
+
+  if (!_fadeListenerAdded) {
+    el.addEventListener('scroll', updateTabsFade, { passive: true });
+    window.addEventListener('resize', updateTabsFade, { passive: true });
+    _fadeListenerAdded = true;
+  }
 
   state.tabs.forEach(tab => {
     const btn = document.createElement('button');
@@ -185,4 +204,7 @@ export function renderTabBar() {
   addBtn.textContent = '+';
   addBtn.addEventListener('click', addTab);
   el.appendChild(addBtn);
+
+  // Recalculate fade after DOM is updated
+  requestAnimationFrame(updateTabsFade);
 }

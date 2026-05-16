@@ -8,7 +8,7 @@
 </p>
 
 <p align="center">
-  <strong>Version:</strong> 0.6.0 — work in progress, active development.
+  <strong>Version:</strong> 0.6.1 — work in progress, active development.
 </p>
 
 ---
@@ -33,7 +33,9 @@
 
 ### Templates & map management
 
-- **Built-in templates** — load a ready-made hotkey map for Adobe Photoshop, Adobe Premiere Pro, Battlefield 6, Counter-Strike 2, VS Code, or World of Warcraft via the Templates button (sorted alphabetically); each tile shows the app's official product icon; template list is sorted alphabetically
+- **Built-in templates** — six ready-made hotkey maps (Adobe Photoshop, Adobe Premiere Pro, Battlefield 6, Counter-Strike 2, VS Code, World of Warcraft); clicking a tile in the Templates modal navigates to its dedicated preview page; the preview page's "Map your own →" CTA loads the template into the main app via `?template=` URL param
+- **Templates gallery** — standalone browseable page (`/templates.html`) listing all templates with category filters; each card links to the template's individual static preview page; fully crawlable for SEO
+- **Individual template pages** — each template has its own static HTML file (e.g. `/photoshop.html`) with unique title, meta description, and Open Graph tags; indexable by Google without JavaScript; includes the full Share dropdown (Copy Link, Copy Text, Markdown, X, Reddit, Email, Export JSON/PNG, Print)
 - **Multi-tab templates** — templates can define multiple context tabs (e.g. Battlefield 6 ships with 7 tabs: Infantry, Ground Vehicle, Aircraft, etc.); loading a multi-tab template replaces all existing tabs
 - **New Map** — clicking "New" opens a confirmation dialog; on confirm, all hotkeys, categories, and tabs are cleared and the map name is set to "New Map"
 - **Category filter tabs** — filter the template grid by Design, Video, Gaming, or Development

@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Keyboard Shortcut Templates — KeyBindr</title>
+  <meta name="description" content="Browse pre-built keyboard shortcut maps for Photoshop, Premiere Pro, VS Code, World of Warcraft, CS2, Battlefield 6, and more. Free, no signup.">
+
+  <!-- Google Analytics -->
+  <script async src="https://www.googletagmanager.com/gtag/js?id=G-Y1EQFTC8YR"></script>
+  <script src="analytics.js"></script>
+
+  <link rel="icon" type="image/svg+xml" href="/favicon.svg">
+  <link rel="icon" type="image/png" sizes="96x96" href="/favicon-96x96.png">
+  <link rel="apple-touch-icon" sizes="180x180" href="/apple-touch-icon.png">
+  <link rel="preload" href="/fonts/chakra-petch-400.woff2" as="font" type="font/woff2" crossorigin>
+  <link rel="stylesheet" href="style.css">
+
+  <script type="module" src="js/gallery.js"></script>
+
+  <style>
+    .gallery-main {
+      max-width: 960px;
+      margin: 0 auto;
+      padding: 24px 20px 48px;
+    }
+
+    .gallery-page-title {
+      font-size: 1.25rem;
+      font-weight: 700;
+      color: var(--text-primary);
+      margin: 0 0 4px;
+    }
+
+    .gallery-page-subtitle {
+      font-size: 0.83rem;
+      color: var(--text-muted);
+      margin: 0 0 20px;
+    }
+
+    .gallery-tabs {
+      display: flex;
+      gap: 6px;
+      flex-wrap: wrap;
+      margin-bottom: 18px;
+    }
+
+    .gallery-tab {
+      padding: 5px 14px;
+      border-radius: 20px;
+      border: 1px solid var(--border);
+      background: transparent;
+      color: var(--text-muted);
+      font-size: 0.8rem;
+      font-family: var(--font);
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.12s;
+    }
+    .gallery-tab:hover { border-color: var(--border-2); color: var(--text); }
+    .gallery-tab.active { background: var(--surface-2); border-color: var(--border-2); color: var(--text); }
+
+    .gallery-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 12px;
+    }
+
+    .gallery-card {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      gap: 8px;
+      padding: 18px 14px 14px;
+      background: var(--surface-2);
+      border: 1px solid var(--border);
+      border-radius: 12px;
+      text-decoration: none;
+      color: inherit;
+      transition: border-color 0.12s, background 0.12s, transform 0.1s;
+    }
+    .gallery-card:hover {
+      border-color: var(--accent);
+      background: color-mix(in srgb, var(--accent) 6%, transparent);
+      transform: translateY(-1px);
+    }
+
+    .gallery-card-icon {
+      height: 40px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+    }
+    .gallery-card-icon .template-logo { width: 38px; height: 38px; }
+    .gallery-card-icon .template-logo--wide { width: 100px; height: 22px; }
+    .gallery-card-icon .template-logo--wide-xl { width: 140px; height: 22px; object-fit: contain; filter: invert(1); }
+    [data-theme="light"] .gallery-card-icon .template-logo--wide-xl { filter: none; }
+
+    .gallery-card-name {
+      font-size: 0.85rem;
+      font-weight: 600;
+      color: var(--text);
+      text-align: center;
+      line-height: 1.3;
+    }
+
+    .gallery-card-meta {
+      display: flex;
+      align-items: center;
+      gap: 6px;
+      flex-wrap: wrap;
+      justify-content: center;
+    }
+
+    #gallery-empty {
+      grid-column: 1 / -1;
+      text-align: center;
+      color: var(--text-muted);
+      font-size: 0.85rem;
+      padding: 40px 0;
+    }
+
+    @media (max-width: 720px) {
+      .gallery-grid { grid-template-columns: repeat(3, 1fr); }
+    }
+    @media (max-width: 480px) {
+      .gallery-grid { grid-template-columns: repeat(2, 1fr); }
+    }
+  </style>
+</head>
+<body>
+
+  <header class="template-header">
+    <a class="template-header-brand" href="https://keybindr.app">
+      <img class="brand-icon" src="logos/main_nobackground.png" alt="KeyBindr" aria-hidden="true">
+      <span class="brand-name">KeyBindr</span>
+    </a>
+    <div class="template-header-divider"></div>
+    <span style="font-size:0.9rem; font-weight:600; color:var(--text-primary);">Templates</span>
+    <a class="btn btn-primary template-cta-btn" href="https://keybindr.app">
+      Map your own →
+    </a>
+  </header>
+
+  <main class="gallery-main">
+    <h1 class="gallery-page-title">Keyboard Shortcut Templates</h1>
+    <p class="gallery-page-subtitle">Click any template to preview it. Open in KeyBindr to edit and make it your own.</p>
+
+    <div class="gallery-tabs">
+      <button class="gallery-tab active" data-cat="all">All</button>
+      <button class="gallery-tab" data-cat="Design">Design</button>
+      <button class="gallery-tab" data-cat="Video">Video</button>
+      <button class="gallery-tab" data-cat="Gaming">Gaming</button>
+      <button class="gallery-tab" data-cat="Development">Development</button>
+    </div>
+
+    <div id="gallery-grid" class="gallery-grid">
+      <p id="gallery-empty" hidden>No templates in this category yet.</p>
+    </div>
+  </main>
+
+  <footer class="template-page-footer">
+    <span id="footer-version"></span> &nbsp;·&nbsp;
+    <a href="https://keybindr.app">KeyBindr</a> — map and share your keyboard shortcuts
+  </footer>
+
+</body>
+</html>

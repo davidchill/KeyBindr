@@ -1,5 +1,27 @@
 # Changelog
 
+## [0.6.1] – 2026-05-15
+
+### Added
+
+- **Templates gallery page** (`templates.html` + `js/gallery.js`) — standalone browseable gallery of all built-in templates; category filter tabs (All / Design / Video / Gaming / Development); each card links to the template's individual preview page; consistent header/footer with the rest of the template surface
+- **Individual static template pages** — six dedicated HTML files (`photoshop.html`, `premiere.html`, `wow.html`, `cs2.html`, `vscode.html`, `bf6.html`), each with unique `<title>`, `<meta name="description">`, Open Graph tags, and `<link rel="canonical">`; fully indexable by Google without JavaScript execution; template identity driven by `data-template-id` attribute on `<html>`, with `?id=` URL param as fallback
+- **Share panel on template pages** — all seven template pages (`template.html` + six static files) now have the full share dropdown matching the main app: Copy Link, Copy Text, Copy as Markdown, Post on X, Share on Reddit, Share via Email, Export JSON, Export PNG, Print; Copy Link uses the page's canonical URL (no LZString needed); wired via `initSharePanel()` in `template-page.js`, importing `buildPlainText`, `buildMarkdown`, `markdownToHtml`, `exportMap` from `export.js`; hidden `#map-name` input populated at runtime with `template.name`
+- **`?template=` URL param handler** (`main.js`) — landing on `keybindr.app/?template=photoshop` auto-loads the matching template; closes the funnel from template preview pages back to the main app
+- **Sitemap expanded** — `sitemap.xml` updated with `templates.html` (priority 0.8) and all six individual template pages (priority 0.7)
+- **Cache headers** — `_headers` now sets `Cache-Control: public, max-age=3600` for `/js/*.js` and `/style.css`; upgradeable to `immutable` once filenames are content-hashed
+
+### Changed
+
+- **Template modal tiles** now navigate to the static template page (e.g. `photoshop.html`) instead of loading the template directly into the app; the preview page's "Map your own →" CTA completes the round-trip via the `?template=` param handler
+- **Template header/footer CSS** moved from an inline `<style>` block in `template.html` into `style.css`; shared by all template pages with no duplication
+- **GitHub and Feedback buttons removed** from the main app footer
+- **Tab bar horizontal scroll** — `#context-tabs` is now `overflow-x: auto` with hidden scrollbar; fade indicators (`::before` / `::after` on `.context-tabs-wrap`) appear on the relevant side when there is more content to scroll; `updateTabsFade()` in `tabs.js` recalculates on scroll and resize
+- **Tab bar right gap + rounded corner** — `margin-right: 20px` on `.context-tabs` creates a real 20px gap on the right matching the left padding; `border-top-right-radius: 8px` on `.context-tabs` (the scroll container, not the wrapper) clips overflowing tab content at a rounded corner; fade indicator sits at `right: 20px` (the gap boundary)
+- **Mobile tab font size** reduced to `0.7rem` with `padding: 5px 10px` at `max-width: 600px`, freeing enough horizontal space for gap and rounding to coexist with long tab names (e.g. BF6's 7 tabs)
+
+---
+
 ## [0.6.0] – 2026-05-14
 
 ### Added

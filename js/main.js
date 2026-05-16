@@ -206,6 +206,13 @@ function loadTemplate(template) {
   }
 }
 
+function handleTemplateParam() {
+  const id = new URLSearchParams(location.search).get('template');
+  if (!id) return;
+  const template = TEMPLATES.find(t => t.id === id.toLowerCase());
+  if (template) loadTemplate(template);
+}
+
 function initTemplates() {
   const grid = document.getElementById('template-grid');
 
@@ -311,8 +318,9 @@ function initTemplates() {
     const count = template.tabs
       ? template.tabs.reduce((sum, t) => sum + Object.keys(t.hotkeys).length, 0)
       : Object.keys(template.hotkeys).length;
-    const tile = document.createElement('button');
+    const tile = document.createElement('a');
     tile.className = 'template-tile';
+    tile.href = `${template.id}.html`;
     tile.dataset.category = template.appCategory;
 
     const iconSpan = document.createElement('span');
@@ -340,7 +348,6 @@ function initTemplates() {
     metaSpan.append(badgeSpan, countSpan);
 
     tile.append(iconSpan, nameSpan, metaSpan);
-    tile.addEventListener('click', () => loadTemplate(template));
     grid.appendChild(tile);
   });
 
@@ -1022,6 +1029,7 @@ function init() {
   initConfirmEvents();
   initLayoutControls();
   initTemplates();
+  handleTemplateParam();
   initCustomCategories();
   initPlatformToggle();
   initLegendToggle();
